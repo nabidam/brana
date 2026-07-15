@@ -35,11 +35,11 @@ Reviewer must be a **different model than the implementer** — default Opus 4.8
 
 ## 6b — Product review (the demo gate)
 
-The human plus the running app; zero tokens for the walkthrough itself. **Soft stop:** halt the turn, print the gate task's journey script, and wait for the walkthrough result (screenshots optional but recommended — cheap context for fixes). "Continue" skips — log `GATE SKIPPED` on the task in TASKS.md; every skipped gate is surfaced at the v1 exit bar.
+The human plus the running app; zero tokens for the walkthrough itself. **Preflight first (agent):** build, launch via the gate task's preflight block (launch command + seed data), confirm the journey's entry point is reachable. Preflight fails → log `GATE BLOCKED` on the task (a defect, not a choice — distinct from `GATE SKIPPED`), route the breakage as fix tasks at the head of the queue, re-run the preflight after they land; the human is only invited to walk an app that provably runs. **Soft stop:** halt the turn, print the gate task's journey script plus its launch command, and wait for the walkthrough result (screenshots optional but recommended — cheap context for fixes). "Continue" skips — log `GATE SKIPPED` on the task in TASKS.md; every skipped gate is surfaced at the v1 exit bar.
 
 The user's walkthrough:
 
-1. Build and launch the actual app.
+1. Launch the app with the gate's launch command (the agent's preflight has already proven it boots).
 2. Walk the scripted journey from the gate task (kernel journey at minimum, once it exists).
 3. Check each step against its falsifiable criterion — did the observable thing happen?
 4. Optional: screenshot screens touched — archive under `specs/NNN-name/screenshots/`; they make fix prompts and the vision pass possible, but the walkthrough result alone passes the gate.
@@ -54,7 +54,7 @@ Here are screenshots of the app and the UX.md + DESIGN.md contracts:
 that would most improve clarity and hierarchy. Findings only.
 ```
 
-**v1 exit bar:** the kernel journey passes end-to-end in a release build, witnessed by the user, including the unglamorous steps (restart, offline, error paths named in the PRD). Every `GATE SKIPPED` entry in TASKS.md is listed here and either walked now or explicitly accepted. "All tasks Done" is not the bar; this is.
+**v1 exit bar:** the kernel journey passes end-to-end in a release build, witnessed by the user, including the unglamorous steps (restart, offline, error paths named in the PRD). Every `GATE SKIPPED` entry in TASKS.md is listed here and either walked now or explicitly accepted; an unresolved `GATE BLOCKED` fails the bar outright — a gate that never became runnable is a defect, not debt. "All tasks Done" is not the bar; this is.
 
 ## Prompt mode templates
 

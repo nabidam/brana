@@ -26,9 +26,9 @@ Read the current cycle's PLAN.md (latest `specs/NNN-name/`), root ARCHITECTURE.m
 
 Rules:
 
-- Preserve PLAN.md's **DEMO GATE** entries as explicit tasks: journey to walk, observations required, the human's walkthrough result as the completion artifact (screenshots optional). A skipped gate is marked `GATE SKIPPED` on the task, never deleted.
+- Preserve PLAN.md's **DEMO GATE** entries as explicit tasks: journey to walk, observations required, a **preflight block** (exact build/launch command — a disposable/fixture path, fail-closed against non-disposable targets, when the journey would otherwise touch production state; seed/fixture command if the journey needs data; and the task ids whose output the journey walks — the gate depends on all of them), the human's walkthrough result as the completion artifact (screenshots optional). A journey step with no implementing task before the gate is a blocking finding — reorder or add the wiring task; never emit a gate that isn't walkable at its position. A skipped gate is marked `GATE SKIPPED` on the task, never deleted.
 - The walking-skeleton milestone tasks come first and may not be reordered after feature tasks.
-- Tasks tiny — ~50–300 lines of new code, one prompt each. Task ids numbered fresh per cycle dir. Task 0 of a new app is always the scaffold (file tree from FILE_STRUCTURE.md, configs, data migrations, one smoke test, no feature logic).
+- Tasks tiny — ~50–300 lines of new code, one prompt each. Task ids numbered fresh per cycle dir. Task 0 of a new app is always the scaffold (file tree from FILE_STRUCTURE.md, configs, data migrations, no feature logic); its smoke test is the app booting via a documented run command, recorded in CONVENTIONS.md.
 
 Context packs are predictions made before code exists — mark them as hints; the implementation session verifies against real files. Interfaces blocks are firmer than packs: they quote the contract, and contract changes route through the docs, not through a task improvising. Isolation is for token budgets, not for truth: demo gates exist precisely because bugs live in the seams between well-tested tasks.
 
@@ -55,9 +55,16 @@ Rules:
   test that drives one. "Compiles", "check passes", "renders" are gates,
   never the criterion.
 - Preserve PLAN.md's DEMO GATE entries as explicit tasks: journey to
-  walk, observations required, the human's walkthrough result as the
-  completion artifact (screenshots optional). A skipped gate is marked
-  GATE SKIPPED on the task, never deleted.
+  walk, observations required, a preflight block (exact build/launch
+  command — a disposable/fixture path, fail-closed against
+  non-disposable targets, when the journey would otherwise touch
+  production state; seed/fixture command if the journey needs data;
+  and the task ids whose output the journey walks — the gate depends
+  on all of them), the human's walkthrough result as the completion artifact
+  (screenshots optional). A journey step with no implementing task
+  before the gate is a blocking finding — reorder or add the wiring
+  task; never emit a gate that isn't walkable at its position. A
+  skipped gate is marked GATE SKIPPED on the task, never deleted.
 - The walking-skeleton milestone tasks come first and may not be
   reordered after feature tasks.
 - Tasks tiny: ~50–300 lines of code, one prompt each.

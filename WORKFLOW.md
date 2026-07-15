@@ -12,7 +12,7 @@ The failure mode this workflow guards against: every task green, every doc consi
 
 1. **The deliverable is the running app, not the documents.** A phase whose output is only markdown is scaffolding; it earns nothing on its own. Any conflict between "the doc says done" and "the app doesn't do it" resolves in favor of the app's reality.
 2. **Done = demonstrated.** A task is Done when its behavior has been exercised in the running app (or via a test that actually drives it), not when the code it wrote passes the tests it wrote for itself. Per-task visual verification (launch-and-look + screenshot) is **opt-in**: the agent does it only when the human asks for it on that task or in CONVENTIONS.md; otherwise UI tasks pass on tests + acceptance behavior, and visual quality is caught by the human at the next demo gate (rule 3).
-3. **Demo gate every 2–3 tasks.** You (human) launch the build and walk one scripted user journey from UX.md. Findings become tasks before new features proceed. This is Phase 6b. Soft stop: at a gate the agent halts, prints the journey script, and reminds you; you may reply "continue" to skip — the skip is logged as `GATE SKIPPED` against the gate task in TASKS.md and every skipped gate is surfaced at the v1 exit bar. Skipping is visible debt, never silence.
+3. **Demo gate every 2–3 tasks.** You (human) launch the build and walk one scripted user journey from UX.md. Findings become tasks before new features proceed. This is Phase 6b. Before the stop, the agent preflights the gate — builds, launches, confirms the journey is reachable; a failed preflight is `GATE BLOCKED` (fix tasks first, walk later), never an invitation to walk a broken app. Soft stop: at a gate the agent halts, prints the journey script plus the launch command, and reminds you; you may reply "continue" to skip — the skip is logged as `GATE SKIPPED` against the gate task in TASKS.md and every skipped gate is surfaced at the v1 exit bar. Skipping is visible debt, never silence.
 4. **Scope cuts escalate, never archive.** If an implementer or planner discovers mid-flight that a spec'd, user-visible behavior won't be built (e.g. "user data doesn't survive a restart"), that is a stop-the-line event requiring your explicit decision. Documenting a cut in a gotchas file is not a decision — it's laundering. This is the one hard stop in the workflow: gates soften (rule 3), scope cuts never do — verification is delegable, product decisions are not. The agent states the cut and ends its turn; there is no "continue" default.
 5. **One source of truth per fact.** A value (color, name, payload shape) lives in exactly one place; every other doc references it, never restates it. Contradictions between docs fail the _documents_ and block the next phase.
 6. **Unread intent docs are the residual risk you accept.** A generated doc nobody has read is not a contract. The machine pass of the Consistency Gate catches the mechanical failure class (placeholders, contradictions, open decisions, unserved flow steps) and is mandatory; human reading is advisory — but SPEC.md and UX.md encode _intent_, which no machine check can verify: wrong-but-consistent docs pass every machine pass. Read those two at minimum; ~20 minutes each is the cheapest QA in the whole workflow.
@@ -59,7 +59,7 @@ Copy-paste is canon; this section translates it when the workflow runs inside ag
 - **"Paste X" means the agent reads X.** Context packs in TASKS.md remain as hints and as the copy-paste fallback.
 - **Reading roams, writing doesn't.** The agent may read any file in the repo (task-named files plus whatever it needs), but "only modify files listed in the task" stays a hard rule.
 - **Sessions:** fresh conversation per phase; in Phase 5, one session per 2–3-task batch, cleared at each demo gate.
-- **Gates are soft stops:** at a demo-gate task the agent halts its turn, prints the journey script, and waits; "continue" skips and logs `GATE SKIPPED`. At the consistency gate the machine pass hard-blocks and the agent fixes its findings; the human read is advisory (SPEC.md + UX.md flagged).
+- **Gates are soft stops:** at a demo-gate task the agent preflights (build, launch, journey entry reachable — failure is `GATE BLOCKED`, fixed before the walk), then halts its turn, prints the journey script plus launch command, and waits; "continue" skips and logs `GATE SKIPPED`. At the consistency gate the machine pass hard-blocks and the agent fixes its findings; the human read is advisory (SPEC.md + UX.md flagged).
 - **Scope cuts are hard stops:** the agent states the cut and ends its turn. No default-proceed.
 - **Phase 7:** the agent self-triages A/B/C, announces the route + one-line reason, and proceeds; you override by replying. The agent applies doc-sync corrections directly and creates `specs/NNN-name/` dirs itself.
 - **Escalation counting:** "failed twice" = two failed attempts within the batch session; then the human switches the session to Opus.
@@ -242,10 +242,20 @@ produce four complete markdown files:
 1. PLAN.md — implementation plan in ordered chunks. FIRST MILESTONE is
    the WALKING SKELETON: the thinnest end-to-end slice that makes the
    kernel journey pass in the real app (ugly is fine, fake is not).
-   Later chunks deepen it. Every 2–3 chunks, insert a DEMO GATE naming
-   the exact journey to walk and what must be observed. For each chunk:
-   files touched, exact requirements, falsifiable acceptance criteria,
-   what NOT to do. Max ~300 lines of new code per chunk.
+   Later chunks deepen it. Every 2–3 chunks, insert a DEMO GATE —
+   cadence is the target, runnability the constraint: a gate sits only
+   where the app launches and its journey is walkable end-to-end in the
+   running app. Chunks between gates are vertical slices (each gate
+   interval ends runnable), never horizontal layers whose UI lands
+   chunks later. No walkable point within ~4 chunks is a plan smell —
+   restructure the chunks, don't stretch the gate. Each gate entry
+   names: the exact journey to walk, what must be observed, and its
+   runnability preconditions — launch command, seed/fixture data, and
+   which prior chunk serves each journey step; a journey that would
+   otherwise touch production state names a disposable/fixture path
+   (fail-closed against non-disposable targets). For each chunk: files
+   touched, exact requirements, falsifiable acceptance criteria, what
+   NOT to do. Max ~300 lines of new code per chunk.
 2. CONVENTIONS.md — naming, error handling style, folder rules, test
    style, commit style. Keep it under 2 pages: every line here is a line
    of context each future task pays for.
@@ -281,10 +291,13 @@ Generated contracts routinely ship with the same fact stated two different ways,
 
 ```
 Here are this project's contract docs: [paste SPEC, UX, PRD, ARCHITECTURE,
-DESIGN, CONVENTIONS, FILE_STRUCTURE]. List every internal contradiction
+PLAN, DESIGN, CONVENTIONS, FILE_STRUCTURE]. List every internal contradiction
 (same fact stated with different values in two places), every unresolved
 placeholder or template variable, every decision left open ("X or Y"),
-and every UX.md flow step with no serving ARCHITECTURE.md contract.
+every UX.md flow step with no serving ARCHITECTURE.md contract, and —
+in PLAN.md — every DEMO GATE journey step with no serving chunk before
+the gate, plus every gate missing its runnability preconditions
+(launch command, seed data).
 If a pre-built design system is attached, also list every token or
 component name DESIGN.md cites that does not exist in the system files.
 Report only findings with doc + quote. No rewrites.
@@ -321,9 +334,16 @@ Rules:
   test that drives one. "Compiles", "check passes", "renders" are gates,
   never the criterion.
 - Preserve PLAN.md's DEMO GATE entries as explicit tasks: journey to
-  walk, observations required, the human's walkthrough result as the
-  completion artifact (screenshots optional). A skipped gate is marked
-  GATE SKIPPED on the task, never deleted.
+  walk, observations required, a preflight block (exact build/launch
+  command — a disposable/fixture path, fail-closed against
+  non-disposable targets, when the journey would otherwise touch
+  production state; seed/fixture command if the journey needs data;
+  and the task ids whose output the journey walks — the gate depends
+  on all of them), the human's walkthrough result as the completion artifact
+  (screenshots optional). A journey step with no implementing task
+  before the gate is a blocking finding — reorder or add the wiring
+  task; never emit a gate that isn't walkable at its position. A
+  skipped gate is marked GATE SKIPPED on the task, never deleted.
 - The walking-skeleton milestone tasks come first and may not be
   reordered after feature tasks.
 - Tasks tiny: ~50–300 lines of code, one prompt each.
@@ -341,7 +361,7 @@ Write TASKS.md with frontmatter `status: ready`. Context packs are predictions m
 **Inputs per task:** the task + `CONVENTIONS.md` + only the files it touches (copy-paste mode; agent mode reads freely, writes only task-listed files). UI tasks additionally get `DESIGN.md` and their UX.md screen section; backend tasks get neither.
 **Outputs:** source + tests per task, demonstrated.
 
-Refuse a TASKS.md not stamped `status: ready`. Task 0 is always the scaffold: file tree from FILE_STRUCTURE.md, configs, data migrations (if any), one smoke test, no feature logic. Then the walking skeleton — the kernel journey passes in the real app before any feature deepening begins.
+Refuse a TASKS.md not stamped `status: ready`. Task 0 is always the scaffold: file tree from FILE_STRUCTURE.md, configs, data migrations (if any), no feature logic; its smoke test is the app booting via a documented run command, recorded in CONVENTIONS.md. Then the walking skeleton — the kernel journey passes in the real app before any feature deepening begins.
 
 Per-task prompt:
 
@@ -420,9 +440,11 @@ changed files.
 
 **Model:** you, plus the running app. Zero tokens for the walkthrough itself. Cadence: every demo-gate task (every 2–3 tasks), and always before a feature branch merges.
 
-Soft stop: in agent mode the agent halts at the gate task, prints the journey script, and waits for your walkthrough result (screenshots optional but recommended — cheap context for fixes). "Continue" skips the gate — logged as `GATE SKIPPED` on the task and surfaced at the v1 exit bar.
+Preflight first (agent): before the soft stop, the agent builds, launches via the gate task's preflight block (launch command + seed data), and confirms the journey's entry point is reachable. Preflight fails → `GATE BLOCKED` on the task (a defect, not a choice — distinct from `GATE SKIPPED`), breakage becomes fix tasks at the head of the queue, preflight re-runs after they land; you are only invited to walk an app that provably runs.
 
-1. Build and launch the actual app.
+Soft stop: in agent mode the agent halts at the gate task, prints the journey script plus its launch command, and waits for your walkthrough result (screenshots optional but recommended — cheap context for fixes). "Continue" skips the gate — logged as `GATE SKIPPED` on the task and surfaced at the v1 exit bar.
+
+1. Launch the app with the gate's launch command (the agent's preflight has already proven it boots).
 2. Walk the scripted journey from the gate task (kernel journey at minimum, once it exists).
 3. Check each step against its falsifiable criterion — did the observable thing happen?
 4. Optional: screenshot screens touched (archive under `specs/NNN-name/screenshots/`) — they make fix prompts and the vision pass possible, but the walkthrough result alone passes the gate.
@@ -437,7 +459,7 @@ Here are screenshots of the app and the UX.md + DESIGN.md contracts:
 that would most improve clarity and hierarchy. Findings only.
 ```
 
-**v1 exit bar:** the kernel journey passes end-to-end in a release build, witnessed by you, including the unglamorous steps (restart, offline, error paths named in the PRD). Every `GATE SKIPPED` entry in TASKS.md is listed here and either walked now or explicitly accepted. "All tasks Done" is not the bar; this is.
+**v1 exit bar:** the kernel journey passes end-to-end in a release build, witnessed by you, including the unglamorous steps (restart, offline, error paths named in the PRD). Every `GATE SKIPPED` entry in TASKS.md is listed here and either walked now or explicitly accepted; an unresolved `GATE BLOCKED` fails the bar outright — a gate that never became runnable is a defect, not debt. "All tasks Done" is not the bar; this is.
 
 ---
 
