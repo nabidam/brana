@@ -1,6 +1,6 @@
 ---
 name: brana-7-change
-description: "Use for any post-v1 change to an app built with the workflow — add a feature, fix a bug, refactor, migrate schema, redesign UI — or when the user mentions impact analysis, doc sync, change routes A/B/C, phase 7, or the change loop."
+description: "Use for any post-v1 change to an app built with the workflow — add a feature, fix a bug, refactor, migrate schema, redesign UI — or when the user mentions impact analysis, doc sync, change routes A/B/C/R, phase 7, or the change loop."
 ---
 
 # Phase 7 — Change Loop
@@ -21,7 +21,7 @@ Self-triage: pick the route, announce it + a one-line reason, and proceed — th
 | **A — trivial** | Bugfix, copy change, config tweak | Short-lived branch (Git Rule 3, human may waive per instance) → one hand-written task → Phase 5 (`brana-5-implement`) → verify (incl. journey suite) green before merge. No doc updates unless a behavior contract changed. Styling still obeys DESIGN.md tokens. |
 | **B — small feature** | Fits existing architecture, no schema/API/module-boundary change | Mini-spec → impact analysis → Phase 4 on the delta → Phase 5/6 (incl. 6b). Feature branch. |
 | **C — big feature** | New module, schema migration, new integration | Full Phase 1→6 scoped to the delta (`brana-1` … `brana-6`), new `specs/NNN-name/` dir. ARCHITECTURE.md and UX.md are patched (Opus-tier), never regenerated. Feature branch. |
-| **Route R — refactor** | Refactor, dependency upgrade, debt paydown; no user-visible behavior change intended | Feature branch → verify + journey suite green BEFORE, as baseline → chunked tasks (~300-line cap, one green commit each) → verify green after each chunk → 6a on the full diff → doc sync (append **Decision log** entry if a boundary moved) → 6b only if UI touched → merge. |
+| **R — refactor** | Refactor, dependency upgrade, debt paydown; no user-visible behavior change intended | Feature branch → verify + journey suite green BEFORE, as baseline → chunked tasks (~300-line cap, one green commit each) → verify green after each chunk → 6a on the full diff → doc sync (append **Decision log** entry if a boundary moved) → 6b only if UI touched → merge. |
 
 **Escalation rules:**
 

@@ -3,7 +3,7 @@
 **A 7-phase app-development workflow for AI coding agents that gates on the running app, not green tests.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](CHANGELOG.md)
 [![Works with](https://img.shields.io/badge/works%20with-Claude%20Code%20·%20Cursor%20·%20Codex%20·%20any%20chat%20UI-8A2BE2.svg)](#installation)
 
 The failure mode Brana guards against: **every task green, every doc consistent-looking, app unusable.** Most agent workflows stop at code review — nothing ever launches the app, walks a user journey, or judges a screen. Brana's countermeasure is a set of contract documents plus a human demo gate every 2–3 tasks: you launch the build and walk a scripted journey before feature work continues.
@@ -18,7 +18,7 @@ flowchart LR
     P4 --> P5["5 · IMPLEMENT<br/>2–3-task batches"]
     P5 <--> P6["6 · REVIEW<br/>6a code · 6b demo gate"]
     P6 --> V1((v1 exit bar))
-    V1 --> P7["7 · CHANGE LOOP<br/>routes A/B/C"]
+    V1 --> P7["7 · CHANGE LOOP<br/>routes A/B/C/R"]
     P7 --> P7
 ```
 
@@ -30,7 +30,7 @@ flowchart LR
 | 4 — Tasks | `brana-4-tasks` | `TASKS.md` with context packs + demo-gate tasks |
 | 5 — Implement | `brana-5-implement` | code + tests + commit, *demonstrated* |
 | 6 — Review | `brana-6-review` | 6a code review (diffs) + 6b product walkthrough |
-| 7 — Change loop | `brana-7-change` | post-v1 changes routed A/B/C + doc sync |
+| 7 — Change loop | `brana-7-change` | post-v1 changes routed A/B/C/R + doc sync |
 
 Full canon: [WORKFLOW.md](WORKFLOW.md). Skill-by-skill guide: [skills/USAGE.md](skills/USAGE.md).
 

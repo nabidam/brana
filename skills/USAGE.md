@@ -1,6 +1,6 @@
 # Brana Skills — Usage Guide
 
-Seven skills implementing Brana, the 6-phase app-dev workflow + Phase 7 change loop (WORKFLOW.md v1.0). Each skill has **run** mode (executes in Claude Code, Agent Adaptation Layer applies) and **prompt** mode (emits paste-ready blocks for external chat UIs — copy-paste is the workflow's canon medium).
+Seven skills implementing Brana, the 6-phase app-dev workflow + Phase 7 change loop (WORKFLOW.md v1.1). Each skill has **run** mode (executes in Claude Code, Agent Adaptation Layer applies) and **prompt** mode (emits paste-ready blocks for external chat UIs — copy-paste is the workflow's canon medium).
 
 The workflow's guard: every task green, every doc consistent-looking, app unusable. Countermeasures baked into the skills — the deliverable is the running app; Done = demonstrated (with live verification evidence); demo gate every 2–3 tasks; scope cuts are hard stops; consistency gate before tasks; per-cycle docs carry `status:` stamps (`draft` → `gate-passed`; TASKS.md `ready`) that downstream phases refuse to consume unstamped.
 
@@ -26,10 +26,11 @@ The workflow's guard: every task green, every doc consistent-looking, app unusab
 ### Post-v1 iteration (change loop):
 
 ```
-1. /brana-7-change [request]   → agent self-triages A/B/C, announces route, proceeds
+1. /brana-7-change [request]   → agent self-triages A/B/C/R, announces route, proceeds
 2. Route B: mini-spec → impact analysis → Phase 4 on delta → Phase 5/6 (incl. 6b)
 3. Route C: full Phase 1–6 scoped to delta
-4. After merge: doc sync (mandatory) on ARCHITECTURE/UX/DESIGN/FILE_STRUCTURE
+4. Route R: verify + journey suite green as baseline → chunked tasks → 6a on full diff → doc sync
+5. After merge (B/C/R): doc sync (mandatory) on ARCHITECTURE/UX/DESIGN
 ```
 
 ---
@@ -76,10 +77,10 @@ TASKS.md per task: id, objective, dependencies, files, acceptance criteria (**ob
 - **Demo gate = soft stop:** halt, print journey script, wait. "continue" skips → `GATE SKIPPED` logged.
 - **Ambiguity:** internal → simplest interpretation + comment; would change/drop user-visible behavior → STOP and ask.
 - **Scope cut = hard stop:** state the cut, end the turn. No default-proceed.
-- Commit per green task; the done-mark in TASKS.md carries the commit SHA + a one-line verification-evidence entry (what was exercised, what was observed — captured live, not reconstructable from the diff). Stuck twice → escalate to Opus-tier (may conclude PLAN.md itself is wrong).
+- Run the **verify script**, then commit per green task; the done-mark in TASKS.md carries the commit SHA + the path to the captured **evidence file** (`specs/NNN-name/evidence/task-N.txt` — the exercised command plus its last ~30 lines of output, captured live, not reconstructable from the diff afterward). Stuck twice → escalate to Opus-tier (may conclude PLAN.md itself is wrong).
 - After compaction/flush: rebuild state from git log + TASKS.md marks, never from remembered conversation.
 
-`delegate` mode: subagent per task (haiku boilerplate / sonnet rest); dispatch passes **file paths, never pasted content or re-narrated summaries**; report ≤15 lines with status `DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT` + SHA + evidence line — verify it (it's unverified claims); two failures → take over directly.
+`delegate` mode: subagent per task (haiku boilerplate / sonnet rest); dispatch passes **file paths, never pasted content or re-narrated summaries**; report ≤15 lines with status `DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT` + SHA + evidence file path — verify it (it's unverified claims); two failures → take over directly.
 
 ### Phase 6 — `/brana-6-review`
 
@@ -95,17 +96,18 @@ TASKS.md per task: id, objective, dependencies, files, acceptance criteria (**ob
 
 **Triggers:** "add dark mode", "fix the login bug", "redesign", "impact analysis", "doc sync", "phase 7"
 
-Agent **self-triages** A/B/C, announces route + one-line reason, proceeds; you override by replying.
+Agent **self-triages** A/B/C/R, announces route + one-line reason, proceeds; you override by replying.
 
 | Route | Type | Path |
 |---|---|---|
-| **A — trivial** | Bugfix, copy, config | Hand-write one task → Phase 5, commit to main. |
+| **A — trivial** | Bugfix, copy, config | Short-lived branch (human may waive per instance) → hand-write one task → Phase 5 → verify (incl. journey suite) green before merge. |
 | **B — small feature** | Fits architecture | Mini-spec → impact analysis → Phase 4 delta → 5/6 incl. 6b. Branch. |
 | **C — big feature** | New module/schema/integration | Full Phase 1–6 on delta; ARCHITECTURE.md + UX.md patched, never regenerated. Branch. |
+| **R — refactor** | Refactor, dependency upgrade, debt paydown; no user-visible behavior change intended | Feature branch → verify + journey suite green BEFORE, as baseline → chunked tasks (~300-line cap, one green commit each) → verify green after each chunk → 6a on the full diff (test adequacy matters most here) → doc sync (append Decision log entry if a boundary moved) → 6b only if UI touched → merge. |
 
-Escalations: mid-flight boundary touch → re-enter as C; mid-flight behavior drop → hard stop for your decision. B/C get one 6a of the full feature diff + one 6b walkthrough before merge. Redesigns start from observed failures feeding a **UX.md patch first** — retokening without touching UX.md repaints the same wrong rooms. Impact analysis covers architecture fit + UX screens/flows + affected files + doc sections to patch.
+Escalations: mid-flight boundary touch → re-enter as C; mid-flight behavior drop → hard stop for your decision (Route R also freezes on ANY user-visible change discovered mid-flight, not just a drop). Stale-interface-block rule: a mid-cycle CONSUMES/PRODUCES patch triggers a pass that updates every not-done task quoting the changed section, before the next implementation session. B/C get one 6a of the full feature diff + one 6b walkthrough before merge; Route R gets one 6a always and 6b only if UI was touched; Route A gets 6a only if it touches logic, auth, or data handling. Redesigns start from observed failures feeding a **UX.md patch first** — retokening without touching UX.md repaints the same wrong rooms. Impact analysis covers architecture fit + UX screens/flows + affected files + doc sections to patch.
 
-**Doc sync (mandatory after every B/C merge):** ARCHITECTURE/UX/DESIGN/FILE_STRUCTURE vs the feature diff; amend every now-false statement directly — never a deviations appendix.
+**Doc sync (mandatory after every B/C/R merge):** ARCHITECTURE/UX/DESIGN vs the feature diff; amend every now-false statement directly — never a deviations appendix. If a module boundary moved, append a Decision log line to ARCHITECTURE.md. `FILE_STRUCTURE.md` is per-cycle, archived with its `specs/NNN-name/` dir, and is never compared here.
 
 ---
 
@@ -143,10 +145,10 @@ Two stop types, deliberately different:
 1. **Read SPEC.md and UX.md yourself** (~20 min each) — they encode intent; wrong-but-consistent docs pass every machine check. Cheapest QA in the workflow.
 2. **Walk the demo gates.** Skipping is allowed but logged; silent skipping is how "every task green, app unusable" happens.
 3. **The kernel journey is the spine:** walking-skeleton target in Phase 5, standing gate script in 6b, exit bar for v1.
-4. **Living docs are patched, never regenerated** — ARCHITECTURE.md, UX.md, CONVENTIONS.md, DESIGN.md, FILE_STRUCTURE.md. One source of truth per fact; no deviations ledgers.
+4. **Living docs are patched, never regenerated** — ARCHITECTURE.md, UX.md, CONVENTIONS.md, DESIGN.md. One source of truth per fact; no deviations ledgers. (`FILE_STRUCTURE.md` is per-cycle, not living — see File Locations below.)
 5. **Context packs are hints** — verify against the real tree at Phase 5 time.
 6. **Commit per green task**, branch per B/C feature, diffs from git.
-7. **Doc sync after every B/C merge** — stale docs poison every future impact analysis.
+7. **Doc sync after every B/C/R merge** — stale docs poison every future impact analysis.
 8. **Screenshots are cheap context, not a requirement** — capturing is always the human's choice; when you have them, paste into review/fix prompts and archive gate shots under `specs/NNN-name/screenshots/`.
 9. **Escalation is structured:** two failed attempts → Opus with task spec + code + failing output + attempt summary. The fix may be a PLAN.md edit.
 10. **Scaling:** when Phase 4 context packs start guessing wrong (~200 files), feed the splitter a code map (one paragraph per module, cheap-model regenerated after each Route C).
@@ -158,14 +160,15 @@ Two stop types, deliberately different:
 ```
 repo/
   specs/
-    001-core/         SPEC.md PRD.md PLAN.md TASKS.md screenshots/  (v1)
-    002-reminders/    SPEC.md PLAN.md TASKS.md          (Route C)
-    003-dark-mode/    SPEC.md TASKS.md                  (Route B mini-spec)
-  ARCHITECTURE.md     (living, patched per change)
+    001-core/         SPEC.md PRD.md PLAN.md TASKS.md FILE_STRUCTURE.md
+                       evidence/ reviews/ screenshots/   (v1, Route C scale)
+    002-reminders/     SPEC.md PLAN.md TASKS.md FILE_STRUCTURE.md
+                       evidence/ reviews/                (Route C)
+    003-dark-mode/     SPEC.md TASKS.md evidence/         (Route B mini-spec)
+  ARCHITECTURE.md     (living, patched per change; ends in an append-only Decision log)
   UX.md               (living, patched per change)
   CONVENTIONS.md      (living, patched per change)
   DESIGN.md           (living, patched per change)
-  FILE_STRUCTURE.md   (living, corrected by doc sync)
   src/  tests/  ...
 ```
 
@@ -181,5 +184,5 @@ repo/
 | Phase 5 keeps failing | Ambiguous task or wrong PLAN.md | Escalate to Opus with task + failing output; fix may be a PLAN.md edit. |
 | Contradictions found mid-implementation | Consistency-gate machine pass skipped | Run it now; fix findings before more tasks. |
 | Feature quietly shrank | Scope cut laundered into a comment/gotchas file | Hard-stop rule: cuts are your decision, restore or accept explicitly. |
-| Docs drift after merges | Doc sync not run | Non-optional after every B/C merge. |
+| Docs drift after merges | Doc sync not run | Non-optional after every B/C/R merge. |
 | UI incoherent across screens | UX.md missing or unread | UX.md is the floor plan; patch it, don't just retoken DESIGN.md. |

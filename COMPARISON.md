@@ -1,6 +1,6 @@
 # How Brana Compares
 
-Brana (WORKFLOW.md v1.0 + `skills/brana-1…7`) side by side with two excellent public workflows we studied closely and borrowed from: [**Superpowers**](https://github.com/obra/superpowers) (Jesse Vincent / prime-radiant) and [**Compound Engineering**](https://github.com/EveryInc/compound-engineering) (Every). Both are strong projects worth your time — this document explains where each shines and which bet Brana makes differently. Written 2026-07-12.
+Brana (WORKFLOW.md v1.1 + `skills/brana-1…7`) side by side with two excellent public workflows we studied closely and borrowed from: [**Superpowers**](https://github.com/obra/superpowers) (Jesse Vincent / prime-radiant) and [**Compound Engineering**](https://github.com/EveryInc/compound-engineering) (Every). Both are strong projects worth your time — this document explains where each shines and which bet Brana makes differently. Written 2026-07-12.
 
 ## At a glance
 
@@ -8,7 +8,7 @@ Brana (WORKFLOW.md v1.0 + `skills/brana-1…7`) side by side with two excellent 
 |---|---|---|---|
 | Core bet | Contract docs + human demo gates | Behavioral discipline skills | Compounding knowledge loops |
 | Phases | 7 fixed (spec→…→change loop) | 5-ish, chained by terminal states | 6 (brainstorm→…→compound) |
-| Artifacts | 4 per-cycle + 5 living docs | Design doc + plan | 1 mutating unified plan |
+| Artifacts | 5 per-cycle + 4 living docs | Design doc + plan | 1 mutating unified plan |
 | Handoff gate | Consistency gate + `status:` stamps | User approval gates | Readiness frontmatter contract |
 | Product review | **6b demo gate (human, running app)** | None | None |
 | Scope discipline | **Kernel journey + scope challenge** | YAGNI + decomposition | Tier-sized ceremony |
