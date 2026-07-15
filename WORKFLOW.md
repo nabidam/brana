@@ -546,7 +546,7 @@ Here are screenshots of the app and the UX.md + DESIGN.md contracts:
 that would most improve clarity and hierarchy. Findings only.
 ```
 
-**v1 exit bar:** the kernel journey passes end-to-end in a release build, witnessed by you, including the unglamorous steps (restart, offline, error paths named in the PRD), _and_ the kernel journey's crystallization-task e2e test is green in the release build. Every `GATE SKIPPED` entry in TASKS.md is listed here and either walked now or explicitly accepted; an unresolved `GATE BLOCKED` fails the bar outright — a gate that never became runnable is a defect, not debt. Every crystallization task across every gate must be Done — a gate walked but never crystallized is an untested journey by the next change. "All tasks Done" is not the bar; this is.
+**v1 exit bar:** the kernel journey passes end-to-end in a release build, witnessed by you, including the unglamorous steps (restart, offline, error paths named in the PRD), _and_ the kernel journey's crystallization-task e2e test is green in the release build. Every `GATE SKIPPED` entry in TASKS.md is listed here and either walked now or explicitly accepted (accepting a skipped gate also explicitly accepts — and records — its DEFERRED crystallization task); an unresolved `GATE BLOCKED` fails the bar outright — a gate that never became runnable is a defect, not debt. Every crystallization task across every gate must be Done or explicitly accepted with its skipped gate — a gate walked but never crystallized is an untested journey by the next change. "All tasks Done" is not the bar; this is.
 
 ---
 
