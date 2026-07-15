@@ -4,7 +4,7 @@ Consolidated from 5 agent proposals, revised after a v1 post-mortem. Optimized f
 
 Maintenance rule for this doc and the skills: every line must change agent behavior — if deleting it would not change the output, delete it. Adjectives earn their place only when operationalized by a concrete rule.
 
-Execution medium: copy-paste is canon — a human moving prompts between chat UIs, no agent tooling assumed; every prompt in this doc works that way. When run inside agent tooling (Claude Code), the Agent Adaptation Layer below translates the copy-paste rules. Phases 1–3 may also run in another vendor's chat UI (e.g. Gemini), outputs committed as files. Phases 1–6 build v1. Phase 7 is the change loop for everything after. After v1, `ARCHITECTURE.md`, `CONVENTIONS.md`, `DESIGN.md`, `UX.md`, `FILE_STRUCTURE.md` are living artifacts: commit them, patch them, never regenerate from scratch and never append "deviations" ledgers — when code legitimately diverges, the doc is amended. `SPEC.md`, `PRD.md`, `PLAN.md`, `TASKS.md` are per-cycle artifacts, archived under `specs/NNN-name/`. Per-cycle artifacts carry a `status:` frontmatter stamp — `draft` on write, flipped to `gate-passed` when their gate clears (consistency gate for SPEC/PRD/PLAN; Route B impact analysis for a mini-spec), `ready` on TASKS.md; a consuming phase refuses a doc whose stamp hasn't cleared. Stamps never store progress — task completion is derived from git and TASKS.md task marks, nowhere else.
+Execution medium: copy-paste is canon — a human moving prompts between chat UIs, no agent tooling assumed; every prompt in this doc works that way. When run inside agent tooling (Claude Code), the Agent Adaptation Layer below translates the copy-paste rules. Phases 1–3 may also run in another vendor's chat UI (e.g. Gemini), outputs committed as files. Phases 1–6 build v1. Phase 7 is the change loop for everything after. After v1, `ARCHITECTURE.md`, `CONVENTIONS.md`, `DESIGN.md`, `UX.md` are living artifacts: commit them, patch them, never regenerate from scratch and never append "deviations" ledgers — when code legitimately diverges, the doc is amended. `SPEC.md`, `PRD.md`, `PLAN.md`, `TASKS.md`, `FILE_STRUCTURE.md` are per-cycle artifacts, archived under `specs/NNN-name/`. FILE_STRUCTURE.md is a per-cycle prediction (planner + Task 0 input), not a living doc — the repo tree and code map are the living truth for structure. Per-cycle artifacts carry a `status:` frontmatter stamp — `draft` on write, flipped to `gate-passed` when their gate clears (consistency gate for SPEC/PRD/PLAN; Route B impact analysis for a mini-spec), `ready` on TASKS.md; a consuming phase refuses a doc whose stamp hasn't cleared. Stamps never store progress — task completion is derived from git and TASKS.md task marks, nowhere else.
 
 ## Reality Rules (these outrank everything below)
 
@@ -79,7 +79,7 @@ Copy-paste is canon; this section translates it when the workflow runs inside ag
 - **Sessions:** fresh conversation per phase; in Phase 5, one session per 2–3-task batch, cleared at each demo gate.
 - **Gates are soft stops:** at a demo-gate task the agent preflights (build, launch, journey entry reachable — failure is `GATE BLOCKED`, fixed before the walk), then halts its turn, prints the journey script plus launch command, and waits; "continue" skips and logs `GATE SKIPPED`. At the consistency gate the machine pass hard-blocks and the agent fixes its findings; the human read is advisory (SPEC.md + UX.md flagged).
 - **Scope cuts are hard stops:** the agent states the cut and ends its turn. No default-proceed.
-- **Phase 7:** the agent self-triages A/B/C, announces the route + one-line reason, and proceeds; you override by replying. The agent applies doc-sync corrections directly and creates `specs/NNN-name/` dirs itself.
+- **Phase 7:** the agent self-triages A/B/C/R, announces the route + one-line reason, and proceeds; you override by replying. The agent applies doc-sync corrections directly and creates `specs/NNN-name/` dirs itself.
 - **Escalation counting:** "failed twice" = two failed attempts within the batch session; then the human switches the session to Opus.
 - **Delegation passes paths, not prose.** A dispatched subagent gets file paths — its task's TASKS.md entry, CONVENTIONS.md, the contract sections it must obey — and reads them itself. Never pasted contents, never a re-narrated summary: everything pasted into a dispatch stays resident in the parent context for the rest of the session, and re-narration compresses lossily. Bulk subagent output (diffs, findings, review packages) is written to a file; only the path + a short gist returns.
 - **Subagent reports:** ≤15 lines; status is one of `DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT`; includes the evidence file path. `BLOCKED`/`NEEDS_CONTEXT` route to the ambiguity/scope-cut rules — never guessed past. The report is unverified claims until the parent checks suite, behavior, and TASKS.md mark.
@@ -233,9 +233,15 @@ ARCHITECTURE.md: system overview, module responsibilities and boundaries,
 data model / DB schema (DDL with indices and constraints), API contract
 (endpoints, request/response shapes, status codes, errors, auth),
 component hierarchy mapped to UX.md screen ids, dependency graph, error
-handling strategy, configuration strategy.
+handling strategy, configuration strategy, and an empty **Decision log**
+section at the end of the file — append-only, one line per future
+decision as `YYYY-MM-DD — decision — why`; Phase 7 doc sync and Route C
+patches append to it, never delete an earlier entry's why.
 Rules: COMMIT to one concrete stack and one design per decision — no
-"e.g. X or Y", no alternatives left open. Every UX.md flow must be
+"e.g. X or Y", no alternatives left open. Name the e2e/journey-test
+harness as part of the stack commitment — CONVENTIONS.md's Test
+strategy (Phase 3) and every gate's crystallization task (Phase 4)
+build on this name. Every UX.md flow must be
 traceable through the contract: for each kernel-journey step, name the
 API call or event that serves it; if a step has no serving contract
 (e.g. "reopen app → data restored" needs a list/read endpoint), add it.
@@ -278,15 +284,25 @@ produce four complete markdown files:
    touched, exact requirements, falsifiable acceptance criteria, what
    NOT to do. Max ~300 lines of new code per chunk.
 2. CONVENTIONS.md — naming, error handling style, folder rules, test
-   style, commit style. Keep it under 2 pages: every line here is a line
-   of context each future task pays for.
+   style, commit style, and **Test strategy**: which layer
+   (`[unit]`/`[integration]`/`[contract]`/`[e2e@gate-N]`) verifies which
+   criterion type, the frameworks for each, the e2e/journey-test harness
+   named in ARCHITECTURE.md, and the verify command. Keep it under 2
+   pages: every line here is a line of context each future task pays
+   for. **Lint-over-prose rule:** a convention a machine can check
+   becomes a lint rule at Task 0; prose is only for what lint can't see.
 3. DESIGN.md — the design system contract, styling the screens UX.md
    already defined. Include:
    a. Direction: 3 adjectives, reference apps, one deliberate visual
       signature.
    b. Tokens: semantic color tokens with exact values (light AND dark if
-      applicable); type scale (max 2 typefaces); spacing on a 4/8px
-      grid; radii; shadows; motion durations/easings.
+      applicable) and, for every fg/bg token pair used as text-on-
+      background, the computed contrast ratio; type scale (max 2
+      typefaces); spacing on a 4/8px grid; radii; shadows; motion
+      durations/easings. Token-source handoff: once Task 0 emits the
+      token file (Phase 5), values live only there — DESIGN.md keeps
+      roles + usage rules and refers to the file, never restates a
+      value.
    c. Component states: default, hover, focus-visible, active, disabled
       for every interactive element; empty, loading, error for every
       data view.
@@ -296,7 +312,11 @@ produce four complete markdown files:
    SINGLE-SOURCE RULE: exact values appear ONLY in the token table;
    all prose refers to tokens by name, never by value. No template
    placeholders may remain — every value is resolved.
-4. FILE_STRUCTURE.md — the full file tree, every file that will exist.
+4. FILE_STRUCTURE.md — the full file tree, every file predicted to
+   exist this cycle. A per-cycle artifact written to
+   `specs/NNN-name/`: a prediction for the planner and Task 0, archived
+   after — never a living doc. The repo tree and code map are the
+   living truth once code exists.
 
 Output the four files completely. No conversational text.
 [paste PRD.md + ARCHITECTURE.md + UX.md + design direction]
@@ -318,7 +338,11 @@ placeholder or template variable, every decision left open ("X or Y"),
 every UX.md flow step with no serving ARCHITECTURE.md contract, and —
 in PLAN.md — every DEMO GATE journey step with no serving chunk before
 the gate, plus every gate missing its runnability preconditions
-(launch command, seed data).
+(launch command, seed data). Also flag: every PRD.md acceptance
+criterion that would be tagged `[e2e@gate-N]` (behavior only observable
+end-to-end in the running app) with no corresponding gate journey step
+in PLAN.md; and every fg/bg contrast ratio listed in DESIGN.md's token
+table that falls below WCAG AA.
 If a pre-built design system is attached, also list every token or
 component name DESIGN.md cites that does not exist in the system files.
 Report only findings with doc + quote. No rewrites.
@@ -335,7 +359,7 @@ No task is written until the machine pass is clean. A clean machine pass flips t
 ## Phase 4 — TASKS.md
 
 **Model:** Sonnet-tier. Fresh session. Refuse a PLAN.md still stamped `status: draft` — the consistency gate hasn't cleared; point back to Phase 3.
-**Inputs:** `PLAN.md`, `ARCHITECTURE.md`, `UX.md`
+**Inputs:** `PLAN.md`, `ARCHITECTURE.md`, `UX.md`, `PRD.md` (error/edge-case list)
 **Output:** `TASKS.md`
 
 ```
@@ -349,11 +373,18 @@ The interfaces block has two parts, quoted from ARCHITECTURE.md:
 CONSUMES — the exact signatures, payload shapes, or endpoints this task
 uses from other tasks' output; PRODUCES — the exact signatures later
 tasks may rely on. An isolated implementer must learn neighboring types
-from this block, never by reading neighbor code.
+from this block, never by reading neighbor code. A task with a PRODUCES
+block gets one additional acceptance criterion, tagged `[contract]`:
+a test that calls the produced signature/endpoint exactly as specified
+and asserts the shape — catching drift before a consumer task ever
+reads it.
 Rules:
 - Acceptance criteria are observable behaviors in the running app or a
   test that drives one. "Compiles", "check passes", "renders" are gates,
-  never the criterion.
+  never the criterion. Tag every criterion with the layer that verifies
+  it: `[unit]`, `[integration]`, `[contract]`, or `[e2e@gate-N]`. A
+  `[e2e@gate-N]` criterion must appear as a step of gate N's journey —
+  if it doesn't, add it there, not just here.
 - Preserve PLAN.md's DEMO GATE entries as explicit tasks: journey to
   walk, observations required, a preflight block (exact build/launch
   command — a disposable/fixture path, fail-closed against
@@ -364,12 +395,22 @@ Rules:
   (screenshots optional). A journey step with no implementing task
   before the gate is a blocking finding — reorder or add the wiring
   task; never emit a gate that isn't walkable at its position. A
-  skipped gate is marked GATE SKIPPED on the task, never deleted.
+  skipped gate is marked GATE SKIPPED on the task, never deleted. Append
+  one unglamorous step to every gate journey, drawn from PRD.md's
+  error/edge-case list, rotating across gates: restart → offline →
+  invalid input → restart → ... — a gate never ships checking only the
+  happy path.
+- Every DEMO GATE task is immediately followed by a **crystallization
+  task**: blocked until the gate's walkthrough passes, it encodes the
+  just-walked journey (including its unglamorous step) as an automated
+  e2e test on the harness named in CONVENTIONS.md's Test strategy; the
+  new test joins the journey suite. No feature task may start before
+  its preceding gate's crystallization task is done.
 - The walking-skeleton milestone tasks come first and may not be
   reordered after feature tasks.
 - Tasks tiny: ~50–300 lines of code, one prompt each.
 Output TASKS.md as a numbered list. Do not write any code.
-[paste PLAN.md + UX.md flow section]
+[paste PLAN.md + UX.md flow section + PRD.md error/edge-case list]
 ```
 
 Write TASKS.md with frontmatter `status: ready`. Context packs are predictions made before code exists — treat them as hints. At implementation time paste what actually exists. Interfaces blocks are firmer than packs: they quote the contract, and contract changes route through the docs, not through a task improvising. Isolation is for token budgets, not for truth: the demo gates exist precisely because bugs live in the seams between well-tested tasks.
@@ -382,7 +423,9 @@ Write TASKS.md with frontmatter `status: ready`. Context packs are predictions m
 **Inputs per task:** the task + `CONVENTIONS.md` + only the files it touches (copy-paste mode; agent mode reads freely, writes only task-listed files). UI tasks additionally get `DESIGN.md` and their UX.md screen section; backend tasks get neither.
 **Outputs:** source + tests per task, demonstrated.
 
-Refuse a TASKS.md not stamped `status: ready`. Task 0 is always the scaffold: file tree from FILE_STRUCTURE.md, configs, data migrations (if any), no feature logic; its smoke test is the app booting via a documented run command, recorded in CONVENTIONS.md. Then the walking skeleton — the kernel journey passes in the real app before any feature deepening begins.
+Refuse a TASKS.md not stamped `status: ready`. **Step 0, before Task 0:** check the current branch (Git Rule 1) — on main/master, create the cycle branch (named after the spec dir) before any code; direct-to-main only when the human explicitly says so. Task 0 is always the scaffold: file tree from FILE_STRUCTURE.md, configs, data migrations (if any), no feature logic; its smoke test is the app booting via a documented run command, recorded in CONVENTIONS.md. Then the walking skeleton — the kernel journey passes in the real app before any feature deepening begins.
+
+**Migration tasks:** a task that adds or alters a schema migration must apply-rollback-reapply against fixture data — up, then down, then up again — with an assertion that the fixture data present before the up survives the round trip (not just that each step exits zero). Rollback in this workflow always means running the down migration, never `git revert` (Git Rule 2) — a reverted commit leaves the schema changed underneath a codebase that no longer expects it.
 
 Per-task prompt:
 
@@ -400,7 +443,10 @@ Rules:
   (hover, focus, disabled; empty, loading, error), not just the happy
   path.
 - Write the implementation plus unit tests covering the acceptance
-  criteria. The full existing suite must still pass.
+  criteria, at the layer(s) tagged on each criterion. The full existing
+  suite must still pass.
+- Migration task: run up, then down, then up again against fixture
+  data; assert the pre-up fixture data is intact after the round trip.
 - Output complete files with exact paths. No placeholders, no TODOs,
   no truncation. No refactoring unrelated code, no future tasks.
 - Ambiguity rule: if the ambiguity is internal (naming, private
@@ -411,7 +457,7 @@ Rules:
 
 That last rule exists because a blanket "choose the simplest interpretation — do not ask" turns silent feature cuts into code comments instead of alarms.
 
-**Completing a task:** run its gate (tests + check) _and_ its acceptance behavior. UI tasks: launch-and-look + screenshot only if the human asked for it (per task or in CONVENTIONS.md) — otherwise visual quality waits for the demo gate. Then commit, capture the **evidence file** at `specs/NNN-name/evidence/task-N.txt` (the exercised command — verify script, test, or journey step — plus the last ~30 lines of its output), and mark the task done in TASKS.md with the commit SHA plus the evidence file's path. Evidence is captured live — it is not reconstructable from the diff afterward, and a done-mark without it doesn't pass the demo gate or the v1 exit bar. Marking Done on green tests alone is the classic failure — don't reintroduce it.
+**Completing a task:** run the **verify script** (Verification Machinery) _and_ its acceptance behavior. UI tasks: launch-and-look + screenshot only if the human asked for it (per task or in CONVENTIONS.md) — otherwise visual quality waits for the demo gate. Then commit, capture the **evidence file** at `specs/NNN-name/evidence/task-N.txt` (the exercised command — verify script, test, or journey step — plus the last ~30 lines of its output), and mark the task done in TASKS.md with the commit SHA plus the evidence file's path. Evidence is captured live — it is not reconstructable from the diff afterward, and a done-mark without it doesn't pass the demo gate or the v1 exit bar. Marking Done on green tests alone is the classic failure — don't reintroduce it.
 
 Escalation prompt (only when stuck twice):
 
@@ -433,21 +479,31 @@ Code review alone lets everything a compiler can't see — bad flows, bad layout
 ### 6a — Code review
 
 **Model:** a different model than the implementer — default Opus 4.8 reviewing Sonnet's code; cross-vendor when running in chat UIs anyway (a different vendor catches more). After every 2–3 tasks, on diffs only.
-**Inputs:** diff + relevant ARCHITECTURE.md section + CONVENTIONS.md (+ DESIGN.md and UX.md screen section when the diff touches UI).
+**Inputs:** diff + relevant ARCHITECTURE.md section + CONVENTIONS.md + the reviewed tasks' acceptance criteria from TASKS.md (+ DESIGN.md and UX.md screen section when the diff touches UI).
+
+**Precondition:** lint and typecheck must be green before a 6a review starts — a finding a linter could catch is a lint-config gap, not a review finding; fix the config, not the code, and re-run.
 
 **Reviewer independence:** the reviewer gets the diff and the contracts — never the implementer's report, self-review, or rationale; those are unverified claims that anchor the review. Never pre-judge the review ("do not flag X", "at most low severity") — a stated rationale never downgrades a finding. Findings that conflict with the plan itself escalate to the human ("which governs?"), never get silently resolved either way.
 
 ```
-Review this diff against the attached contracts. Report only:
+Review this diff against the attached contracts and acceptance criteria.
+Report only:
 (1) bugs/logic errors, (2) security issues, (3) race conditions,
 (4) contract violations, (5) convention violations, (6) UI-only: design
 contract violations (raw values where tokens exist, missing states,
 contrast/focus failures) and UX contract violations (screen structure or
-flow steps that diverge from UX.md). Each finding: file:line, severity,
-one-line fix. Objective checks only — no style opinions, no praise, no
-rewrites.
-[paste diff + contract sections]
+flow steps that diverge from UX.md), (7) test adequacy: an acceptance
+criterion with no test at its declared layer, a test that asserts
+nothing meaningful (runs without checking the outcome), or a test that
+mocks away the exact behavior the criterion requires. Each finding:
+file:line, severity, one-line fix. Objective checks only — no style
+opinions, no praise, no rewrites.
+[paste diff + contract sections + acceptance criteria]
 ```
+
+Write findings to `specs/NNN-name/reviews/REVIEW_N.md`. Each finding becomes a TASKS.md fix task quoting file:line and referencing the review file's path — findings are never fixed off the review output directly.
+
+**Compound rule:** when a finding's category repeats a second time in one review cycle, its fix task also adds a CONVENTIONS.md line or a lint rule closing that class — the same class never needs a reviewer's eyes again.
 
 Fixer prompt (feed findings back to the implementation model):
 
@@ -461,7 +517,7 @@ changed files.
 
 **Model:** you, plus the running app. Zero tokens for the walkthrough itself. Cadence: every demo-gate task (every 2–3 tasks), and always before a feature branch merges.
 
-Preflight first (agent): before the soft stop, the agent builds, launches via the gate task's preflight block (launch command + seed data), and confirms the journey's entry point is reachable. Preflight fails → `GATE BLOCKED` on the task (a defect, not a choice — distinct from `GATE SKIPPED`), breakage becomes fix tasks at the head of the queue, preflight re-runs after they land; you are only invited to walk an app that provably runs.
+Preflight first (agent): before the soft stop, the agent runs the **verify script**, builds, launches via the gate task's preflight block (launch command + seed data), and confirms the journey's entry point is reachable. Preflight fails → `GATE BLOCKED` on the task (a defect, not a choice — distinct from `GATE SKIPPED`), breakage becomes fix tasks at the head of the queue, preflight re-runs after they land; you are only invited to walk an app that provably runs.
 
 Soft stop: in agent mode the agent halts at the gate task, prints the journey script plus its launch command, and waits for your walkthrough result (screenshots optional but recommended — cheap context for fixes). "Continue" skips the gate — logged as `GATE SKIPPED` on the task and surfaced at the v1 exit bar.
 
@@ -480,7 +536,7 @@ Here are screenshots of the app and the UX.md + DESIGN.md contracts:
 that would most improve clarity and hierarchy. Findings only.
 ```
 
-**v1 exit bar:** the kernel journey passes end-to-end in a release build, witnessed by you, including the unglamorous steps (restart, offline, error paths named in the PRD). Every `GATE SKIPPED` entry in TASKS.md is listed here and either walked now or explicitly accepted; an unresolved `GATE BLOCKED` fails the bar outright — a gate that never became runnable is a defect, not debt. "All tasks Done" is not the bar; this is.
+**v1 exit bar:** the kernel journey passes end-to-end in a release build, witnessed by you, including the unglamorous steps (restart, offline, error paths named in the PRD), _and_ the kernel journey's crystallization-task e2e test is green in the release build. Every `GATE SKIPPED` entry in TASKS.md is listed here and either walked now or explicitly accepted; an unresolved `GATE BLOCKED` fails the bar outright — a gate that never became runnable is a defect, not debt. Every crystallization task across every gate must be Done — a gate walked but never crystallized is an untested journey by the next change. "All tasks Done" is not the bar; this is.
 
 ---
 
@@ -492,18 +548,20 @@ Every change enters through triage, routed by size. Living docs stay accurate (s
 
 Who routes: in agent mode the agent self-triages, announces the chosen route + one-line reason, and proceeds; you override by replying. In copy-paste mode you route. Wrong-way-cheap mistakes are caught by the escalation rules below.
 
-| Route                 | Change type                                                      | Path                                                                                                                    |
-| --------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| **A — trivial**       | Bugfix, copy change, config tweak                                | Hand-write one task → Phase 5. No doc updates unless a behavior contract changed. Styling still obeys DESIGN.md tokens. |
-| **B — small feature** | Fits existing architecture, no schema/API/module-boundary change | Mini-spec → impact analysis → Phase 4 on the delta → Phase 5/6 (incl. 6b).                                              |
-| **C — big feature**   | New module, schema migration, new integration                    | Full Phase 1→6 scoped to the delta: new `specs/NNN-name/` dir; Opus patches ARCHITECTURE.md/UX.md, never regenerates.   |
+| Route                 | Change type                                                      | Path                                                                                                                                                                                                                    |
+| --------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **A — trivial**       | Bugfix, copy change, config tweak                                | Short-lived branch (Git Rule 3, human may waive per instance) → hand-write one task → Phase 5 → verify (incl. journey suite) green before merge. No doc updates unless a behavior contract changed. Styling still obeys DESIGN.md tokens. |
+| **B — small feature** | Fits existing architecture, no schema/API/module-boundary change | Mini-spec → impact analysis → Phase 4 on the delta → Phase 5/6 (incl. 6b).                                                                                                                                              |
+| **C — big feature**   | New module, schema migration, new integration                    | Full Phase 1→6 scoped to the delta: new `specs/NNN-name/` dir; Opus patches ARCHITECTURE.md/UX.md, never regenerates.                                                                                                    |
+| **R — refactor**      | Refactor, dependency upgrade, debt paydown; no user-visible behavior change intended | Feature branch → verify + journey suite green BEFORE, as baseline → chunked tasks (~300-line cap, one green commit each) → verify green after each chunk → 6a on the full diff → doc sync (append Decision log entry if a boundary moved) → 6b only if UI touched → merge. |
 
 **Escalation rules:**
 
 - Any change that mid-flight touches a schema/API/module boundary stops and re-enters as Route C.
-- Any change that mid-flight would drop or degrade user-visible behavior stops for your decision — same stop-the-line rule as Phase 5. This stays a hard stop in every medium.
+- Any change that mid-flight would drop or degrade user-visible behavior stops for your decision — same stop-the-line rule as Phase 5. This stays a hard stop in every medium. Route R additionally freezes on ANY user-visible change discovered mid-flight, not just a drop — a refactor that changes behavior isn't a refactor; same hard stop.
+- **Stale-interface-block rule:** any mid-cycle contract patch (CONSUMES/PRODUCES section of ARCHITECTURE.md changes) triggers a cheap pass that diffs old vs. new contract and updates the CONSUMES/PRODUCES blocks of every not-done TASKS.md task quoting the changed section — before the next implementation session starts. An implementer working from a stale interfaces block is the seam-bug failure mode rule 8 exists to close.
 
-**Review policy:** Routes B/C get one 6a review of the full feature diff plus one 6b walkthrough before merge. Route A gets 6a only if it touches logic, auth, or data handling.
+**Review policy:** Routes B/C get one 6a review of the full feature diff plus one 6b walkthrough before merge. Route A gets 6a only if it touches logic, auth, or data handling. Route R gets one 6a review of the full diff always (6a category 7 — test adequacy — matters most on a refactor) and 6b only if the diff touched UI.
 
 **Redesigns:** a visual/UX rework is driven by observed failures — your usage notes and screenshots of what is bad and why — feeding a UX.md patch first. Re-specifying tokens and animation parameters without touching UX.md repaints the same wrong rooms.
 
@@ -511,17 +569,18 @@ Who routes: in agent mode the agent self-triages, announces the chosen route + o
 
 ```
 specs/
-  001-core/        SPEC.md PRD.md PLAN.md TASKS.md screenshots/  (v1, Route C scale)
-  002-reminders/   SPEC.md PLAN.md TASKS.md          (Route C)
-  003-dark-mode/   SPEC.md TASKS.md                  (Route B mini-spec)
-ARCHITECTURE.md    (single, patched per change)
+  001-core/        SPEC.md PRD.md PLAN.md TASKS.md FILE_STRUCTURE.md
+                   evidence/ reviews/ screenshots/   (v1, Route C scale)
+  002-reminders/   SPEC.md PLAN.md TASKS.md FILE_STRUCTURE.md
+                   evidence/ reviews/                (Route C)
+  003-dark-mode/   SPEC.md TASKS.md evidence/         (Route B mini-spec)
+ARCHITECTURE.md    (single, patched per change; ends in an append-only Decision log)
 UX.md              (single, patched per change)
 CONVENTIONS.md     (single, patched per change)
 DESIGN.md          (single, patched per change)
-FILE_STRUCTURE.md  (single, corrected by doc sync)
 ```
 
-`specs/` is append-only history. Living docs in root are current truth — patched, never contradicted by a side ledger.
+`specs/` is append-only history. Living docs in root are current truth — patched, never contradicted by a side ledger. `FILE_STRUCTURE.md` lives per-cycle under each `specs/NNN-name/` — it's a prediction, archived with its cycle, never a root doc.
 
 ### Mini-spec (Route B)
 
@@ -547,13 +606,16 @@ Do not write code or a plan.
 **Model:** Haiku/Flash tier. Stale docs are the failure mode that kills this workflow at scale.
 
 ```
-Here are ARCHITECTURE.md / UX.md / DESIGN.md / FILE_STRUCTURE.md and the
-diff of the last feature: [paste]. List every statement in the docs now
-false, with the correction (include new screens, tokens, or components
-the feature added that the docs don't list). Output only the corrections.
+Here are ARCHITECTURE.md / UX.md / DESIGN.md and the diff of the last
+feature: [paste]. List every statement in the docs now false, with the
+correction (include new screens, tokens, or components the feature
+added that the docs don't list). If a module boundary moved or a
+non-obvious decision was made, also draft one Decision log line:
+`YYYY-MM-DD — decision — why`. Output only the corrections and the log
+line.
 ```
 
-Apply corrections to the source docs directly — the agent applies them itself in agent mode; you apply them in copy-paste mode. Never record divergence as a "deviations" appendix or a gotchas list; amend the statement that became false. Cheap, mechanical, non-optional.
+Apply corrections to the source docs directly — the agent applies them itself in agent mode; you apply them in copy-paste mode. Never record divergence as a "deviations" appendix or a gotchas list; amend the statement that became false. Append the drafted line to ARCHITECTURE.md's Decision log — append-only, a patch never deletes an earlier entry's why. FILE_STRUCTURE.md is out of scope here — it's per-cycle, archived with its `specs/NNN-name/` dir, never corrected in place. Cheap, mechanical, non-optional.
 
 ### Scaling note: context selection
 
