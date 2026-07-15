@@ -33,7 +33,10 @@ No visual styling, no colors, no code. If SPEC names a reference pack, adapt its
 **Step 3 — ARCHITECTURE.md** (from PRD.md + UX.md). Act as a principal software architect. Include: system overview, module responsibilities and boundaries, data model / DB schema (DDL with indices and constraints), API contract (endpoints, request/response shapes, status codes, errors, auth), component hierarchy mapped to UX.md screen ids, dependency graph, error handling strategy, configuration strategy. Rules:
 
 - COMMIT to one concrete stack and one design per decision — no "e.g. X or Y", no alternatives left open.
+- **Name the test harness per layer, including the e2e/journey harness** — the walking skeleton needs it and CONVENTIONS.md's Test strategy (Phase 3) and every gate's crystallization task (Phase 4) build on this name.
 - **Traceability (load-bearing):** every UX.md flow must be traceable through the contract — for each kernel-journey step, name the API call or event that serves it; a step with no serving contract (e.g. "reopen app → data restored" needs a list/read endpoint) means add the contract. Implementers build only what the contract names.
+
+Include an empty **Decision log** section at the end of the file — append-only, one line per future decision as `YYYY-MM-DD — decision — why`; Phase 7 doc sync and Route C patches append to it, never delete an earlier entry's why.
 
 No implementation code. Write to repo root — living doc, patched forever after.
 
@@ -85,12 +88,18 @@ ARCHITECTURE.md: system overview, module responsibilities and boundaries,
 data model / DB schema (DDL with indices and constraints), API contract
 (endpoints, request/response shapes, status codes, errors, auth),
 component hierarchy mapped to UX.md screen ids, dependency graph, error
-handling strategy, configuration strategy.
+handling strategy, configuration strategy, and an empty Decision log
+section at the end of the file — append-only, one line per future
+decision as `YYYY-MM-DD — decision — why`; Phase 7 doc sync and Route C
+patches append to it, never delete an earlier entry's why.
 Rules: COMMIT to one concrete stack and one design per decision — no
-"e.g. X or Y", no alternatives left open. Every UX.md flow must be
-traceable through the contract: for each kernel-journey step, name the
-API call or event that serves it; if a step has no serving contract
-(e.g. "reopen app → data restored" needs a list/read endpoint), add it.
+"e.g. X or Y", no alternatives left open. Name the e2e/journey-test
+harness as part of the stack commitment — CONVENTIONS.md's Test
+strategy (Phase 3) and every gate's crystallization task (Phase 4)
+build on this name. Every UX.md flow must be traceable through the
+contract: for each kernel-journey step, name the API call or event
+that serves it; if a step has no serving contract (e.g. "reopen app →
+data restored" needs a list/read endpoint), add it.
 Do not write implementation code. Output Markdown only.
 [embed PRD.md + UX.md]
 ```
