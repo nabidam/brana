@@ -10,11 +10,11 @@ Split the plan into tasks small enough that each fits one implementation prompt.
 ## Modes
 
 - **run** (default): execute below.
-- **prompt** (argument contains `prompt`): output the paste-ready prompt block from the template below with actual PLAN.md + UX.md flow section embedded (Sonnet-tier target). No other output.
+- **prompt** (argument contains `prompt`): output the paste-ready prompt block from the template below with actual PLAN.md + UX.md flow section + PRD.md error/edge-case list embedded (Sonnet-tier target). No other output.
 
 ## Run mode
 
-Read the current cycle's PLAN.md (latest `specs/NNN-name/`), root ARCHITECTURE.md and UX.md. Split PLAN.md into small, isolated, sequential tasks. Each task includes:
+Read the current cycle's PLAN.md (latest `specs/NNN-name/`), root ARCHITECTURE.md, UX.md, and PRD.md (error/edge-case list). Split PLAN.md into small, isolated, sequential tasks. Each task includes:
 
 - id, title, objective, inputs, outputs
 - dependencies (task ids)
@@ -77,8 +77,8 @@ Rules:
   error/edge-case list, rotating across gates: restart → offline →
   invalid input → restart → ... — a gate never ships checking only the
   happy path.
-- Every DEMO GATE task is immediately followed by a crystallization
-  task: blocked until the gate's walkthrough passes, it encodes the
+- Every DEMO GATE task is immediately followed by a **crystallization
+  task**: blocked until the gate's walkthrough passes, it encodes the
   just-walked journey (including its unglamorous step) as an automated
   e2e test on the harness named in CONVENTIONS.md's Test strategy; the
   new test joins the journey suite. No feature task may start before
@@ -86,6 +86,9 @@ Rules:
 - The walking-skeleton milestone tasks come first and may not be
   reordered after feature tasks.
 - Tasks tiny: ~50–300 lines of code, one prompt each.
+Task done-marks reference `specs/NNN-name/evidence/task-N.txt`
+(Verification Machinery in WORKFLOW.md) — note this in TASKS.md, do
+not restate the format.
 Output TASKS.md as a numbered list. Do not write any code.
-[embed PLAN.md + UX.md flow section]
+[embed PLAN.md + UX.md flow section + PRD.md error/edge-case list]
 ```
