@@ -19,20 +19,21 @@ Read the current cycle's PLAN.md (latest `specs/NNN-name/`), root ARCHITECTURE.m
 - id, title, objective, inputs, outputs
 - dependencies (task ids)
 - files to create/modify
-- acceptance criteria — **observable behaviors in the running app or a test that drives one**. "Compiles", "check passes", "renders" are gates, never the criterion.
+- acceptance criteria — **observable behaviors in the running app or a test that drives one**. "Compiles", "check passes", "renders" are gates, never the criterion. Tag every criterion with the layer that verifies it: `[unit]`, `[integration]`, `[contract]`, or `[e2e@gate-N]`. A `[e2e@gate-N]` criterion must appear as a step of gate N's journey — if it doesn't, add it there, not just here.
 - estimated difficulty
-- **interfaces block**, quoted from ARCHITECTURE.md: **CONSUMES** — the exact signatures, payload shapes, or endpoints this task uses from other tasks' output; **PRODUCES** — the exact signatures later tasks may rely on. An isolated implementer must learn neighboring types from this block, never by reading neighbor code.
+- **interfaces block**, quoted from ARCHITECTURE.md: **CONSUMES** — the exact signatures, payload shapes, or endpoints this task uses from other tasks' output; **PRODUCES** — the exact signatures later tasks may rely on. An isolated implementer must learn neighboring types from this block, never by reading neighbor code. A task with a PRODUCES block gets one additional acceptance criterion, tagged `[contract]`: a test that calls the produced signature/endpoint exactly as specified and asserts the shape — catching drift before a consumer task ever reads it.
 - **context pack**: the exact files to load into the implementation session plus the ARCHITECTURE.md sections to obey. UI tasks also name their UX.md screen ids and get DESIGN.md; backend-only tasks get neither.
 
 Rules:
 
-- Preserve PLAN.md's **DEMO GATE** entries as explicit tasks: journey to walk, observations required, a **preflight block** (exact build/launch command — a disposable/fixture path, fail-closed against non-disposable targets, when the journey would otherwise touch production state; seed/fixture command if the journey needs data; and the task ids whose output the journey walks — the gate depends on all of them), the human's walkthrough result as the completion artifact (screenshots optional). A journey step with no implementing task before the gate is a blocking finding — reorder or add the wiring task; never emit a gate that isn't walkable at its position. A skipped gate is marked `GATE SKIPPED` on the task, never deleted.
+- Preserve PLAN.md's **DEMO GATE** entries as explicit tasks: journey to walk, observations required, a **preflight block** (exact build/launch command — a disposable/fixture path, fail-closed against non-disposable targets, when the journey would otherwise touch production state; seed/fixture command if the journey needs data; and the task ids whose output the journey walks — the gate depends on all of them), the human's walkthrough result as the completion artifact (screenshots optional). A journey step with no implementing task before the gate is a blocking finding — reorder or add the wiring task; never emit a gate that isn't walkable at its position. A skipped gate is marked `GATE SKIPPED` on the task, never deleted. Append one unglamorous step to every gate journey, drawn from PRD.md's error/edge-case list, rotating across gates: restart → offline → invalid input → restart → ... — a gate never ships checking only the happy path.
+- Every DEMO GATE task is immediately followed by a **crystallization task**: blocked until the gate's walkthrough passes, it encodes the just-walked journey (including its unglamorous step) as an automated e2e test on the harness named in CONVENTIONS.md's Test strategy; the new test joins the journey suite. No feature task may start before its preceding gate's crystallization task is done.
 - The walking-skeleton milestone tasks come first and may not be reordered after feature tasks.
 - Tasks tiny — ~50–300 lines of new code, one prompt each. Task ids numbered fresh per cycle dir. Task 0 of a new app is always the scaffold (file tree from FILE_STRUCTURE.md, configs, data migrations, no feature logic); its smoke test is the app booting via a documented run command, recorded in CONVENTIONS.md.
 
 Context packs are predictions made before code exists — mark them as hints; the implementation session verifies against real files. Interfaces blocks are firmer than packs: they quote the contract, and contract changes route through the docs, not through a task improvising. Isolation is for token budgets, not for truth: demo gates exist precisely because bugs live in the seams between well-tested tasks.
 
-Write TASKS.md to the same `specs/NNN-name/` dir with frontmatter `status: ready` (Phase 5 refuses TASKS.md without it). Do not write any code.
+Write TASKS.md to the same `specs/NNN-name/` dir with frontmatter `status: ready` (Phase 5 refuses TASKS.md without it). Do not write any code. Task completions done-mark against `specs/NNN-name/evidence/task-N.txt` (Verification Machinery in WORKFLOW.md) — TASKS.md need not restate the format, only that done-marks reference it.
 
 ## Prompt mode template
 
@@ -49,11 +50,18 @@ The interfaces block has two parts, quoted from ARCHITECTURE.md:
 CONSUMES — the exact signatures, payload shapes, or endpoints this task
 uses from other tasks' output; PRODUCES — the exact signatures later
 tasks may rely on. An isolated implementer must learn neighboring types
-from this block, never by reading neighbor code.
+from this block, never by reading neighbor code. A task with a PRODUCES
+block gets one additional acceptance criterion, tagged [contract]:
+a test that calls the produced signature/endpoint exactly as specified
+and asserts the shape — catching drift before a consumer task ever
+reads it.
 Rules:
 - Acceptance criteria are observable behaviors in the running app or a
   test that drives one. "Compiles", "check passes", "renders" are gates,
-  never the criterion.
+  never the criterion. Tag every criterion with the layer that verifies
+  it: [unit], [integration], [contract], or [e2e@gate-N]. A
+  [e2e@gate-N] criterion must appear as a step of gate N's journey —
+  if it doesn't, add it there, not just here.
 - Preserve PLAN.md's DEMO GATE entries as explicit tasks: journey to
   walk, observations required, a preflight block (exact build/launch
   command — a disposable/fixture path, fail-closed against
@@ -64,7 +72,17 @@ Rules:
   (screenshots optional). A journey step with no implementing task
   before the gate is a blocking finding — reorder or add the wiring
   task; never emit a gate that isn't walkable at its position. A
-  skipped gate is marked GATE SKIPPED on the task, never deleted.
+  skipped gate is marked GATE SKIPPED on the task, never deleted. Append
+  one unglamorous step to every gate journey, drawn from PRD.md's
+  error/edge-case list, rotating across gates: restart → offline →
+  invalid input → restart → ... — a gate never ships checking only the
+  happy path.
+- Every DEMO GATE task is immediately followed by a crystallization
+  task: blocked until the gate's walkthrough passes, it encodes the
+  just-walked journey (including its unglamorous step) as an automated
+  e2e test on the harness named in CONVENTIONS.md's Test strategy; the
+  new test joins the journey suite. No feature task may start before
+  its preceding gate's crystallization task is done.
 - The walking-skeleton milestone tasks come first and may not be
   reordered after feature tasks.
 - Tasks tiny: ~50–300 lines of code, one prompt each.
