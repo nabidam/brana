@@ -17,12 +17,24 @@ The failure mode this workflow guards against: every task green, every doc consi
 5. **One source of truth per fact.** A value (color, name, payload shape) lives in exactly one place; every other doc references it, never restates it. Contradictions between docs fail the _documents_ and block the next phase.
 6. **Unread intent docs are the residual risk you accept.** A generated doc nobody has read is not a contract. The machine pass of the Consistency Gate catches the mechanical failure class (placeholders, contradictions, open decisions, unserved flow steps) and is mandatory; human reading is advisory — but SPEC.md and UX.md encode _intent_, which no machine check can verify: wrong-but-consistent docs pass every machine pass. Read those two at minimum; ~20 minutes each is the cheapest QA in the whole workflow.
 7. **Depth beats breadth.** v1 is the smallest feature set that delivers the product's core promise, built well. Everything else is v1.1. The scope challenge in Phase 1 enforces this.
+8. **A passed human check compiles into a machine check.** The first time a human verifies something by hand — walking a journey, checking a seam, spotting a convention violation — the pass is encoded: walked journeys become e2e tests, PRODUCES blocks become contract tests, recurring review findings become lint rules or CONVENTIONS.md lines. Human judgment is reserved for what machines can't check (intent, taste); spending it twice on the same check is the workflow failing.
 
 ## Git Rules
 
-1. **Commit after each task** passes its gate — per-task rollback beats re-pasting a whole feature.
-2. **Branch per feature** in Phase 7: Routes B/C work on a feature branch, merged only after Phase 6 review + doc sync. Route A commits directly.
-3. **Diffs come from git.** Phase 6a "review after 2–3 tasks" = diff of those commits; "feature diff" = the branch diff.
+1. **Never implement on main uninvited.** Phase 5 begins by checking the
+   current branch: on main/master, create the cycle branch (named after the
+   spec dir, e.g. `001-core`) before any code. Direct-to-main only when the
+   human explicitly says so — per instance, or as a standing rule in
+   CONVENTIONS.md.
+2. **Commit after each task** passes its gate — per-task rollback beats
+   re-pasting a whole feature. (Schema changes roll back via down
+   migration, never git revert — see Phase 5.)
+3. **Branch per feature** in Phase 7: Routes B/C/R work on a feature
+   branch, merged only after Phase 6 review + doc sync. Route A uses a
+   short-lived branch merged after verify is green; the human may waive
+   the branch per instance.
+4. **Diffs come from git.** Phase 6a "review after 2–3 tasks" = diff of
+   those commits; "feature diff" = the branch diff.
 
 ## Token Rules
 
@@ -33,6 +45,12 @@ The failure mode this workflow guards against: every task green, every doc consi
 5. **Reviewer reports, never rewrites.** Findings with file:line + one-line fix. Diffs only, no full-project review.
 6. **No conversational output.** Every generation prompt ends with "Output the Markdown/code directly, no pleasantries."
 7. **Screenshots are cheap context, not a requirement.** A screenshot of the running app pasted into a review or fix prompt beats three paragraphs describing it — use them when you have them, but capturing is always the human's choice, never a mandated step. Gate screenshots, when taken, are archived under `specs/NNN-name/screenshots/`.
+
+## Verification Machinery
+
+- **Verify script:** one documented command running build + lint + typecheck + full test suite (+ the journey suite once it exists). Created in Task 0, recorded in CONVENTIONS.md. Every task completion runs it; demo-gate preflight runs it.
+- **Journey suite:** the automated e2e tests produced by crystallization tasks — each demo gate's walked journey, encoded after its first witnessed pass (Reality Rule 8). Part of verify once it exists.
+- **Evidence file:** `specs/NNN-name/evidence/task-N.txt` — the exercised command plus the last ~30 lines of its output, captured live at task completion. The TASKS.md done-mark references its path.
 
 ## Model Bindings
 
@@ -66,6 +84,9 @@ Copy-paste is canon; this section translates it when the workflow runs inside ag
 - **Delegation passes paths, not prose.** A dispatched subagent gets file paths — its task's TASKS.md entry, CONVENTIONS.md, the contract sections it must obey — and reads them itself. Never pasted contents, never a re-narrated summary: everything pasted into a dispatch stays resident in the parent context for the rest of the session, and re-narration compresses lossily. Bulk subagent output (diffs, findings, review packages) is written to a file; only the path + a short gist returns.
 - **Subagent reports:** ≤15 lines; status is one of `DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT`; includes the verification-evidence line. `BLOCKED`/`NEEDS_CONTEXT` route to the ambiguity/scope-cut rules — never guessed past. The report is unverified claims until the parent checks suite, behavior, and TASKS.md mark.
 - **Recovery after compaction or session flush:** rebuild state from git log + TASKS.md marks (SHAs live there), never from remembered conversation — re-running a completed task is the classic post-compaction failure.
+- **Branch check is automatic:** the agent runs Git Rule 1's main/master check itself at the start of Phase 5, with no human prompt needed.
+- **CI wiring:** when the repo has a remote, Task 0 adds a CI config that runs the verify script on push — the same command a human would run locally.
+- **Parallel subagent delegation** is allowed only for tasks with disjoint file sets and no dependency edge between them; anything else runs sequentially in one session.
 
 ## External Design Inputs (optional)
 
@@ -390,7 +411,7 @@ Rules:
 
 That last rule exists because a blanket "choose the simplest interpretation — do not ask" turns silent feature cuts into code comments instead of alarms.
 
-**Completing a task:** run its gate (tests + check) _and_ its acceptance behavior. UI tasks: launch-and-look + screenshot only if the human asked for it (per task or in CONVENTIONS.md) — otherwise visual quality waits for the demo gate. Then commit, and mark the task done in TASKS.md with the commit SHA plus a one-line **verification evidence** entry: what was exercised (command, test, or journey step) and what was observed. Evidence is captured live — it is not reconstructable from the diff afterward, and a done-mark without it doesn't pass the demo gate or the v1 exit bar. Marking Done on green tests alone is the classic failure — don't reintroduce it.
+**Completing a task:** run its gate (tests + check) _and_ its acceptance behavior. UI tasks: launch-and-look + screenshot only if the human asked for it (per task or in CONVENTIONS.md) — otherwise visual quality waits for the demo gate. Then commit, capture the **evidence file** at `specs/NNN-name/evidence/task-N.txt` (the exercised command — verify script, test, or journey step — plus the last ~30 lines of its output), and mark the task done in TASKS.md with the commit SHA plus the evidence file's path. Evidence is captured live — it is not reconstructable from the diff afterward, and a done-mark without it doesn't pass the demo gate or the v1 exit bar. Marking Done on green tests alone is the classic failure — don't reintroduce it.
 
 Escalation prompt (only when stuck twice):
 
