@@ -19,10 +19,10 @@ Reviewer must be a **different model than the implementer** — default Opus 4.8
 
 **Reviewer independence:** the reviewer gets the diff and the contracts — never the implementer's report, self-review, or rationale; those are unverified claims that anchor the review. Never pre-judge the review ("do not flag X", "at most low severity") — a stated rationale never downgrades a finding. A finding that conflicts with the plan itself escalates to the user ("which governs?"), never gets silently resolved either way.
 
-**Precondition:** lint and typecheck must be green before this review starts — a finding a linter could catch is a lint-config gap, not a review finding; fix the config, not the code, and re-run.
+**Precondition:** lint and typecheck must be green before a 6a review starts — a finding a linter could catch is a lint-config gap, not a review finding; fix the config, not the code, and re-run.
 
-1. Get the diff from git: commits since the range recorded in the last REVIEW_N.md for mid-feature cadence (no prior review → since branch point), or the full branch diff before merge. Never review code that isn't in the diff.
-2. Read only the ARCHITECTURE.md contract sections the diff touches, plus CONVENTIONS.md, plus the reviewed tasks' acceptance criteria from TASKS.md (contract text, not the implementer's claims). Diff touches UI → also DESIGN.md and the relevant UX.md screen sections.
+1. Get the diff from git: commits since the range recorded in the last `specs/NNN-name/reviews/REVIEW_N.md` for mid-feature cadence (no prior review → since branch point), or the full branch diff before merge. Never review code that isn't in the diff.
+2. Read only the ARCHITECTURE.md contract sections the diff touches, plus CONVENTIONS.md, plus the reviewed tasks' acceptance criteria from TASKS.md. Diff touches UI → also DESIGN.md and the relevant UX.md screen sections.
 3. Report only:
    1. bugs / logic errors
    2. security issues (injection, XSS, auth)
