@@ -34,14 +34,14 @@ Reviewer must be a **different model than the implementer** — default Opus 4.8
 
    Each finding: file:line, severity (high/med/low), one-line fix. Objective checks only — no style opinions, no praise, no rewrites.
 4. Write findings to `specs/NNN-name/reviews/REVIEW_N.md` (next N), reviewed commit range in the header — the next review starts from there. Each finding becomes a TASKS.md fix task quoting file:line and referencing the review file's path — findings are never fixed off the review output directly.
-5. **Compound rule:** when a finding's category repeats a second time in one review cycle, its fix task also adds a CONVENTIONS.md line or a lint rule closing that class — the same class never needs a reviewer's eyes again.
+5. **Compound rule:** when the same specific rule or pattern — not the same numbered category — repeats a second time in one review cycle, its fix task also adds a CONVENTIONS.md line or a lint rule closing that class — the same class never needs a reviewer's eyes again.
 6. Fixes go back to a Phase 5 session (Sonnet-tier fixer): apply findings, full suite must still pass, change only flagged files.
 
 ## 6b — Product review (the demo gate)
 
 The human plus the running app; zero tokens for the walkthrough itself. **Preflight first (agent):** run the **verify script**, build, launch via the gate task's preflight block (launch command + seed data), confirm the journey's entry point is reachable. Preflight fails → log `GATE BLOCKED` on the task (a defect, not a choice — distinct from `GATE SKIPPED`), route the breakage as fix tasks at the head of the queue, re-run the preflight after they land; the human is only invited to walk an app that provably runs. **Soft stop:** halt the turn, print the gate task's journey script plus its launch command, and wait for the walkthrough result (screenshots optional but recommended — cheap context for fixes). "Continue" skips — log `GATE SKIPPED` on the task in TASKS.md; every skipped gate is surfaced at the v1 exit bar.
 
-After a passed gate, the next queue item is the gate's **crystallization task** (Phase 4) — no feature task may start before it is done.
+After a passed gate, the next queue item is the gate's **crystallization task** (Phase 4) — no feature task may start before it is done. A `GATE SKIPPED` gate instead marks its crystallization task `DEFERRED` (same visible-debt mark as the gate) and feature work proceeds past it — the deferred task unblocks once the journey is eventually walked, at latest the v1 exit bar.
 
 The user's walkthrough:
 
@@ -86,7 +86,7 @@ opinions, no praise, no rewrites.
 + DESIGN.md and UX.md screen sections if the diff touches UI]
 ```
 
-Write findings to `specs/NNN-name/reviews/REVIEW_N.md`; each finding becomes a TASKS.md fix task referencing the review file's path. Same finding category twice in a cycle → the fix task also adds a CONVENTIONS.md line or lint rule.
+Write findings to `specs/NNN-name/reviews/REVIEW_N.md`; each finding becomes a TASKS.md fix task referencing the review file's path. The same specific rule or pattern — not the same numbered category — twice in a cycle → the fix task also adds a CONVENTIONS.md line or lint rule.
 
 Fixer (back to the implementation model):
 

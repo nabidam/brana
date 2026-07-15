@@ -7,9 +7,9 @@ One skill per phase of `WORKFLOW.md` (Brana v1.1). Run each phase in a **fresh s
 | `brana-1-spec` | 1 | your idea | `specs/NNN-name/SPEC.md` (kernel/v1/backlog + kernel journey) |
 | `brana-2-prd-arch` | 2 | SPEC.md | `UX.md`, `specs/NNN-name/PRD.md`, `ARCHITECTURE.md` |
 | `brana-3-plan` | 3 | PRD.md, ARCHITECTURE.md, UX.md | `specs/NNN-name/PLAN.md`, `CONVENTIONS.md`, `DESIGN.md`, `FILE_STRUCTURE.md` + consistency gate |
-| `brana-4-tasks` | 4 | PLAN.md, ARCHITECTURE.md, UX.md | `specs/NNN-name/TASKS.md` (incl. demo-gate tasks) |
+| `brana-4-tasks` | 4 | PLAN.md, ARCHITECTURE.md, UX.md, PRD.md (error/edge-case list) | `specs/NNN-name/TASKS.md` (incl. demo-gate tasks) |
 | `brana-5-implement` | 5 | task N + context pack | code + tests + commit, demonstrated |
-| `brana-6-review` | 6a/6b | git diff + contracts / running app | `REVIEW_N.md` / gate walkthrough (+ optional screenshots) |
+| `brana-6-review` | 6a/6b | git diff + contracts / running app | `specs/NNN-name/reviews/REVIEW_N.md` / gate walkthrough (+ optional screenshots) |
 | `brana-7-change` | 7 | change request + living docs | routed cycle (A/B/C/R) + doc sync |
 
 Every skill has two modes (brana-5 adds `delegate`):

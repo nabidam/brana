@@ -20,7 +20,7 @@ Read the current cycle's PRD.md and SPEC.md design direction (latest `specs/NNN-
 2. **CONVENTIONS.md** — naming, error handling style, folder rules, test style, commit style, and **Test strategy**: which layer (`[unit]`/`[integration]`/`[contract]`/`[e2e@gate-N]`) verifies which criterion type, the frameworks for each, the e2e/journey-test harness named in ARCHITECTURE.md, and the verify command. Under 2 pages: every line is context each future task pays for. **Lint-over-prose rule:** a convention a machine can check becomes a lint rule at Task 0; prose is only for what lint can't see. Repo root (living doc).
 3. **DESIGN.md** — the design system contract, styling the screens UX.md already defined. Repo root (living doc). Include:
    - **Direction**: 3 adjectives, reference apps, one deliberate visual signature.
-   - **Tokens**: semantic color tokens with exact values (light AND dark if applicable) and, for every fg/bg token pair used as text-on-background, the computed contrast ratio; type scale (max 2 typefaces); spacing on a 4/8px grid; radii; shadows; motion durations/easings. **Token-source handoff:** once Task 0 emits the token file (Phase 5), values live only there — DESIGN.md keeps roles + usage rules and refers to the file, never restates a value.
+   - **Tokens**: semantic color tokens with exact values (light AND dark if applicable) and, for every fg/bg token pair used as text-on-background, the computed contrast ratio; type scale (max 2 typefaces); spacing on a 4/8px grid; radii; shadows; motion durations/easings. **Token-source handoff:** once Task 0 emits the token file (Phase 5), values live only there — DESIGN.md keeps roles + usage rules and refers to the file, never restates a value. The contrast ratios move with the values: once the token file is the source, ratios are maintained there (or its adjacent doc), never back in DESIGN.md prose, and the consistency/doc-sync checks read them from that file from then on.
    - **Component states**: default, hover, focus-visible, active, disabled for every interactive element; empty, loading, error for every data view.
    - **Layout**: grid/breakpoints, max widths, density rules.
    - **Hard rules**: tokens only in components — no raw hex/px/font values; WCAG AA contrast; visible focus states; no template clichés.
@@ -83,7 +83,10 @@ produce four complete markdown files:
       durations/easings. Token-source handoff: once Task 0 emits the
       token file (Phase 5), values live only there — DESIGN.md keeps
       roles + usage rules and refers to the file, never restates a
-      value.
+      value. The contrast ratios move with the values: once the token
+      file is the source, ratios are maintained there (or its adjacent
+      doc), never back in DESIGN.md prose, and the consistency/doc-sync
+      checks read them from that file from then on.
    c. Component states: default, hover, focus-visible, active, disabled
       for every interactive element; empty, loading, error for every
       data view.

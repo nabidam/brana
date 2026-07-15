@@ -23,6 +23,8 @@ Self-triage: pick the route, announce it + a one-line reason, and proceed — th
 | **C — big feature** | New module, schema migration, new integration | Full Phase 1→6 scoped to the delta (`brana-1` … `brana-6`), new `specs/NNN-name/` dir. ARCHITECTURE.md and UX.md are patched (Opus-tier), never regenerated. Feature branch. |
 | **R — refactor** | Refactor, dependency upgrade, debt paydown; no user-visible behavior change intended | Feature branch → verify + journey suite green BEFORE, as baseline → chunked tasks (~300-line cap, one green commit each) → verify green after each chunk → 6a on the full diff → doc sync (append **Decision log** entry if a boundary moved) → 6b only if UI touched → merge. |
 
+No verify script / journey suite yet (pre-v1.1 app, or all gates were skipped) → Route R's and Route A's baseline preconditions are unsatisfiable as written; the route's first task is the backfill: create the verify script and crystallize the kernel journey, before any chunked/behavior work starts.
+
 **Escalation rules:**
 
 - Any change that mid-flight touches a schema/API/module boundary stops and re-enters as Route C — impact analysis re-run, quoted doc sections patched — before more tasks run.

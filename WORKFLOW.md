@@ -48,7 +48,7 @@ The failure mode this workflow guards against: every task green, every doc consi
 
 ## Verification Machinery
 
-- **Verify script:** one documented command running build + lint + typecheck + full test suite (+ the journey suite once it exists). Created in Task 0, recorded in CONVENTIONS.md. Every task completion runs it; demo-gate preflight runs it.
+- **Verify script:** one documented command running build + lint + typecheck + full test suite (+ the journey suite once it exists). UI stacks: verify also runs an automated a11y check (axe or equivalent), wired at Task 0 alongside the rest of the script. Created in Task 0, recorded in CONVENTIONS.md. Every task completion runs it; demo-gate preflight runs it.
 - **Journey suite:** the automated e2e tests produced by crystallization tasks — each demo gate's walked journey, encoded after its first witnessed pass (Reality Rule 8). Part of verify once it exists.
 - **Evidence file:** `specs/NNN-name/evidence/task-N.txt` — the exercised command plus the last ~30 lines of its output, captured live at task completion. The TASKS.md done-mark references its path.
 
@@ -302,7 +302,10 @@ produce four complete markdown files:
       durations/easings. Token-source handoff: once Task 0 emits the
       token file (Phase 5), values live only there — DESIGN.md keeps
       roles + usage rules and refers to the file, never restates a
-      value.
+      value. The contrast ratios move with the values: once the token
+      file is the source, ratios are maintained there (or its adjacent
+      doc), never back in DESIGN.md prose, and the consistency/doc-sync
+      checks read them from that file from then on.
    c. Component states: default, hover, focus-visible, active, disabled
       for every interactive element; empty, loading, error for every
       data view.
@@ -384,7 +387,9 @@ Rules:
   never the criterion. Tag every criterion with the layer that verifies
   it: `[unit]`, `[integration]`, `[contract]`, or `[e2e@gate-N]`. A
   `[e2e@gate-N]` criterion must appear as a step of gate N's journey —
-  if it doesn't, add it there, not just here.
+  if it doesn't, add it there, not just here (the gate N task's journey
+  as copied into TASKS.md is the amendable copy — PLAN.md is not
+  re-edited here).
 - Preserve PLAN.md's DEMO GATE entries as explicit tasks: journey to
   walk, observations required, a preflight block (exact build/launch
   command — a disposable/fixture path, fail-closed against
@@ -405,7 +410,12 @@ Rules:
   just-walked journey (including its unglamorous step) as an automated
   e2e test on the harness named in CONVENTIONS.md's Test strategy; the
   new test joins the journey suite. No feature task may start before
-  its preceding gate's crystallization task is done.
+  its preceding gate's crystallization task is done. A `GATE SKIPPED`
+  gate defers its crystallization task instead — mark it `DEFERRED`
+  with the same visible-debt mark as the gate; it unblocks once the
+  journey is eventually walked, at latest the v1 exit bar. Feature work
+  may proceed past a deferred crystallization task as part of the skip
+  — the skip already accepted the debt.
 - The walking-skeleton milestone tasks come first and may not be
   reordered after feature tasks.
 - Tasks tiny: ~50–300 lines of code, one prompt each.
@@ -503,7 +513,7 @@ opinions, no praise, no rewrites.
 
 Write findings to `specs/NNN-name/reviews/REVIEW_N.md`. Each finding becomes a TASKS.md fix task quoting file:line and referencing the review file's path — findings are never fixed off the review output directly.
 
-**Compound rule:** when a finding's category repeats a second time in one review cycle, its fix task also adds a CONVENTIONS.md line or a lint rule closing that class — the same class never needs a reviewer's eyes again.
+**Compound rule:** when the same specific rule or pattern — not the same numbered category — repeats a second time in one review cycle, its fix task also adds a CONVENTIONS.md line or a lint rule closing that class — the same class never needs a reviewer's eyes again.
 
 Fixer prompt (feed findings back to the implementation model):
 
@@ -554,6 +564,8 @@ Who routes: in agent mode the agent self-triages, announces the chosen route + o
 | **B — small feature** | Fits existing architecture, no schema/API/module-boundary change | Mini-spec → impact analysis → Phase 4 on the delta → Phase 5/6 (incl. 6b).                                                                                                                                              |
 | **C — big feature**   | New module, schema migration, new integration                    | Full Phase 1→6 scoped to the delta: new `specs/NNN-name/` dir; Opus patches ARCHITECTURE.md/UX.md, never regenerates.                                                                                                    |
 | **R — refactor**      | Refactor, dependency upgrade, debt paydown; no user-visible behavior change intended | Feature branch → verify + journey suite green BEFORE, as baseline → chunked tasks (~300-line cap, one green commit each) → verify green after each chunk → 6a on the full diff → doc sync (append Decision log entry if a boundary moved) → 6b only if UI touched → merge. |
+
+No verify script / journey suite yet (pre-v1.1 app, or all gates were skipped) → Route R's and Route A's baseline preconditions are unsatisfiable as written; the route's first task is the backfill: create the verify script and crystallize the kernel journey, before any chunked/behavior work starts.
 
 **Escalation rules:**
 
