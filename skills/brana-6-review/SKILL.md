@@ -19,8 +19,10 @@ Reviewer must be a **different model than the implementer** — default Opus 4.8
 
 **Reviewer independence:** the reviewer gets the diff and the contracts — never the implementer's report, self-review, or rationale; those are unverified claims that anchor the review. Never pre-judge the review ("do not flag X", "at most low severity") — a stated rationale never downgrades a finding. A finding that conflicts with the plan itself escalates to the user ("which governs?"), never gets silently resolved either way.
 
+**Precondition:** lint and typecheck must be green before this review starts — a finding a linter could catch is a lint-config gap, not a review finding; fix the config, not the code, and re-run.
+
 1. Get the diff from git: commits since the range recorded in the last REVIEW_N.md for mid-feature cadence (no prior review → since branch point), or the full branch diff before merge. Never review code that isn't in the diff.
-2. Read only the ARCHITECTURE.md contract sections the diff touches, plus CONVENTIONS.md. Diff touches UI → also DESIGN.md and the relevant UX.md screen sections.
+2. Read only the ARCHITECTURE.md contract sections the diff touches, plus CONVENTIONS.md, plus the reviewed tasks' acceptance criteria from TASKS.md (contract text, not the implementer's claims). Diff touches UI → also DESIGN.md and the relevant UX.md screen sections.
 3. Report only:
    1. bugs / logic errors
    2. security issues (injection, XSS, auth)
@@ -28,14 +30,18 @@ Reviewer must be a **different model than the implementer** — default Opus 4.8
    4. contract violations
    5. convention violations
    6. UI-only: design contract violations (raw values where DESIGN.md tokens exist, missing component/view states, contrast/focus failures) and **UX contract violations** (screen structure or flow steps diverging from UX.md). With a pre-built design system: bypassed the system (hand-rolled what it provides).
+   7. test adequacy: an acceptance criterion with no test at its declared layer, a test that asserts nothing meaningful (runs without checking the outcome), or a test that mocks away the exact behavior the criterion requires.
 
    Each finding: file:line, severity (high/med/low), one-line fix. Objective checks only — no style opinions, no praise, no rewrites.
-4. Write findings to `REVIEW_N.md` (next N), reviewed commit range in the header — the next review starts from there.
-5. Fixes go back to a Phase 5 session (Sonnet-tier fixer): apply findings, full suite must still pass, change only flagged files.
+4. Write findings to `specs/NNN-name/reviews/REVIEW_N.md` (next N), reviewed commit range in the header — the next review starts from there. Each finding becomes a TASKS.md fix task quoting file:line and referencing the review file's path — findings are never fixed off the review output directly.
+5. **Compound rule:** when a finding's category repeats a second time in one review cycle, its fix task also adds a CONVENTIONS.md line or a lint rule closing that class — the same class never needs a reviewer's eyes again.
+6. Fixes go back to a Phase 5 session (Sonnet-tier fixer): apply findings, full suite must still pass, change only flagged files.
 
 ## 6b — Product review (the demo gate)
 
-The human plus the running app; zero tokens for the walkthrough itself. **Preflight first (agent):** build, launch via the gate task's preflight block (launch command + seed data), confirm the journey's entry point is reachable. Preflight fails → log `GATE BLOCKED` on the task (a defect, not a choice — distinct from `GATE SKIPPED`), route the breakage as fix tasks at the head of the queue, re-run the preflight after they land; the human is only invited to walk an app that provably runs. **Soft stop:** halt the turn, print the gate task's journey script plus its launch command, and wait for the walkthrough result (screenshots optional but recommended — cheap context for fixes). "Continue" skips — log `GATE SKIPPED` on the task in TASKS.md; every skipped gate is surfaced at the v1 exit bar.
+The human plus the running app; zero tokens for the walkthrough itself. **Preflight first (agent):** run the **verify script**, build, launch via the gate task's preflight block (launch command + seed data), confirm the journey's entry point is reachable. Preflight fails → log `GATE BLOCKED` on the task (a defect, not a choice — distinct from `GATE SKIPPED`), route the breakage as fix tasks at the head of the queue, re-run the preflight after they land; the human is only invited to walk an app that provably runs. **Soft stop:** halt the turn, print the gate task's journey script plus its launch command, and wait for the walkthrough result (screenshots optional but recommended — cheap context for fixes). "Continue" skips — log `GATE SKIPPED` on the task in TASKS.md; every skipped gate is surfaced at the v1 exit bar.
+
+After a passed gate, the next queue item is the gate's **crystallization task** (Phase 4) — no feature task may start before it is done.
 
 The user's walkthrough:
 
@@ -54,24 +60,33 @@ Here are screenshots of the app and the UX.md + DESIGN.md contracts:
 that would most improve clarity and hierarchy. Findings only.
 ```
 
-**v1 exit bar:** the kernel journey passes end-to-end in a release build, witnessed by the user, including the unglamorous steps (restart, offline, error paths named in the PRD). Every `GATE SKIPPED` entry in TASKS.md is listed here and either walked now or explicitly accepted; an unresolved `GATE BLOCKED` fails the bar outright — a gate that never became runnable is a defect, not debt. "All tasks Done" is not the bar; this is.
+**v1 exit bar:** the kernel journey passes end-to-end in a release build, witnessed by the user, including the unglamorous steps (restart, offline, error paths named in the PRD), _and_ the kernel journey's crystallization-task e2e test is green in the release build. Every `GATE SKIPPED` entry in TASKS.md is listed here and either walked now or explicitly accepted; an unresolved `GATE BLOCKED` fails the bar outright — a gate that never became runnable is a defect, not debt. Every crystallization task across every gate must be Done — a gate walked but never crystallized is an untested journey by the next change. "All tasks Done" is not the bar; this is.
 
 ## Prompt mode templates
 
 Reviewer (different model/vendor than implementer — Opus 4.8, or GPT/Gemini cross-vendor):
 
+Lint and typecheck must be green before running this prompt — a finding a linter could catch is a lint-config gap, not a review finding; fix the config, not the code, and re-run.
+
 ```
-Review this diff against the attached contracts. Report only:
+Review this diff against the attached contracts and acceptance criteria.
+Report only:
 (1) bugs/logic errors, (2) security issues, (3) race conditions,
 (4) contract violations, (5) convention violations, (6) UI-only: design
 contract violations (raw values where tokens exist, missing states,
 contrast/focus failures) and UX contract violations (screen structure or
-flow steps that diverge from UX.md). Each finding: file:line, severity,
-one-line fix. Objective checks only — no style opinions, no praise, no
-rewrites.
+flow steps that diverge from UX.md), (7) test adequacy: an acceptance
+criterion with no test at its declared layer, a test that asserts
+nothing meaningful (runs without checking the outcome), or a test that
+mocks away the exact behavior the criterion requires. Each finding:
+file:line, severity, one-line fix. Objective checks only — no style
+opinions, no praise, no rewrites.
 [embed diff + relevant ARCHITECTURE.md sections + CONVENTIONS.md
++ the reviewed tasks' acceptance criteria from TASKS.md
 + DESIGN.md and UX.md screen sections if the diff touches UI]
 ```
+
+Write findings to `specs/NNN-name/reviews/REVIEW_N.md`; each finding becomes a TASKS.md fix task referencing the review file's path. Same finding category twice in a cycle → the fix task also adds a CONVENTIONS.md line or lint rule.
 
 Fixer (back to the implementation model):
 
