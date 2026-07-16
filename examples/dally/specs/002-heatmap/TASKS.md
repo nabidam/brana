@@ -178,6 +178,10 @@ parse/validate `--year` (reject future year and non-integer via `_fail`, exit 2,
 - **Context pack (hints):** `src/dally/cli.py` (app, `_fail`, `_parse_date`, `_show_report`
   empty-state pattern), `src/dally/reports.py`, `src/dally/render.py`, `tests/test_cli.py`.
   ARCHITECTURE.md §Contract surface, §Error handling. **UX screens: S6, S4.**
+- **Done:** `a662129` — evidence `specs/002-heatmap/evidence/task-2.txt`. Verify green (69 passed).
+  Driven through the real `dally` console script: `dally heatmap` renders the trailing-52wk grid,
+  `--year 2099` exits 2 (one stderr line), fresh data dir prints the friendly empty state exit 0.
+  `heatmap` registered top-level (in `dally --help`).
 
 ## Task 3 — DEMO GATE 1: heatmap surface (default / --year / empty / bad input)
 
