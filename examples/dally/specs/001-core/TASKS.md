@@ -326,6 +326,9 @@ until the journey is walked.
 - **Interfaces — CONSUMES:** the CLI surface quoted in task 3 PRODUCES. **PRODUCES:** none.
 - **Context pack (hints):** tests/test_journey.py, tests/conftest.py, gate 1 journey above;
   CONVENTIONS.md §Test strategy (assert exit codes + stable substrings, not Rich framebuffers).
+- **Done:** `4184901` — evidence `specs/001-core/evidence/task-5.txt`. Verify green (28 passed);
+  `test_gate1_walking_skeleton` replays all 7 steps + unglamorous DB-delete via CliRunner.
+  WITNESSED (gate 1 walked). Feature work (tasks 6–7) unlocked.
 
 ## Task 6 — reports.py: period resolution + averages
 
