@@ -14,7 +14,7 @@ dependencies = [
 ]
 
 [project.scripts]
-dally = "dally.cli:app"
+dally = "dally.cli:main"
 
 [project.optional-dependencies]
 dev = [
