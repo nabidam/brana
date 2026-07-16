@@ -376,6 +376,12 @@ fixed dates, never patch the clock). Raises, never prints.
 - **Context pack (hints):** src/dally/reports.py, src/dally/storage.py (signature per interfaces
   block); ARCHITECTURE.md §Contract surface, §Decision log (averages in Python, not SQL);
   CONVENTIONS.md §Test strategy. Backend-only: no UX.md/DESIGN.md.
+- **Done:** `860cf68` — evidence `specs/001-core/evidence/task-6.txt`. Verify green (40 passed);
+  `Report`/`Bucket` frozen dataclasses + `build_report`. ISO-week/calendar-month/calendar-year
+  bounds; day buckets (week/month), month buckets (year). Period average = mean of daily averages
+  (live drive: seed 5,2 on one day + 2 on next → 2.8, not raw 3.0), rounded 1 decimal; empty
+  days/months → None, excluded; zero-entry period → None. Integration test aggregates real temp-DB
+  rows. Bucket labels are stable ISO strings (`YYYY-MM-DD` / `YYYY-MM`) — render formats in task 7.
 
 ## Task 7 — `dally report` command + report table
 
