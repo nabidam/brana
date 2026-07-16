@@ -1,0 +1,12 @@
+# Task 4 evidence — DEMO GATE 1: walking skeleton
+# captured: 2026-07-16T20:46:55Z
+
+## Preflight (fail-closed) — PASS
+- verify script: GREEN (27 passed)
+- launch: pip install -e . && XDG_DATA_HOME=$(mktemp -d) && dally --help  -> exit 0
+- XDG_DATA_HOME isolated to /tmp (not under $HOME)
+- journey entry points reachable: mood add, mood list; DB-delete recovery no crash
+
+## Human walkthrough — PASS (2026-07-17)
+- All 7 journey steps + unglamorous DB-delete step confirmed by the user.
+- Screenshots: none (optional; declined).

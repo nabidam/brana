@@ -297,6 +297,10 @@ A skipped walkthrough marks this task `GATE SKIPPED` (never deleted) and task 5'
 `UNWITNESSED`; the journey must be walked at latest at the v1 exit bar.
 
 - **Difficulty:** human time only.
+- **GATE 1 WALKED — PASS** (2026-07-17, human) — evidence `specs/001-core/evidence/task-4.txt`.
+  Preflight green (verify 27 passed, real console script boots, XDG isolated to /tmp); all 7
+  journey steps + unglamorous DB-delete confirmed by the user. No screenshots (declined). No
+  findings → no fix tasks. Task 5 crystallization runs next (test is WITNESSED, not UNWITNESSED).
 
 ## Task 5 — Crystallize gate 1 as journey e2e
 
