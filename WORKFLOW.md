@@ -1,4 +1,4 @@
-# Brana — App Development Workflow (v1.5)
+# Brana — App Development Workflow (v1.6)
 
 Consolidated from 5 agent proposals, revised after a v1 post-mortem. Optimized for token efficiency + output quality. Works for any app idea. Folds in tested patterns from two public workflows ([superpowers](https://github.com/obra/superpowers), [compound-engineering](https://github.com/EveryInc/compound-engineering)): path-based delegation, task interface blocks, live verification evidence, reviewer independence, and doc status stamps. Pre-release lineage (internal v2.0–v2.2) is in CHANGELOG.md.
 
@@ -95,6 +95,26 @@ Copy-paste is canon; this section translates it when the workflow runs inside ag
 - **CI wiring:** when the repo has a remote, Task 0 adds a CI config that runs the verify script on push — the same command a human would run locally.
 - **Parallel subagent delegation** is allowed only for tasks with disjoint file sets and no dependency edge between them; anything else runs sequentially in one session.
 
+## Route S — Lite v1 Profile
+
+The full pipeline is sized for apps worth eight documents; a small tool isn't, and an unsanctioned skip breaks chain-shaped guarantees silently (each gate assumes the last). Route S is the sanctioned off-ramp: fewer artifacts, same load-bearing links.
+
+**Qualify (all four, decided at Phase 1 end, user confirms):** single subsystem; ≤ ~15 estimated tasks; no external system in the kernel journey or a v1 flow (no wire contracts); low stakes (no multi-user data, no payments). SPEC.md frontmatter records the choice: `profile: lite` (absent = full). Downstream phases read the stamp.
+
+**Kept — non-negotiable in every profile:** SPEC.md with kernel journey + scope challenge; falsifiable acceptance criteria; verify script + evidence files; same-composition rule; scope-cut and ambiguity hard stops; git rules; at least one mid demo gate plus the release gate; crystallization tasks; the task gate (`brana-gate tasks`, run without `--plan`); the v1 exit bar; threat model still applies if its trigger does (auth/user data/external input disqualifies "low stakes" anyway — re-check the qualification instead).
+
+**Folded or cut:**
+
+- **PRD.md — cut.** Acceptance criteria (falsifiable, NFR budgets+measurements if any are stated) move into a SPEC.md section. SPEC stays under ~700 words total.
+- **UX.md — mini.** Screen list with ids, the kernel flow step-by-step, one line per screen on empty/error states. Still the living root doc; still read by you.
+- **ARCHITECTURE.md — lite.** Stack commitment, data model, API/contract surface, kernel-journey traceability, Decision log. No module ceremony. Still the living root doc. Architecture review becomes advisory — offered once, skippable; skipping is recorded in SPEC.md as an accepted risk line.
+- **PLAN.md — cut.** Chunking happens directly in TASKS.md; DEMO GATE and RELEASE GATE entries are authored there with full gate anatomy (journey, preflight block, unglamorous step, crystallization task). Consistency gate shrinks to `brana-gate docs` over the remaining docs + a short LLM pass (contradictions, unserved kernel-journey steps, open decisions); it stamps SPEC.md `gate-passed`.
+- **DESIGN.md — optional.** UI-heavy → keep it. Otherwise CONVENTIONS.md carries ≤5 style rules (spacing scale, one accent, focus visible, WCAG AA) and DESIGN.md is skipped.
+- **FILE_STRUCTURE.md — cut.** Task 0 scaffolds from ARCHITECTURE.md directly.
+- **CONVENTIONS.md — kept but ≤1 page,** Test strategy + verify command included.
+
+**Escalation (hard rule):** mid-flight discovery of a second subsystem, an external system, or a schema/module-boundary change beyond the lite ARCHITECTURE.md → stop, tell the user, and upgrade: write the missing docs for the delta (Route C shape), re-run the consistency gate, then continue. A lite profile that has outgrown itself and keeps going is the same self-certification seam the gates exist to close. Phase 7 is unchanged — living docs exist in both profiles, so the change loop and its routes work identically.
+
 ## External Design Inputs (optional)
 
 Two kinds of pre-existing design input slot into the workflow as phase inputs — no extra phases. A design system replaces _generation_; reference apps ground _judgment_. Neither replaces UX.md: a design system is vocabulary, not sentences, and a fully themed component kit arranged badly is still a bad app.
@@ -180,7 +200,9 @@ Fold the result back into SPEC.md: **Kernel** (with the kernel journey verbatim)
 
 **Design direction (required, 3–5 lines):** product personality as 3 adjectives, 2–3 reference apps whose look is the target, platform density, accessibility floor (WCAG AA). Feeds UX.md and DESIGN.md. If you have a pre-built design system or a reference pack, name them here instead — see External Design Inputs.
 
-Keep SPEC.md under 500 words plus the kernel section. Write it with frontmatter `status: draft`.
+**Profile choice (last step, user confirms):** check the Route S qualification (single subsystem, ≤ ~15 estimated tasks, no external systems, low stakes — see Route S — Lite v1 Profile). All four hold → propose `profile: lite`; any fails → `profile: full` (the default). Record it in the frontmatter.
+
+Keep SPEC.md under 500 words plus the kernel section (lite: ~700 words including the acceptance-criteria section that replaces PRD.md). Write it with frontmatter `status: draft` (plus `profile: lite` when chosen).
 
 **Spec self-review (after writing, before handing over):** re-read the file fresh — (1) placeholders/TBDs, (2) internal contradictions, (3) scope: fits one cycle or needs decomposition, (4) ambiguity: any requirement readable two ways → pick one and make it explicit. Fix inline, then ask the human to read it. Catches at zero cost what the Phase 3 consistency gate would catch two phases later.
 
@@ -191,6 +213,7 @@ Keep SPEC.md under 500 words plus the kernel section. Write it with frontmatter 
 **Model:** Strong general model for UX and PRD; Opus-tier for ARCHITECTURE. Fresh session each, in this order: UX → PRD → ARCHITECTURE (screens inform requirements; both inform architecture).
 **Inputs:** `SPEC.md`.
 **Outputs:** `UX.md`, `PRD.md`, `ARCHITECTURE.md`
+**Route S (`profile: lite`):** skip PRD.md — criteria live in SPEC.md; UX.md mini and ARCHITECTURE.md lite per the Route S section; architecture review advisory (skip recorded in SPEC.md as accepted risk).
 
 ### UX.md — the missing artifact
 
@@ -314,6 +337,7 @@ PRD.md is written with frontmatter `status: draft` (UX.md and ARCHITECTURE.md ar
 **Model:** Opus-tier. Fresh session. Opus does not implement after this.
 **Inputs:** `PRD.md`, `ARCHITECTURE.md`, `UX.md` (+ SPEC design direction)
 **Outputs:** `PLAN.md`, `CONVENTIONS.md`, `DESIGN.md`, `FILE_STRUCTURE.md`
+**Route S (`profile: lite`):** produce only CONVENTIONS.md (≤1 page) and, if UI-heavy, DESIGN.md — no PLAN.md, no FILE_STRUCTURE.md; the consistency gate shrinks per the Route S section (`brana-gate docs` + short LLM pass) and stamps SPEC.md `gate-passed`.
 
 ```
 You are a senior full-stack architect with strong product design taste.
@@ -445,6 +469,7 @@ No task is written until the machine pass is clean. A clean machine pass flips t
 **Model:** Sonnet-tier. Fresh session. Refuse a PLAN.md still stamped `status: draft` — the consistency gate hasn't cleared; point back to Phase 3.
 **Inputs:** `PLAN.md`, `ARCHITECTURE.md`, `UX.md`, `PRD.md` (error/edge-case list)
 **Output:** `TASKS.md`
+**Route S (`profile: lite`):** no PLAN.md — refuse a SPEC.md still stamped `draft` instead; split from SPEC.md's kernel journey + acceptance criteria and ARCHITECTURE.md; author the DEMO GATE (≥1) and RELEASE GATE tasks directly here with full gate anatomy; the task gate runs `brana-gate tasks` without `--plan` (chunk checks skip).
 
 ```
 Split PLAN.md into small, isolated, sequential implementation tasks.

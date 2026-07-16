@@ -44,7 +44,9 @@ The final SPEC.md covers:
 7. Design direction (3–5 lines, required — feeds UX.md and DESIGN.md): product personality as 3 adjectives, 2–3 reference apps whose look is the target, platform density, accessibility floor (WCAG AA). If the user has a pre-built design system or an annotated reference-screenshot pack, name them here instead ("Design system: X. Deltas: [any]" / "Reference pack: references/"). No answer → propose a direction and confirm; never leave "clean and modern".
 8. Out-of-scope
 
-Keep it under 500 words plus the kernel section. Write to `specs/001-core/SPEC.md` for a new app (later cycles: next `specs/NNN-name/`) with frontmatter `status: draft` — the Phase 3 consistency gate flips it to `gate-passed`.
+**Profile choice (last step, user confirms):** check the Route S qualification (WORKFLOW.md, Route S — Lite v1 Profile): single subsystem, ≤ ~15 estimated tasks, no external system in the kernel journey or a v1 flow, low stakes (no multi-user data, no payments). All four hold → propose `profile: lite`: PRD folds into a SPEC acceptance-criteria section (falsifiable; NFR budgets+measurements if any), UX.md/ARCHITECTURE.md ship mini/lite, PLAN.md/FILE_STRUCTURE.md are cut, DESIGN.md only if UI-heavy. Any criterion fails → `profile: full` (default). Downstream phases read the stamp; mid-flight outgrowth is a hard stop + upgrade.
+
+Keep it under 500 words plus the kernel section (lite: ~700 words including the acceptance-criteria section). Write to `specs/001-core/SPEC.md` for a new app (later cycles: next `specs/NNN-name/`) with frontmatter `status: draft` plus `profile: lite|full` — the Phase 3 consistency gate flips status to `gate-passed`.
 
 **Spec self-review (after writing, before handing over):** re-read the file fresh — (1) placeholders/TBDs, (2) internal contradictions, (3) scope: fits one cycle or needs decomposition, (4) ambiguity: any requirement readable two ways → pick one and make it explicit. Fix inline, then ask the user to read it. Catches at zero cost what the Phase 3 consistency gate would catch two phases later.
 

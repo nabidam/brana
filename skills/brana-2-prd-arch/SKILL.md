@@ -14,7 +14,7 @@ Three documents, in this order: UX → PRD → ARCHITECTURE (screens inform requ
 
 ## Run mode
 
-Locate the current cycle's SPEC.md (latest `specs/NNN-name/SPEC.md`).
+Locate the current cycle's SPEC.md (latest `specs/NNN-name/SPEC.md`). **`profile: lite` in its frontmatter → Route S deltas apply:** skip Step 2 entirely (criteria live in SPEC.md); Step 1 produces the mini UX.md (screen list with ids, kernel flow step-by-step, one line per screen on empty/error states); Step 3 produces the lite ARCHITECTURE.md (stack commitment, data model, API/contract surface, kernel-journey traceability, Decision log — no module ceremony; threat model still applies if its trigger does, which should instead fail the lite qualification — flag it); Step 4 becomes advisory — offer it once, and a skip is recorded in SPEC.md as an accepted-risk line.
 
 **Step 1 — UX.md** (from SPEC.md). Act as a senior product designer. Produce:
 

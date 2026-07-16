@@ -5,7 +5,7 @@ description: "Use when PLAN.md exists and the user wants it split into implement
 
 # Phase 4 — TASKS.md
 
-Split the plan into tasks small enough that each fits one implementation prompt. Task size is the workflow's unit of safety: a task that fits in one prompt can be verified, committed, and rolled back alone. Blocked until the Phase 3 consistency gate's machine pass is clean — refuse a PLAN.md still stamped `status: draft`; point back to Phase 3. Route B delta (no PLAN.md): the mini-spec must be stamped `gate-passed` by impact analysis.
+Split the plan into tasks small enough that each fits one implementation prompt. Task size is the workflow's unit of safety: a task that fits in one prompt can be verified, committed, and rolled back alone. Blocked until the Phase 3 consistency gate's machine pass is clean — refuse a PLAN.md still stamped `status: draft`; point back to Phase 3. Route B delta (no PLAN.md): the mini-spec must be stamped `gate-passed` by impact analysis. **Route S delta (SPEC.md `profile: lite`, no PLAN.md):** refuse a SPEC.md still stamped `draft`; split from SPEC.md's kernel journey + acceptance criteria and ARCHITECTURE.md; author the DEMO GATE (≥1) and RELEASE GATE tasks directly here with full gate anatomy (journey, preflight block, unglamorous step, crystallization task); the task gate runs `brana-gate tasks` without `--plan` (chunk checks skip) and every other check stands.
 
 ## Modes
 

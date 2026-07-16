@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.6.0 — 2026-07-16
+
+Closes the process-weight gap from the v1.3 expert critique: Phase 7 routed changes by size (A/B/C/R) but Phases 1–6 were one-size — a weekend tool paid eight documents and full gate ceremony, so users improvised skips, and the workflow's guarantees are chain-shaped: one silently skipped link collapses the chain. Route S is the sanctioned off-ramp.
+
+- **Route S — lite v1 profile:** chosen at Phase 1 end by four explicit criteria (single subsystem; ≤ ~15 estimated tasks; no external system in the kernel journey or a v1 flow; low stakes — no multi-user data, no payments), recorded as `profile: lite` in SPEC.md frontmatter; downstream phases read the stamp.
+- **Kept in every profile (the load-bearing links):** SPEC with kernel journey + scope challenge, falsifiable criteria, verify script + evidence files, same-composition rule, scope-cut/ambiguity hard stops, git rules, ≥1 mid demo gate plus the release gate, crystallization tasks, the task gate (`brana-gate tasks` without `--plan`; chunk checks skip, everything else stands), the v1 exit bar.
+- **Folded or cut:** PRD folds into a SPEC acceptance-criteria section (~700-word cap total); UX.md ships mini (screen ids, kernel flow, one line per screen on empty/error); ARCHITECTURE.md ships lite (stack, data model, contract surface, traceability, Decision log) and stays a living root doc so Phase 7 works unchanged; PLAN.md and FILE_STRUCTURE.md are cut — chunking and both gates are authored directly in TASKS.md with full gate anatomy; DESIGN.md only if UI-heavy (else ≤5 style rules in CONVENTIONS.md); architecture review advisory, with a skip recorded in SPEC.md as an accepted-risk line; consistency gate shrinks to `brana-gate docs` + a short LLM pass, stamping SPEC.md.
+- **Escalation is a hard rule:** mid-flight discovery of a second subsystem, an external system, or a boundary change beyond the lite architecture stops the line and upgrades to the full shape (Route C-style delta docs, consistency gate re-run) — outgrowing lite silently is the same self-certification seam the gates close.
+- Doc set: WORKFLOW.md (Route S section, Phase 1 profile choice, Phase 2/3/4 delta lines), brana-1/2/3/4 skills, USAGE.md, README, manifests.
+
 ## 1.5.0 — 2026-07-16
 
 Closes the design-correctness gap from the v1.3 expert critique: the pipeline was Opus-writes → mechanical consistency check → implementation — nobody ever reviewed the design itself, and wrong-but-consistent architecture passes every machine pass by definition. Plus NFR/security traceability, which functional flows had and non-functional requirements didn't.

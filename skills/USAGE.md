@@ -1,6 +1,6 @@
 # Brana Skills — Usage Guide
 
-Seven skills implementing Brana, the 6-phase app-dev workflow + Phase 7 change loop (WORKFLOW.md v1.5). Each skill has **run** mode (executes in Claude Code, Agent Adaptation Layer applies) and **prompt** mode (emits paste-ready blocks for external chat UIs — copy-paste is the workflow's canon medium).
+Seven skills implementing Brana, the 6-phase app-dev workflow + Phase 7 change loop (WORKFLOW.md v1.6). Each skill has **run** mode (executes in Claude Code, Agent Adaptation Layer applies) and **prompt** mode (emits paste-ready blocks for external chat UIs — copy-paste is the workflow's canon medium).
 
 The workflow's guard: every task green, every doc consistent-looking, app unusable. Countermeasures baked into the skills — the deliverable is the running app; Done = demonstrated (with live verification evidence); demo gate every 2–3 tasks; scope cuts are hard stops; consistency gate before tasks; task gate before implementation; per-cycle docs carry `status:` stamps (`draft` → `gate-passed`; TASKS.md `draft` → `ready` via the task gate) that downstream phases refuse to consume unstamped.
 
@@ -45,7 +45,9 @@ The workflow's guard: every task green, every doc consistent-looking, app unusab
 
 Scope decomposition first (multi-subsystem ideas split into per-cycle sub-products), then gap-check (has draft) or interview (from nothing — ask the user's own thinking first; AskUserQuestion multiple-choice when options are enumerable). Multiple plausible directions → 2–3 approaches with trade-offs, options presented **before** the recommendation. Then the **required scope challenge**: core promise in one sentence, KERNEL (3–5 features), KERNEL JOURNEY (end-to-end story exercising every kernel feature — becomes the walking-skeleton target and the standing demo-gate script), ranked backlog. Convenience features are backlog by default. Integration check before writing (combine answers, probe non-obvious consequences; uncertainty → explicit assumption). Design direction required (3 adjectives, reference apps, density, WCAG AA) — or name a pre-built design system / reference pack. After writing: spec self-review (placeholders, contradictions, scope, ambiguity) fixed inline before you read it.
 
-**Output:** `specs/001-core/SPEC.md`, under 500 words plus the kernel section.
+Last step: **profile choice** — small project (single subsystem, ≤ ~15 tasks, no external systems, low stakes) → `profile: lite` in the frontmatter, and Phases 2–4 apply the **Route S** deltas: PRD folds into SPEC, UX/ARCHITECTURE ship mini/lite, PLAN/FILE_STRUCTURE cut, DESIGN only if UI-heavy, gates authored directly in TASKS.md. Verify script, evidence, gates, task gate, exit bar, and hard stops are kept in every profile; outgrowing lite mid-flight is a hard stop + upgrade.
+
+**Output:** `specs/001-core/SPEC.md`, under 500 words plus the kernel section (lite: ~700 words incl. acceptance criteria).
 
 ### Phase 2 — `/brana-2-prd-arch`
 
