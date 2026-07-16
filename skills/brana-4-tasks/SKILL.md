@@ -10,7 +10,7 @@ Split the plan into tasks small enough that each fits one implementation prompt.
 ## Modes
 
 - **run** (default): execute below.
-- **prompt** (argument contains `prompt`): output the paste-ready prompt block from the template below with actual PLAN.md + UX.md flow section + PRD.md error/edge-case list embedded (Sonnet-tier target). No other output.
+- **prompt** (argument contains `prompt`): output the paste-ready prompt block for whichever step is current — the splitter (Sonnet-tier target) or the task-gate machine pass (Haiku/Flash-tier target) — from the templates below, actual files embedded. No other output.
 
 ## Run mode
 
@@ -34,11 +34,25 @@ Rules:
 
 Context packs are predictions made before code exists — mark them as hints; the implementation session verifies against real files. Interfaces blocks are firmer than packs: they quote the contract, and contract changes route through the docs, not through a task improvising. Isolation is for token budgets, not for truth: demo gates exist precisely because bugs live in the seams between well-tested tasks.
 
-Write TASKS.md to the same `specs/NNN-name/` dir with frontmatter `status: ready` (Phase 5 refuses TASKS.md without it). Do not write any code. Task completions done-mark against `specs/NNN-name/evidence/task-N.txt` (Verification Machinery in WORKFLOW.md) — TASKS.md need not restate the format, only that done-marks reference it.
+Write TASKS.md to the same `specs/NNN-name/` dir with frontmatter `status: draft` — the task gate below flips it to `ready` (Phase 5 refuses a draft TASKS.md). Do not write any code. Task completions done-mark against `specs/NNN-name/evidence/task-N.txt` (Verification Machinery in WORKFLOW.md) — TASKS.md need not restate the format, only that done-marks reference it.
 
-## Prompt mode template
+## Task gate (blocks Phase 5)
 
-Sonnet-tier model, fresh session:
+Without this gate TASKS.md is self-certified — the splitter stamps its own output and the first integrity check is a gate preflight *during* Phase 5, the most expensive moment to learn a journey step has no serving task. Every check is cross-referencing, not judgment; machine pass only — intent was already checked at the Phase 3 consistency gate, and TASKS.md is a mechanical derivation of PLAN.md. Fresh session, Haiku/Flash tier. Against TASKS.md + PLAN.md + ARCHITECTURE.md's interface and wire-contract sections, list:
+
+- every PLAN.md chunk with no task implementing it, and every task serving no chunk;
+- every dependency cycle, and every walking-skeleton task ordered after a feature task;
+- every gate-task journey step with no implementing task earlier in the order, and every such serving task missing from the gate's dependency ids;
+- every CONSUMES quote with no earlier task whose PRODUCES matches it and no ARCHITECTURE.md section stating it;
+- every acceptance criterion missing its layer tag; every `[e2e@gate-N]` criterion absent from gate N's journey; every task with a PRODUCES block missing its `[contract]` criterion;
+- every gate task missing a preflight field (launch command; seed/fixture command when the journey needs data; dependency ids) or not immediately followed by its crystallization task; every gate journey missing its unglamorous step;
+- a missing RELEASE GATE task; and — when ARCHITECTURE.md has wire contracts — a production-composition proof absent from the release gate's dependencies, plus every fake-producing task missing its shared-suite `[contract]` criterion.
+
+Mandatory and blocking: fix all findings, re-run until clean, then flip TASKS.md `status: draft` → `ready`. A gate unwalkable on paper here is the same gate that would go `GATE BLOCKED` mid-implementation — this pass moves that discovery to the cheapest moment.
+
+## Prompt mode templates
+
+Splitter — Sonnet-tier model, fresh session:
 
 ```
 Split PLAN.md into small, isolated, sequential implementation tasks.
@@ -114,4 +128,32 @@ Task done-marks reference `specs/NNN-name/evidence/task-N.txt`
 not restate the format.
 Output TASKS.md as a numbered list. Do not write any code.
 [embed PLAN.md + UX.md flow section + PRD.md error/edge-case list]
+```
+
+Task gate — Haiku/Flash-tier model, fresh session:
+
+```
+Here are TASKS.md, PLAN.md, and ARCHITECTURE.md's interface and wire-
+contract sections: [embed]. Findings in TASKS.md only — list:
+- every PLAN.md chunk with no task implementing it, and every task
+  serving no chunk;
+- every dependency cycle, and every walking-skeleton task ordered
+  after a feature task;
+- every gate-task journey step with no implementing task earlier in
+  the order, and every such serving task missing from the gate's
+  dependency ids;
+- every CONSUMES quote with no earlier task whose PRODUCES matches it
+  and no ARCHITECTURE.md section stating it;
+- every acceptance criterion missing its layer tag; every
+  [e2e@gate-N] criterion absent from gate N's journey; every task
+  with a PRODUCES block missing its [contract] criterion;
+- every gate task missing a preflight field (launch command; seed/
+  fixture command when the journey needs data; dependency ids) or not
+  immediately followed by its crystallization task; every gate journey
+  missing its unglamorous step;
+- a missing RELEASE GATE task; and — when ARCHITECTURE.md has wire
+  contracts — a production-composition proof absent from the release
+  gate's dependencies, plus every fake-producing task missing its
+  shared-suite [contract] criterion.
+Report only findings with task id + quote. No rewrites.
 ```

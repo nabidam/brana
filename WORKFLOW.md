@@ -1,10 +1,10 @@
-# Brana — App Development Workflow (v1.2)
+# Brana — App Development Workflow (v1.3)
 
 Consolidated from 5 agent proposals, revised after a v1 post-mortem. Optimized for token efficiency + output quality. Works for any app idea. Folds in tested patterns from two public workflows ([superpowers](https://github.com/obra/superpowers), [compound-engineering](https://github.com/EveryInc/compound-engineering)): path-based delegation, task interface blocks, live verification evidence, reviewer independence, and doc status stamps. Pre-release lineage (internal v2.0–v2.2) is in CHANGELOG.md.
 
 Maintenance rule for this doc and the skills: every line must change agent behavior — if deleting it would not change the output, delete it. Adjectives earn their place only when operationalized by a concrete rule.
 
-Execution medium: copy-paste is canon — a human moving prompts between chat UIs, no agent tooling assumed; every prompt in this doc works that way. When run inside agent tooling (Claude Code), the Agent Adaptation Layer below translates the copy-paste rules. Phases 1–3 may also run in another vendor's chat UI (e.g. Gemini), outputs committed as files. Phases 1–6 build v1. Phase 7 is the change loop for everything after. After v1, `ARCHITECTURE.md`, `CONVENTIONS.md`, `DESIGN.md`, `UX.md` are living artifacts: commit them, patch them, never regenerate from scratch and never append "deviations" ledgers — when code legitimately diverges, the doc is amended. `SPEC.md`, `PRD.md`, `PLAN.md`, `TASKS.md`, `FILE_STRUCTURE.md` are per-cycle artifacts, archived under `specs/NNN-name/`. FILE_STRUCTURE.md is a per-cycle prediction (planner + Task 0 input), not a living doc — the repo tree and code map are the living truth for structure. Per-cycle artifacts carry a `status:` frontmatter stamp — `draft` on write, flipped to `gate-passed` when their gate clears (consistency gate for SPEC/PRD/PLAN; Route B impact analysis for a mini-spec), `ready` on TASKS.md; a consuming phase refuses a doc whose stamp hasn't cleared. Stamps never store progress — task completion is derived from git and TASKS.md task marks, nowhere else.
+Execution medium: copy-paste is canon — a human moving prompts between chat UIs, no agent tooling assumed; every prompt in this doc works that way. When run inside agent tooling (Claude Code), the Agent Adaptation Layer below translates the copy-paste rules. Phases 1–3 may also run in another vendor's chat UI (e.g. Gemini), outputs committed as files. Phases 1–6 build v1. Phase 7 is the change loop for everything after. After v1, `ARCHITECTURE.md`, `CONVENTIONS.md`, `DESIGN.md`, `UX.md` are living artifacts: commit them, patch them, never regenerate from scratch and never append "deviations" ledgers — when code legitimately diverges, the doc is amended. `SPEC.md`, `PRD.md`, `PLAN.md`, `TASKS.md`, `FILE_STRUCTURE.md` are per-cycle artifacts, archived under `specs/NNN-name/`. FILE_STRUCTURE.md is a per-cycle prediction (planner + Task 0 input), not a living doc — the repo tree and code map are the living truth for structure. Per-cycle artifacts carry a `status:` frontmatter stamp — `draft` on write, flipped to `gate-passed` when their gate clears (consistency gate for SPEC/PRD/PLAN; Route B impact analysis for a mini-spec), and to `ready` on TASKS.md when the task gate clears; a consuming phase refuses a doc whose stamp hasn't cleared. Stamps never store progress — task completion is derived from git and TASKS.md task marks, nowhere else.
 
 ## Reality Rules (these outrank everything below)
 
@@ -64,7 +64,7 @@ Tier language elsewhere in this doc stays for portability; these are the current
 | P1 gap-check / interview | Haiku 4.5 / Sonnet 5 | Gemini Flash / Pro |
 | P2 UX.md + PRD.md | Sonnet 5 | Gemini Pro |
 | P2 ARCHITECTURE.md, P3 (all four docs), P7 impact analysis | Opus 4.8 | Gemini Pro |
-| Consistency-gate machine pass, doc sync, code map | Haiku 4.5 | Gemini Flash |
+| Consistency-gate + task-gate machine passes, doc sync, code map | Haiku 4.5 | Gemini Flash |
 | P4 task split, P5 implementation, 6a fixer | Sonnet 5 | Gemini Pro |
 | P5 pure boilerplate | Haiku 4.5 | Gemini Flash |
 | P5 escalation (failed twice) | Opus 4.8 | Gemini Pro |
@@ -80,7 +80,7 @@ Copy-paste is canon; this section translates it when the workflow runs inside ag
 - **"Paste X" means the agent reads X.** Context packs in TASKS.md remain as hints and as the copy-paste fallback.
 - **Reading roams, writing doesn't.** The agent may read any file in the repo (task-named files plus whatever it needs), but "only modify files listed in the task" stays a hard rule.
 - **Sessions:** fresh conversation per phase; in Phase 5, one session per 2–3-task batch, cleared at each demo gate.
-- **Gates are soft stops:** at a demo-gate task the agent preflights (build, launch, journey entry reachable — failure is `GATE BLOCKED`, fixed before the walk), then halts its turn, prints the journey script plus launch command, and waits; "continue" skips and logs `GATE SKIPPED`. At the consistency gate the machine pass hard-blocks and the agent fixes its findings; the human read is advisory (SPEC.md + UX.md flagged).
+- **Gates are soft stops:** at a demo-gate task the agent preflights (build, launch, journey entry reachable — failure is `GATE BLOCKED`, fixed before the walk), then halts its turn, prints the journey script plus launch command, and waits; "continue" skips and logs `GATE SKIPPED`. At the consistency gate and the task gate the machine pass hard-blocks and the agent fixes its findings; the consistency gate's human read is advisory (SPEC.md + UX.md flagged).
 - **Scope cuts are hard stops:** the agent states the cut and ends its turn. No default-proceed.
 - **Phase 7:** the agent self-triages A/B/C/R, announces the route + one-line reason, and proceeds; you override by replying. The agent applies doc-sync corrections directly and creates `specs/NNN-name/` dirs itself.
 - **Escalation counting:** "failed twice" = two failed attempts within the batch session; then the human switches the session to Opus.
@@ -461,7 +461,41 @@ Output TASKS.md as a numbered list. Do not write any code.
 [paste PLAN.md + UX.md flow section + PRD.md error/edge-case list]
 ```
 
-Write TASKS.md with frontmatter `status: ready`. Context packs are predictions made before code exists — treat them as hints. At implementation time paste what actually exists. Interfaces blocks are firmer than packs: they quote the contract, and contract changes route through the docs, not through a task improvising. Isolation is for token budgets, not for truth: the demo gates exist precisely because bugs live in the seams between well-tested tasks.
+Write TASKS.md with frontmatter `status: draft` — the task gate below flips it. Context packs are predictions made before code exists — treat them as hints. At implementation time paste what actually exists. Interfaces blocks are firmer than packs: they quote the contract, and contract changes route through the docs, not through a task improvising. Isolation is for token budgets, not for truth: the demo gates exist precisely because bugs live in the seams between well-tested tasks.
+
+### Task Gate (blocks Phase 5)
+
+The consistency gate checks Phase 3's output; without this gate, Phase 4's output is self-certified — the splitter stamps its own TASKS.md and the first integrity check is a gate preflight *during* implementation, the most expensive moment to learn a journey step has no serving task. Every check below is cross-referencing, not judgment; machine pass only — intent was already checked at the consistency gate, and TASKS.md is a mechanical derivation of PLAN.md.
+
+**Machine pass** (Haiku/Flash tier, fresh session):
+
+```
+Here are TASKS.md, PLAN.md, and ARCHITECTURE.md's interface and wire-
+contract sections: [paste]. Findings in TASKS.md only — list:
+- every PLAN.md chunk with no task implementing it, and every task
+  serving no chunk;
+- every dependency cycle, and every walking-skeleton task ordered
+  after a feature task;
+- every gate-task journey step with no implementing task earlier in
+  the order, and every such serving task missing from the gate's
+  dependency ids;
+- every CONSUMES quote with no earlier task whose PRODUCES matches it
+  and no ARCHITECTURE.md section stating it;
+- every acceptance criterion missing its layer tag; every
+  `[e2e@gate-N]` criterion absent from gate N's journey; every task
+  with a PRODUCES block missing its `[contract]` criterion;
+- every gate task missing a preflight field (launch command; seed/
+  fixture command when the journey needs data; dependency ids) or not
+  immediately followed by its crystallization task; every gate journey
+  missing its unglamorous step;
+- a missing RELEASE GATE task; and — when ARCHITECTURE.md has wire
+  contracts — a production-composition proof absent from the release
+  gate's dependencies, plus every fake-producing task missing its
+  shared-suite `[contract]` criterion.
+Report only findings with task id + quote. No rewrites.
+```
+
+The machine pass is mandatory and blocking; in agent mode the agent applies fixes for its own findings before proceeding. A clean pass flips TASKS.md `status: draft` → `ready` (Phase 5 refuses a draft TASKS.md). A gate that is unwalkable on paper here is the same gate that would go `GATE BLOCKED` mid-implementation — this pass moves that discovery to the cheapest possible moment.
 
 ---
 
@@ -471,7 +505,7 @@ Write TASKS.md with frontmatter `status: ready`. Context packs are predictions m
 **Inputs per task:** the task + `CONVENTIONS.md` + only the files it touches (copy-paste mode; agent mode reads freely, writes only task-listed files). UI tasks additionally get `DESIGN.md` and their UX.md screen section; backend tasks get neither.
 **Outputs:** source + tests per task, demonstrated.
 
-Refuse a TASKS.md not stamped `status: ready`. **Step 0, before Task 0:** check the current branch (Git Rule 1) — on main/master, create the cycle branch (named after the spec dir) before any code; direct-to-main only when the human explicitly says so. Task 0 is always the scaffold: file tree from FILE_STRUCTURE.md, configs, data migrations (if any), no feature logic; its smoke test is the app booting via a documented run command, recorded in CONVENTIONS.md. Then the walking skeleton — the kernel journey passes in the real app before any feature deepening begins.
+Refuse a TASKS.md not stamped `status: ready` — the task gate hasn't cleared; point back to Phase 4. **Step 0, before Task 0:** check the current branch (Git Rule 1) — on main/master, create the cycle branch (named after the spec dir) before any code; direct-to-main only when the human explicitly says so. Task 0 is always the scaffold: file tree from FILE_STRUCTURE.md, configs, data migrations (if any), no feature logic; its smoke test is the app booting via a documented run command, recorded in CONVENTIONS.md. Then the walking skeleton — the kernel journey passes in the real app before any feature deepening begins.
 
 **Migration tasks:** a task that adds or alters a schema migration must apply-rollback-reapply against fixture data — up, then down, then up again — with an assertion that the fixture data present before the up survives the round trip (not just that each step exits zero). Rollback in this workflow always means running the down migration, never `git revert` (Git Rule 2) — a reverted commit leaves the schema changed underneath a codebase that no longer expects it.
 

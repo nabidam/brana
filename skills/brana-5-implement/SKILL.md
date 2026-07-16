@@ -17,7 +17,7 @@ The deliverable is the running app, not green tests. Done = demonstrated: the ta
 
 ## Run mode
 
-Argument is the task id (e.g. `brana-5-implement 3`). No id → take the first incomplete task in the current cycle's TASKS.md. Refuse a TASKS.md not stamped `status: ready` (Phase 4's gate hasn't cleared). After a compaction or session flush, rebuild state from git log + TASKS.md done-marks (SHAs live there), never from remembered conversation — re-running a completed task is the classic post-compaction failure.
+Argument is the task id (e.g. `brana-5-implement 3`). No id → take the first incomplete task in the current cycle's TASKS.md. Refuse a TASKS.md not stamped `status: ready` (the Phase 4 task gate hasn't cleared; point back there). After a compaction or session flush, rebuild state from git log + TASKS.md done-marks (SHAs live there), never from remembered conversation — re-running a completed task is the classic post-compaction failure.
 
 **Step 0, before Task 0 (every cycle, run first):** `git branch --show-current`. On main/master, create the cycle branch (named after the spec dir, e.g. `001-core`) before touching any code. Direct-to-main only when the human explicitly says so this turn, or as a standing rule in CONVENTIONS.md (Git Rule 1).
 

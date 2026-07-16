@@ -1,8 +1,8 @@
 # Brana Skills — Usage Guide
 
-Seven skills implementing Brana, the 6-phase app-dev workflow + Phase 7 change loop (WORKFLOW.md v1.2). Each skill has **run** mode (executes in Claude Code, Agent Adaptation Layer applies) and **prompt** mode (emits paste-ready blocks for external chat UIs — copy-paste is the workflow's canon medium).
+Seven skills implementing Brana, the 6-phase app-dev workflow + Phase 7 change loop (WORKFLOW.md v1.3). Each skill has **run** mode (executes in Claude Code, Agent Adaptation Layer applies) and **prompt** mode (emits paste-ready blocks for external chat UIs — copy-paste is the workflow's canon medium).
 
-The workflow's guard: every task green, every doc consistent-looking, app unusable. Countermeasures baked into the skills — the deliverable is the running app; Done = demonstrated (with live verification evidence); demo gate every 2–3 tasks; scope cuts are hard stops; consistency gate before tasks; per-cycle docs carry `status:` stamps (`draft` → `gate-passed`; TASKS.md `ready`) that downstream phases refuse to consume unstamped.
+The workflow's guard: every task green, every doc consistent-looking, app unusable. Countermeasures baked into the skills — the deliverable is the running app; Done = demonstrated (with live verification evidence); demo gate every 2–3 tasks; scope cuts are hard stops; consistency gate before tasks; task gate before implementation; per-cycle docs carry `status:` stamps (`draft` → `gate-passed`; TASKS.md `draft` → `ready` via the task gate) that downstream phases refuse to consume unstamped.
 
 ---
 
@@ -16,7 +16,8 @@ The workflow's guard: every task green, every doc consistent-looking, app unusab
 3. /brana-3-plan               → PLAN.md (walking skeleton first, demo gates) +
                               CONVENTIONS.md + DESIGN.md + FILE_STRUCTURE.md
                               + consistency gate (machine pass blocks Phase 4)
-4. /brana-4-tasks              → TASKS.md (with context packs + demo-gate tasks)
+4. /brana-4-tasks              → TASKS.md (context packs + demo-gate tasks)
+                              + task gate (machine pass blocks Phase 5)
 5. /brana-5-implement          → implement in 2–3-task batches; halt at each demo gate
 6. /brana-6-review             → 6a code review (diffs) + 6b product walkthrough
 7. v1 exit bar = the release-gate task: kernel journey passes in a release
@@ -66,7 +67,7 @@ Then the **Consistency Gate**: machine pass (contradictions, placeholders, open 
 
 **Triggers:** "split the plan", "create tasks", "phase 4"
 
-TASKS.md per task: id, objective, dependencies, files, acceptance criteria (**observable behaviors** — "compiles"/"renders" are gates, never the criterion), difficulty, **interfaces block** (CONSUMES/PRODUCES — exact signatures quoted from ARCHITECTURE.md, so an isolated implementer never reads neighbor code), context pack (files + ARCHITECTURE sections; UI tasks name UX screen ids and get DESIGN.md). DEMO GATE entries preserved as explicit tasks with the human's walkthrough result as completion artifact (screenshots optional); the RELEASE GATE becomes a gate task too; skipped gates marked `GATE SKIPPED`, never deleted. Verified-fake rule when wire contracts exist: fake and real adapter share one contract suite; live calls only in a bounded canary through the production composition. Walking-skeleton tasks first, non-reorderable. Context packs are hints, not gospel.
+TASKS.md per task: id, objective, dependencies, files, acceptance criteria (**observable behaviors** — "compiles"/"renders" are gates, never the criterion), difficulty, **interfaces block** (CONSUMES/PRODUCES — exact signatures quoted from ARCHITECTURE.md, so an isolated implementer never reads neighbor code), context pack (files + ARCHITECTURE sections; UI tasks name UX screen ids and get DESIGN.md). DEMO GATE entries preserved as explicit tasks with the human's walkthrough result as completion artifact (screenshots optional); the RELEASE GATE becomes a gate task too; skipped gates marked `GATE SKIPPED`, never deleted. Verified-fake rule when wire contracts exist: fake and real adapter share one contract suite; live calls only in a bounded canary through the production composition. Walking-skeleton tasks first, non-reorderable. Context packs are hints, not gospel. TASKS.md is written `status: draft`; the **task gate** (Haiku-tier machine pass, blocks Phase 5) cross-references TASKS.md against PLAN.md and ARCHITECTURE.md — chunk coverage, dependency cycles, journey steps with no earlier serving task, unmatched CONSUMES quotes, missing tags/`[contract]` criteria, incomplete preflight blocks, missing RELEASE GATE / production-composition proof — and flips the stamp to `ready` only when clean.
 
 ### Phase 5 — `/brana-5-implement [task-id]`
 

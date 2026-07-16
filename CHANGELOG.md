@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.3.0 — 2026-07-16
+
+Closes the last unchecked phase seam: Phase 4's output was self-certified — the splitter stamped its own TASKS.md `status: ready`, and the first integrity check of the task list was a gate preflight *during* Phase 5, the most expensive moment to learn a journey step has no serving task.
+
+- **Task gate (blocks Phase 5):** a mandatory machine pass (Haiku/Flash tier, fresh session) at Phase 4 exit, mirroring the consistency gate's anatomy. Cross-references TASKS.md against PLAN.md and ARCHITECTURE.md's interface/wire-contract sections: chunk coverage in both directions, dependency cycles and walking-skeleton ordering, gate journey steps with no earlier serving task (walkable on paper — the static version of the Phase 5 preflight), CONSUMES quotes with no matching upstream PRODUCES or ARCHITECTURE.md section, untagged criteria / `[e2e@gate-N]` criteria absent from their gate journey / PRODUCES tasks missing their `[contract]` criterion, incomplete preflight blocks and missing crystallization tasks and unglamorous steps, missing RELEASE GATE task, and (when wire contracts exist) a release gate without its production-composition proof dependency or fake tasks without the shared-suite criterion. Every check is cross-referencing, not judgment; no human pass — intent was already checked at the consistency gate.
+- TASKS.md is now written `status: draft` and flipped to `ready` only by a clean task-gate pass; Phase 5's refusal of a draft TASKS.md is unchanged but the stamp is no longer self-issued.
+- Scope note: the gate guarantees *structural* closure (every step traced, every seam matched, every gate walkable on paper). Semantic gaps — a concept nobody wrote down — remain the release gate's and spawn route's job (v1.2).
+- Doc set: WORKFLOW.md (Phase 4 Task Gate section, stamp semantics, model bindings, agent layer), brana-4/brana-5 skills, USAGE.md.
+
 ## 1.2.0 — 2026-07-16
 
 Closes the production-seam gap class, found by a live-use post-mortem of a pipeline project (s2orc): every demo gate passed on fixtures while the production daemon composition was never planned, the fake provider's convenience shape stood in for the real wire contract, and both surfaced only at the final release gate — forcing two improvised mid-cycle specs. Four fixes; new terms defined once in WORKFLOW.md's Verification Machinery:
