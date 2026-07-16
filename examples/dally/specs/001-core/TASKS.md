@@ -492,6 +492,11 @@ Unglamorous rotation: gate 1 took restart/DB-delete; this gate takes invalid inp
 `UNWITNESSED`; must be walked by the v1 exit bar.
 
 - **Difficulty:** human time only.
+- **GATE 2 WALKED — PASS** (2026-07-17, human). Preflight green: `python -m build --wheel` →
+  `dally-0.1.0-py3-none-any.whl` installed into a fresh venv, real `dally` entry reachable,
+  kernel journey + unglamorous invalid/future-date cases confirmed, XDG isolated to `/tmp`. All 7
+  journey steps + unglamorous confirmed by the user through the installed wheel. No findings → no
+  fix tasks. Task 9 crystallization done (test WITNESSED, not UNWITNESSED).
 
 ## Task 9 — Crystallize release gate as kernel-journey e2e
 
@@ -517,3 +522,8 @@ surface in-process.
 - **Interfaces — CONSUMES:** CLI surfaces quoted in tasks 3 and 7 PRODUCES. **PRODUCES:** none.
 - **Context pack (hints):** tests/test_journey.py, gate 2 journey above; CONVENTIONS.md §Test
   strategy.
+- **Done:** evidence `specs/001-core/evidence/task-9.txt`. Verify green (49 passed);
+  `test_gate2_kernel_journey` replays all 7 steps + invalid/future-date unglamorous via CliRunner
+  (2 journey tests pass). WITNESSED (gate 2 walked). Dates computed relative to `date.today()` so
+  the report-week step stays in-window on any run day; the wheel/venv release build stays a
+  walkthrough concern (in-process CLI crystallizes the journey behavior).
