@@ -168,6 +168,10 @@ color-only: mood always printed as its number.
   ARCHITECTURE.md §Module layout (render is pure formatting, imports no cli); UX.md **S1, S2**,
   §Density & color notes; CONVENTIONS.md §Output style. No DESIGN.md in lite profile — UX.md
   color/density notes are the design contract.
+- **Done:** `78cd9e7` — evidence `specs/001-core/evidence/task-2.txt`. Verify green (16 passed);
+  single mood palette, S1 confirmation + S2 airy gh-style table + empty state; never color-only,
+  emoji/unicode intact, NO_COLOR-safe. Live tty render sanity-checked (no per-task screenshot —
+  visual quality is the demo-gate 1 call).
 
 ## Task 3 — cli.py: `mood add` + `mood list` with validation
 
