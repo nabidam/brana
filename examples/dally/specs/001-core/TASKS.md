@@ -239,6 +239,10 @@ handler → exit 1, one line, no traceback. No business logic in cli.py.
 - **Context pack (hints):** src/dally/cli.py, src/dally/storage.py + src/dally/render.py
   (signatures per interfaces block — do not read bodies); ARCHITECTURE.md §Contract surface,
   §Error handling; UX.md **S1, S2, S4, S5**; CONVENTIONS.md §Error handling.
+- **Done:** `7bb36a5` — evidence `specs/001-core/evidence/task-3.txt`. Verify green (27 passed);
+  driven through the **real `dally` console script** (fresh XDG_DATA_HOME): add/backdate/list,
+  invalid mood 0/6/abc + bad/future date → exit 2 one-line stderr (nothing written), empty state
+  exit 0. Extra file touched: `pyproject.toml` script → `cli:main` (top-level exit-1 handler).
 
 ## Task 4 — DEMO GATE 1: walking skeleton (add / list / persist)
 
