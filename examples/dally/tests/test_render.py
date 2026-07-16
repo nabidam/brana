@@ -87,3 +87,69 @@ def test_contract_signatures_print_expected_shape(
     assert isinstance(style, str)
     assert "2026-07-15" in out  # date present
     assert "5" in out  # mood number present
+
+
+def test_report_table_shows_averages_as_numbers_and_empty_cells(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    from dally.reports import Bucket, Report
+
+    render.report_table(
+        Report(
+            period="week",
+            start=date(2026, 7, 13),
+            end=date(2026, 7, 19),
+            average=3.0,
+            buckets=[
+                Bucket("2026-07-13", 4.0),
+                Bucket("2026-07-14", None),
+                Bucket("2026-07-15", 2.0),
+            ],
+        )
+    )
+    out = capsys.readouterr().out
+    assert "3.0" in out  # period average shown as a number
+    assert "4.0" in out and "2.0" in out  # bucket averages shown as numbers
+    assert "2026-07-13" in out and "2026-07-14" in out  # one row per bucket
+    assert "0.0" not in out  # empty bucket is blank, never zeroed
+
+
+def test_report_table_year_uses_month_header(capsys: pytest.CaptureFixture[str]) -> None:
+    from dally.reports import Bucket, Report
+
+    render.report_table(
+        Report(
+            period="year",
+            start=date(2026, 1, 1),
+            end=date(2026, 12, 31),
+            average=None,
+            buckets=[Bucket("2026-01", 3.0)],
+        )
+    )
+    out = capsys.readouterr().out
+    assert "Month" in out
+    assert "2026-01" in out and "3.0" in out
+
+
+def test_report_table_uses_the_same_mood_palette(monkeypatch: pytest.MonkeyPatch) -> None:
+    from dally.reports import Bucket, Report
+
+    seen: list[int] = []
+    real_mood_style = render.mood_style
+
+    def spy(mood: int) -> str:
+        seen.append(mood)
+        return real_mood_style(mood)
+
+    monkeypatch.setattr(render, "mood_style", spy)
+    render.report_table(
+        Report(
+            period="week",
+            start=date(2026, 7, 13),
+            end=date(2026, 7, 19),
+            average=4.0,
+            buckets=[Bucket("2026-07-13", 4.0)],
+        )
+    )
+    # Averages are colored through the single mood_style palette (nearest 1–5).
+    assert seen and all(1 <= m <= 5 for m in seen)

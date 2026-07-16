@@ -1,0 +1,36 @@
+== pytest report tests ==
+.....                                                                    [100%]
+...                                                                      [100%]
+
+== live: real dally console script, XDG=/tmp/tmp.nqb65Pepb0 ==
+$ dally mood add 4 --note ok --date 2026-07-13
+✓ 2026-07-13  mood 4  ok
+$ dally mood add 2 --date 2026-07-14
+✓ 2026-07-14  mood 2
+$ dally report week
+Week  2026-07-13 – 2026-07-19   average 3.0
+                            
+   Day            Average   
+ ────────────────────────── 
+   2026-07-13         4.0   
+   2026-07-14         2.0   
+   2026-07-15               
+   2026-07-16               
+   2026-07-17               
+   2026-07-18               
+   2026-07-19               
+                            
+$ dally report month (should have data too)
+Month  2026-07-01 – 2026-07-31   average 3.0
+                            
+   Day            Average   
+$ dally report decade (unknown → usage err)
+Usage: dally report [OPTIONS] COMMAND [ARGS]...
+Try 'dally report --help' for help.
+╭─ Error ──────────────────────────────────────────────────────────────────────╮
+│ No such command 'decade'.                                                    │
+╰──────────────────────────────────────────────────────────────────────────────╯
+exit=2
+$ dally report month (fresh, no data)
+No data for this month yet — try `dally mood add 4`
+exit=0

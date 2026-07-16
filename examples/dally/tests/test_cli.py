@@ -117,3 +117,56 @@ def test_main_converts_unexpected_error_to_exit_1_no_traceback(
     err = capsys.readouterr().err
     assert "unexpected error" in err
     assert "Traceback" not in err
+
+
+def _this_monday() -> date:
+    today = date.today()
+    return today - timedelta(days=today.weekday())
+
+
+def test_report_week_shows_average_and_per_day_breakdown() -> None:
+    monday = _this_monday()
+    tuesday = monday + timedelta(days=1)
+    # Seed via storage (no future-date guard) so both days land in the current
+    # ISO-week window regardless of which weekday the suite runs on.
+    storage.add_entry(monday, 4, None)
+    storage.add_entry(tuesday, 2, None)
+
+    result = runner.invoke(app, ["report", "week"])
+    assert result.exit_code == 0
+    assert monday.isoformat() in result.stdout
+    assert tuesday.isoformat() in result.stdout
+    # Mean of daily averages (4.0, 2.0) = 3.0 — unlogged days excluded, not zeroed.
+    assert "3.0" in result.stdout
+
+
+def test_report_month_no_data_prints_friendly_message_exit_0() -> None:
+    result = runner.invoke(app, ["report", "month"])  # fresh temp DB, no entries
+    assert result.exit_code == 0
+    assert "month" in result.stdout
+    assert "add" in result.stdout  # suggests the next command
+
+
+def test_report_year_one_row_per_month_empty_months_blank() -> None:
+    year = date.today().year
+    storage.add_entry(date(year, 1, 15), 5, None)
+    storage.add_entry(date(year, 2, 15), 1, None)
+
+    result = runner.invoke(app, ["report", "year"])
+    assert result.exit_code == 0
+    # All twelve month labels present (one row per month).
+    for month in range(1, 13):
+        assert f"{year}-{month:02d}" in result.stdout
+    assert "5.0" in result.stdout  # January bucket
+    assert "1.0" in result.stdout  # February bucket
+
+
+def test_report_unknown_period_is_usage_error() -> None:
+    result = runner.invoke(app, ["report", "decade"])
+    assert result.exit_code == 2  # Typer usage error (S5)
+
+
+def test_report_contract_drives_all_three_periods() -> None:
+    for period in ("week", "month", "year"):
+        result = runner.invoke(app, ["report", period])
+        assert result.exit_code == 0  # empty periods still exit 0 (friendly no-data)

@@ -15,7 +15,7 @@ from typing import NoReturn
 
 import typer
 
-from dally import render, storage
+from dally import render, reports, storage
 
 app = typer.Typer(
     name="dally",
@@ -92,6 +92,33 @@ def list_moods() -> None:
         render.empty_state("No moods logged yet — try `dally mood add 4`")
         return
     render.entries_table(entries)
+
+
+def _show_report(period: reports.Period) -> None:
+    """Build and render a period report (S3); friendly no-data message, exit 0."""
+    report = reports.build_report(period, date.today())
+    if report.average is None:  # no entries in the whole period
+        render.empty_state(f"No data for this {period} yet — try `dally mood add 4`")
+        return
+    render.report_table(report)
+
+
+@report_app.command("week")
+def report_week() -> None:
+    """Average + per-day breakdown for the current ISO week (S3)."""
+    _show_report("week")
+
+
+@report_app.command("month")
+def report_month() -> None:
+    """Average + per-day breakdown for the current calendar month (S3)."""
+    _show_report("month")
+
+
+@report_app.command("year")
+def report_year() -> None:
+    """Average + per-month breakdown for the current calendar year (S3)."""
+    _show_report("year")
 
 
 def main() -> None:

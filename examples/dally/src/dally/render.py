@@ -15,6 +15,7 @@ from rich.console import Console
 from rich.table import Table
 from rich.text import Text
 
+from dally.reports import Report
 from dally.storage import Entry
 
 console = Console()
@@ -65,6 +66,40 @@ def entries_table(entries: list[Entry]) -> None:
     for entry in entries:
         mood_cell = Text(str(entry.mood), style=mood_style(entry.mood))
         table.add_row(entry.date.isoformat(), mood_cell, entry.note or "")
+    console.print(table)
+
+
+def _nearest_mood(average: float) -> int:
+    """Clamp a fractional average onto the 1–5 palette for color only."""
+    return max(1, min(5, round(average)))
+
+
+def _average_cell(average: float) -> Text:
+    """An average shown as its number, colored via the shared mood palette."""
+    return Text(f"{average:.1f}", style=mood_style(_nearest_mood(average)))
+
+
+def report_table(report: Report) -> None:
+    """S3 — a period header (name, range, average) then a breakdown table.
+
+    Day buckets for week/month, month buckets for year. Averages always print as
+    numbers (never color-only) on the single mood palette; buckets with no
+    entries render as empty cells, not zeros.
+    """
+    header = Text()
+    header.append(f"{report.period.capitalize()}  ")
+    header.append(f"{report.start.isoformat()} – {report.end.isoformat()}")
+    header.append("   average ")
+    header.append("—" if report.average is None else _average_cell(report.average))
+    console.print(header)
+
+    is_year = report.period == "year"
+    table = Table(box=box.SIMPLE, padding=(0, 2), header_style="bold")
+    table.add_column("Month" if is_year else "Day")
+    table.add_column("Average", justify="right")
+    for bucket in report.buckets:
+        cell = "" if bucket.average is None else _average_cell(bucket.average)
+        table.add_row(bucket.label, cell)
     console.print(table)
 
 
