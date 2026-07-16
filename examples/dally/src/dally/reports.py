@@ -20,8 +20,32 @@ from statistics import fmean
 from typing import Literal
 
 from dally import storage
+from dally.storage import Entry
 
 Period = Literal["week", "month", "year"]
+
+
+@dataclass(frozen=True)
+class HeatCell:
+    # One day of the heatmap grid. ``day is None`` marks a padding cell — a slot
+    # in the first/last partial week that falls outside the window (before the
+    # trailing-52-week start, or outside the requested calendar year). ``average
+    # is None`` on a windowed day means that day has no entry. Rounding for the
+    # cell color is the render layer's job; ``average`` is the exact daily mean.
+    day: date | None
+    average: float | None
+
+
+@dataclass(frozen=True)
+class Heatmap:
+    # ``weeks`` is column-major: one inner list per week column, each length 7
+    # indexed Sunday(0)..Saturday(6). ``start``/``end`` bound the coloured window
+    # (inclusive); ``total_logged`` counts distinct windowed days with >=1 entry.
+    start: date
+    end: date
+    label: str
+    weeks: list[list[HeatCell]]
+    total_logged: int
 
 
 @dataclass(frozen=True)
@@ -76,6 +100,73 @@ def _round1(value: float) -> float:
     return round(value, 1)
 
 
+def daily_averages(entries: list[Entry]) -> dict[date, float]:
+    """Exact per-day mean mood — the aggregation unit for every downstream mean.
+
+    A day with several entries collapses to one value (its mean); the result is
+    unrounded so callers round only at their presentation edge.
+    """
+    moods_by_day: dict[date, list[int]] = {}
+    for entry in entries:
+        moods_by_day.setdefault(entry.date, []).append(entry.mood)
+    return {day: fmean(moods) for day, moods in moods_by_day.items()}
+
+
+def _sunday_on_or_before(d: date) -> date:
+    # Sunday-indexed weeks (Sun=0..Sat=6): weekday() is Mon=0..Sun=6, so the
+    # offset back to this week's Sunday is (weekday + 1) % 7.
+    return d - timedelta(days=(d.weekday() + 1) % 7)
+
+
+def _saturday_on_or_after(d: date) -> date:
+    # weekday() Sat == 5; step forward to the next (or same) Saturday.
+    return d + timedelta(days=(5 - d.weekday()) % 7)
+
+
+def build_heatmap(today: date, year: int | None = None) -> Heatmap:
+    """Lay stored moods onto a GitHub-style 7×N calendar grid (SPEC 002).
+
+    ``year=None`` → the trailing 52 weeks ending ``today`` (53 columns, the last
+    containing ``today``). ``year=YYYY`` → that calendar year, Jan 1 – Dec 31.
+    Pure: never touches the clock (``today`` is passed), never validates ``year``
+    (the CLI owns that), never prints. Reads rows via ``storage.entries_between``.
+    """
+    if year is None:
+        last_sunday = _sunday_on_or_before(today)
+        grid_start = last_sunday - timedelta(weeks=52)
+        grid_end = last_sunday + timedelta(days=6)
+        window_start, window_end = grid_start, today
+        label = "past 52 weeks"
+    else:
+        window_start, window_end = date(year, 1, 1), date(year, 12, 31)
+        grid_start = _sunday_on_or_before(window_start)
+        grid_end = _saturday_on_or_after(window_end)
+        label = str(year)
+
+    daily_avg = daily_averages(storage.entries_between(window_start, window_end))
+
+    num_columns = (grid_end - grid_start).days // 7 + 1
+    weeks: list[list[HeatCell]] = []
+    for column in range(num_columns):
+        column_sunday = grid_start + timedelta(weeks=column)
+        week: list[HeatCell] = []
+        for row in range(7):  # Sunday(0)..Saturday(6)
+            day = column_sunday + timedelta(days=row)
+            if window_start <= day <= window_end:
+                week.append(HeatCell(day, daily_avg.get(day)))
+            else:  # outside the window → padding slot
+                week.append(HeatCell(None, None))
+        weeks.append(week)
+
+    return Heatmap(
+        start=window_start,
+        end=window_end,
+        label=label,
+        weeks=weeks,
+        total_logged=len(daily_avg),
+    )
+
+
 def build_report(period: Period, today: date) -> Report:
     """Resolve ``period`` around ``today`` and aggregate stored moods.
 
@@ -95,13 +186,7 @@ def build_report(period: Period, today: date) -> Report:
     else:
         raise ValueError(f"unknown period {period!r}; expected week, month, or year")
 
-    entries = storage.entries_between(start, end)
-
-    # Exact daily averages — the aggregation unit for every downstream mean.
-    moods_by_day: dict[date, list[int]] = {}
-    for entry in entries:
-        moods_by_day.setdefault(entry.date, []).append(entry.mood)
-    daily_avg: dict[date, float] = {day: fmean(moods) for day, moods in moods_by_day.items()}
+    daily_avg = daily_averages(storage.entries_between(start, end))
 
     period_average = _round1(fmean(daily_avg.values())) if daily_avg else None
 
