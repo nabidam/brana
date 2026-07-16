@@ -1,6 +1,6 @@
 # How Brana Compares
 
-Brana (WORKFLOW.md v1.1 + `skills/brana-1…7`) side by side with two excellent public workflows we studied closely and borrowed from: [**Superpowers**](https://github.com/obra/superpowers) (Jesse Vincent / prime-radiant) and [**Compound Engineering**](https://github.com/EveryInc/compound-engineering) (Every). Both are strong projects worth your time — this document explains where each shines and which bet Brana makes differently. Written 2026-07-12.
+Brana (WORKFLOW.md v1.2 + `skills/brana-1…7`) side by side with two excellent public workflows we studied closely and borrowed from: [**Superpowers**](https://github.com/obra/superpowers) (Jesse Vincent / prime-radiant) and [**Compound Engineering**](https://github.com/EveryInc/compound-engineering) (Every). Both are strong projects worth your time — this document explains where each shines and which bet Brana makes differently. Written 2026-07-12.
 
 ## At a glance
 

@@ -27,7 +27,7 @@ No verify script / journey suite yet (pre-v1.1 app, or all gates were skipped) �
 
 **Escalation rules:**
 
-- Any change that mid-flight touches a schema/API/module boundary stops and re-enters as Route C — impact analysis re-run, quoted doc sections patched — before more tasks run.
+- Any change that mid-flight touches a schema/API/module boundary stops and re-enters as Route C — impact analysis re-run, quoted doc sections patched — before more tasks run. (Pre-v1, the same discovery inside a blocked gate routes through the Spawn route in Phase 6b.)
 - Any change that mid-flight would drop or degrade user-visible behavior stops for the user's decision — same stop-the-line rule as Phase 5. Hard stop in every medium: state the cut, end the turn, no default-proceed. Route R additionally freezes on ANY user-visible change discovered mid-flight, not just a drop — a refactor that changes behavior isn't a refactor; same hard stop.
 - **Stale-interface-block rule:** any mid-cycle contract patch (CONSUMES/PRODUCES section of ARCHITECTURE.md changes) triggers a cheap pass that diffs old vs. new contract and updates the CONSUMES/PRODUCES blocks of every not-done TASKS.md task quoting the changed section — before the next implementation session starts. An implementer working from a stale interfaces block is the seam-bug failure mode rule 8 exists to close.
 

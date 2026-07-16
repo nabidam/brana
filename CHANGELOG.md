@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.2.0 — 2026-07-16
+
+Closes the production-seam gap class, found by a live-use post-mortem of a pipeline project (s2orc): every demo gate passed on fixtures while the production daemon composition was never planned, the fake provider's convenience shape stood in for the real wire contract, and both surfaced only at the final release gate — forcing two improvised mid-cycle specs. Four fixes; new terms defined once in WORKFLOW.md's Verification Machinery:
+
+- **Wire contracts + verified fakes (conditional):** when the kernel journey or a v1 flow depends on an external system that will be faked, Phase 2 ARCHITECTURE.md gives it a versioned **wire contract** (exact request/response shapes, auth, error semantics) with traceability extended to those journey steps; Phase 4 gives any fake of that system a `[contract]` criterion running one shared suite against both fake and real adapter — the fake must reject what the contract rejects; real-adapter side offline (request-shape assertions, recorded fixtures), live calls only in a bounded canary through the production composition. Consistency gate flags an external system with no wire contract. Projects without external systems pay nothing.
+- **Same-composition rule:** a gate's disposable/fixture launch path is the production entry point with config/fakes injected at seams — never a bespoke gate-only assembly (which lets every gate pass while the production path stays unbuilt). Blocking finding at Phases 3/4 and the consistency gate; 6a gains finding category 8 (composition and fake integrity). When fakes stand in for an external system, one pre-release-gate chunk is the **production-composition proof**: the production entry point composes fully against a disposable target.
+- **Release gate:** the v1 exit bar is now PLAN.md's mandatory final gate entry with full demo-gate anatomy — kernel journey in a release build, each step traced to a serving chunk through the production composition — checked at the consistency gate, preserved as a gate task in Phase 4, preflighted with `GATE BLOCKED` semantics in Phases 5/6. A kernel-journey step with no production path is now a Phase 3 finding, not a release-day discovery.
+- **Spawn route (pre-v1):** fixing a blocked gate that reveals a missing subsystem or new/changed contract spawns a scoped child `specs/NNN-name/` cycle (Route C shape, ARCHITECTURE.md patched); parent gate stays `GATE BLOCKED` referencing the child, stale-interface re-sync runs on the parent's not-done tasks, parent preflight re-runs after the child completes. Codifies what the post-mortem project improvised.
+- Doc set: skills 2–7 mirrored to canon.
+
 ## 1.1.0 — 2026-07-15
 
 Closes all 15 gaps (G1–G15): fourteen found by a senior-engineer concept review of v1.0.0, plus one live-use finding (G15); full findings record and gap→fix map at `docs/history/2026-07-15-v1-gap-review.md`. Governing question: what makes apps built by this workflow hard to maintain or test? The fixes compile human checks into machine checks — the workflow's own Reality Rule 8, added by this release.

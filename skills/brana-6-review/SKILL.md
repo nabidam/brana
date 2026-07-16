@@ -31,6 +31,7 @@ Reviewer must be a **different model than the implementer** — default Opus 4.8
    5. convention violations
    6. UI-only: design contract violations (raw values where DESIGN.md tokens exist, missing component/view states, contrast/focus failures) and **UX contract violations** (screen structure or flow steps diverging from UX.md). With a pre-built design system: bypassed the system (hand-rolled what it provides).
    7. test adequacy: an acceptance criterion with no test at its declared layer, a test that asserts nothing meaningful (runs without checking the outcome), or a test that mocks away the exact behavior the criterion requires.
+   8. composition and fake integrity: a runtime or gate path that composes bespoke wiring instead of the production entry point with injected seams, or a fake of an external system that diverges from its wire contract (accepts what the contract rejects, or lacks the shared contract suite).
 
    Each finding: file:line, severity (high/med/low), one-line fix. Objective checks only — no style opinions, no praise, no rewrites.
 4. Write findings to `specs/NNN-name/reviews/REVIEW_N.md` (next N), reviewed commit range in the header — the next review starts from there. Each finding becomes a TASKS.md fix task quoting file:line and referencing the review file's path — findings are never fixed off the review output directly.
@@ -60,7 +61,9 @@ Here are screenshots of the app and the UX.md + DESIGN.md contracts:
 that would most improve clarity and hierarchy. Findings only.
 ```
 
-**v1 exit bar:** the kernel journey passes end-to-end in a release build, witnessed by the user, including the unglamorous steps (restart, offline, error paths named in the PRD), _and_ the kernel journey's crystallization-task e2e test is green in the release build. Every `GATE SKIPPED` entry in TASKS.md is listed here and either walked now or explicitly accepted (accepting a skipped gate also explicitly accepts — and records — its DEFERRED crystallization task); an unresolved `GATE BLOCKED` fails the bar outright — a gate that never became runnable is a defect, not debt. Every crystallization task across every gate must be Done or explicitly accepted with its skipped gate — a gate walked but never crystallized is an untested journey by the next change. "All tasks Done" is not the bar; this is.
+**v1 exit bar:** the exit bar is the **release-gate task** and runs like any gate — preflight it (verify script, release build, launch via the production entry point, journey entry reachable; failure is `GATE BLOCKED`, fix tasks first). The bar: the kernel journey passes end-to-end in a release build through the production composition, witnessed by the user, including the unglamorous steps (restart, offline, error paths named in the PRD), _and_ the kernel journey's crystallization-task e2e test is green in the release build, _and_ — when fakes stood in for an external system — the production-composition proof task and the verified-fake contract suites are Done/green. Every `GATE SKIPPED` entry in TASKS.md is listed here and either walked now or explicitly accepted (accepting a skipped gate also explicitly accepts — and records — its DEFERRED crystallization task); an unresolved `GATE BLOCKED` fails the bar outright — a gate that never became runnable is a defect, not debt. Every crystallization task across every gate must be Done or explicitly accepted with its skipped gate — a gate walked but never crystallized is an untested journey by the next change. "All tasks Done" is not the bar; this is.
+
+**Spawn route (pre-v1):** when fixing a `GATE BLOCKED` — any gate, including the release gate — reveals a missing subsystem or a new/changed contract (more than a few fix tasks, or a new ARCHITECTURE.md section), spawn a scoped child cycle in a new `specs/NNN-name/` dir (Phase 1→6 on the delta, Route C shape, ARCHITECTURE.md patched not regenerated). The parent gate stays `GATE BLOCKED` referencing the child spec; the stale-interface-block rule runs on the parent's not-done tasks; the parent preflight re-runs only after the child cycle completes.
 
 ## Prompt mode templates
 
@@ -78,7 +81,12 @@ contrast/focus failures) and UX contract violations (screen structure or
 flow steps that diverge from UX.md), (7) test adequacy: an acceptance
 criterion with no test at its declared layer, a test that asserts
 nothing meaningful (runs without checking the outcome), or a test that
-mocks away the exact behavior the criterion requires. Each finding:
+mocks away the exact behavior the criterion requires, (8) composition
+and fake integrity: a runtime or gate path that composes bespoke
+wiring instead of the production entry point with injected seams, or a
+fake of an external system that diverges from its wire contract
+(accepts what the contract rejects, or lacks the shared contract
+suite). Each finding:
 file:line, severity, one-line fix. Objective checks only — no style
 opinions, no praise, no rewrites.
 [embed diff + relevant ARCHITECTURE.md sections + CONVENTIONS.md

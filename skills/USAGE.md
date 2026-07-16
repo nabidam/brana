@@ -1,6 +1,6 @@
 # Brana Skills — Usage Guide
 
-Seven skills implementing Brana, the 6-phase app-dev workflow + Phase 7 change loop (WORKFLOW.md v1.1). Each skill has **run** mode (executes in Claude Code, Agent Adaptation Layer applies) and **prompt** mode (emits paste-ready blocks for external chat UIs — copy-paste is the workflow's canon medium).
+Seven skills implementing Brana, the 6-phase app-dev workflow + Phase 7 change loop (WORKFLOW.md v1.2). Each skill has **run** mode (executes in Claude Code, Agent Adaptation Layer applies) and **prompt** mode (emits paste-ready blocks for external chat UIs — copy-paste is the workflow's canon medium).
 
 The workflow's guard: every task green, every doc consistent-looking, app unusable. Countermeasures baked into the skills — the deliverable is the running app; Done = demonstrated (with live verification evidence); demo gate every 2–3 tasks; scope cuts are hard stops; consistency gate before tasks; per-cycle docs carry `status:` stamps (`draft` → `gate-passed`; TASKS.md `ready`) that downstream phases refuse to consume unstamped.
 
@@ -19,8 +19,9 @@ The workflow's guard: every task green, every doc consistent-looking, app unusab
 4. /brana-4-tasks              → TASKS.md (with context packs + demo-gate tasks)
 5. /brana-5-implement          → implement in 2–3-task batches; halt at each demo gate
 6. /brana-6-review             → 6a code review (diffs) + 6b product walkthrough
-7. v1 exit bar: kernel journey passes in a release build, witnessed by you;
-   every GATE SKIPPED walked or explicitly accepted
+7. v1 exit bar = the release-gate task: kernel journey passes in a release
+   build through the production composition, witnessed by you; every
+   GATE SKIPPED walked or explicitly accepted
 ```
 
 ### Post-v1 iteration (change loop):
@@ -49,7 +50,7 @@ Scope decomposition first (multi-subsystem ideas split into per-cycle sub-produc
 
 **Triggers:** "UX", "screens", "wireframes", "write the PRD", "architecture", "phase 2"
 
-Order matters: **UX → PRD → ARCHITECTURE**. UX.md (root, living doc) is the floor plan: screen inventory with ids, navigation map, per-screen text wireframes with empty/loading/error states, key flows, density notes. PRD acceptance criteria must be falsifiable (observable behavior, never adjectives or "tests pass"). ARCHITECTURE.md commits to one stack, maps component hierarchy to UX screen ids, and obeys the traceability rule: every kernel-journey step names its serving API call/event.
+Order matters: **UX → PRD → ARCHITECTURE**. UX.md (root, living doc) is the floor plan: screen inventory with ids, navigation map, per-screen text wireframes with empty/loading/error states, key flows, density notes. PRD acceptance criteria must be falsifiable (observable behavior, never adjectives or "tests pass"). ARCHITECTURE.md commits to one stack, maps component hierarchy to UX screen ids, and obeys the traceability rule: every kernel-journey step names its serving API call/event; an external system in the kernel journey or a v1 flow (anything that will be faked) gets a versioned **wire contract** (exact request/response shapes, auth, error semantics).
 
 **Read UX.md and walk the flows yourself before Phase 3** — intent is the one thing no machine check verifies.
 
@@ -57,15 +58,15 @@ Order matters: **UX → PRD → ARCHITECTURE**. UX.md (root, living doc) is the 
 
 **Triggers:** "implementation plan", "conventions", "design system", "consistency gate", "phase 3"
 
-Opus-tier leverage point. PLAN.md's first milestone is the **walking skeleton** (thinnest slice that makes the kernel journey pass — ugly fine, fake not), with a DEMO GATE every 2–3 chunks. DESIGN.md styles the screens UX.md defined; single-source rule (values only in the token table). Pre-built design system → adoption map + gap list instead of new tokens; reference pack → approved style-extraction pass first.
+Opus-tier leverage point. PLAN.md's first milestone is the **walking skeleton** (thinnest slice that makes the kernel journey pass — ugly fine, fake not), with a DEMO GATE every 2–3 chunks; every gate launch command is the production entry point with disposable inputs (same-composition rule), and the last entry is the **RELEASE GATE** — the kernel journey in a release build, each step served through the production composition. DESIGN.md styles the screens UX.md defined; single-source rule (values only in the token table). Pre-built design system → adoption map + gap list instead of new tokens; reference pack → approved style-extraction pass first.
 
-Then the **Consistency Gate**: machine pass (contradictions, placeholders, open decisions, unserved UX flow steps) is mandatory and blocking — findings fixed before Phase 4; human pass is advisory but read SPEC.md + UX.md at minimum (~20 min each).
+Then the **Consistency Gate**: machine pass (contradictions, placeholders, open decisions, unserved UX flow steps, unserved gate journey steps, bespoke gate compositions, missing wire contracts / RELEASE GATE) is mandatory and blocking — findings fixed before Phase 4; human pass is advisory but read SPEC.md + UX.md at minimum (~20 min each).
 
 ### Phase 4 — `/brana-4-tasks`
 
 **Triggers:** "split the plan", "create tasks", "phase 4"
 
-TASKS.md per task: id, objective, dependencies, files, acceptance criteria (**observable behaviors** — "compiles"/"renders" are gates, never the criterion), difficulty, **interfaces block** (CONSUMES/PRODUCES — exact signatures quoted from ARCHITECTURE.md, so an isolated implementer never reads neighbor code), context pack (files + ARCHITECTURE sections; UI tasks name UX screen ids and get DESIGN.md). DEMO GATE entries preserved as explicit tasks with the human's walkthrough result as completion artifact (screenshots optional); skipped gates marked `GATE SKIPPED`, never deleted. Walking-skeleton tasks first, non-reorderable. Context packs are hints, not gospel.
+TASKS.md per task: id, objective, dependencies, files, acceptance criteria (**observable behaviors** — "compiles"/"renders" are gates, never the criterion), difficulty, **interfaces block** (CONSUMES/PRODUCES — exact signatures quoted from ARCHITECTURE.md, so an isolated implementer never reads neighbor code), context pack (files + ARCHITECTURE sections; UI tasks name UX screen ids and get DESIGN.md). DEMO GATE entries preserved as explicit tasks with the human's walkthrough result as completion artifact (screenshots optional); the RELEASE GATE becomes a gate task too; skipped gates marked `GATE SKIPPED`, never deleted. Verified-fake rule when wire contracts exist: fake and real adapter share one contract suite; live calls only in a bounded canary through the production composition. Walking-skeleton tasks first, non-reorderable. Context packs are hints, not gospel.
 
 ### Phase 5 — `/brana-5-implement [task-id]`
 
@@ -86,11 +87,11 @@ TASKS.md per task: id, objective, dependencies, files, acceptance criteria (**ob
 
 **Triggers:** "code review", "demo gate", "product review", "walkthrough", "exit bar", "phase 6"
 
-**6a code review** — different model than the implementer (Opus reviews Sonnet; cross-vendor via prompt mode when in chat UIs). Diffs only. Precondition: lint and typecheck must be green before the review starts — a finding a linter could catch is a lint-config gap, not a review finding. Reviewer independence: diff + contracts + the reviewed tasks' acceptance criteria from TASKS.md only — never the implementer's report/rationale, never "do not flag X"; plan-vs-finding conflicts escalate to you. Reports bugs, security, races, contract/convention violations, UI: design violations (raw values, missing states, contrast/focus) + UX violations (structure/flow diverging from UX.md), and category 7 — test adequacy (missing test at the declared layer, an assertion-free test, a test that mocks away the behavior under review). Findings → `specs/NNN-name/reviews/REVIEW_N.md` → Phase 5 fixer session.
+**6a code review** — different model than the implementer (Opus reviews Sonnet; cross-vendor via prompt mode when in chat UIs). Diffs only. Precondition: lint and typecheck must be green before the review starts — a finding a linter could catch is a lint-config gap, not a review finding. Reviewer independence: diff + contracts + the reviewed tasks' acceptance criteria from TASKS.md only — never the implementer's report/rationale, never "do not flag X"; plan-vs-finding conflicts escalate to you. Reports bugs, security, races, contract/convention violations, UI: design violations (raw values, missing states, contrast/focus) + UX violations (structure/flow diverging from UX.md), category 7 — test adequacy (missing test at the declared layer, an assertion-free test, a test that mocks away the behavior under review), and category 8 — composition and fake integrity (bespoke wiring where the production entry point belongs; a fake diverging from its wire contract). Findings → `specs/NNN-name/reviews/REVIEW_N.md` → Phase 5 fixer session.
 
 **6b product review (demo gate)** — you + the running app, zero tokens: launch, walk the scripted journey, check falsifiable criteria, judge against UX.md/DESIGN.md and your own eyes ("passes contracts but looks wrong" is valid — contracts are floors). Screenshots optional (→ `specs/NNN-name/screenshots/`) — they enable fix prompts and the optional vision pass. Findings become head-of-queue tasks; feature work does not resume past a failed gate.
 
-**v1 exit bar:** kernel journey end-to-end in a release build, witnessed, including restart/offline/error paths; every `GATE SKIPPED` walked or explicitly accepted. "All tasks Done" is not the bar.
+**v1 exit bar:** the release-gate task, preflighted like any gate — kernel journey end-to-end in a release build through the production composition, witnessed, including restart/offline/error paths; production-composition proof + verified-fake suites green when fakes stood in; every `GATE SKIPPED` walked or explicitly accepted; unresolved `GATE BLOCKED` fails the bar. "All tasks Done" is not the bar. Blocked-gate fixes that reveal a missing subsystem spawn a child spec cycle (Spawn route), never a wedge into the current TASKS.md.
 
 ### Phase 7 — `/brana-7-change [request]`
 

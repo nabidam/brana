@@ -1,4 +1,4 @@
-# Brana — App Development Workflow (v1.1)
+# Brana — App Development Workflow (v1.2)
 
 Consolidated from 5 agent proposals, revised after a v1 post-mortem. Optimized for token efficiency + output quality. Works for any app idea. Folds in tested patterns from two public workflows ([superpowers](https://github.com/obra/superpowers), [compound-engineering](https://github.com/EveryInc/compound-engineering)): path-based delegation, task interface blocks, live verification evidence, reviewer independence, and doc status stamps. Pre-release lineage (internal v2.0–v2.2) is in CHANGELOG.md.
 
@@ -51,6 +51,9 @@ The failure mode this workflow guards against: every task green, every doc consi
 - **Verify script:** one documented command running build + lint + typecheck + full test suite (+ the journey suite once it exists). UI stacks: verify also runs an automated a11y check (axe or equivalent), wired at Task 0 alongside the rest of the script. Created in Task 0, recorded in CONVENTIONS.md. Every task completion runs it; demo-gate preflight runs it.
 - **Journey suite:** the automated e2e tests produced by crystallization tasks — each demo gate's walked journey, encoded after its first witnessed pass (Reality Rule 8). Part of verify once it exists.
 - **Evidence file:** `specs/NNN-name/evidence/task-N.txt` — the exercised command plus the last ~30 lines of its output, captured live at task completion. The TASKS.md done-mark references its path.
+- **Production composition:** the app's real entry point with its production wiring. Disposable/fixture modes inject config, seams, and fakes _inside_ that composition — never a parallel gate-only assembly. A gate's launch command is the production entry point with disposable inputs; a bespoke gate runtime is a blocking finding (it lets every gate pass while the production path stays unbuilt).
+- **Wire contract** (conditional — only when the kernel journey or a v1 flow depends on an external system that will be faked): a versioned, exact request/response contract for that integration — shapes, auth, error semantics — specified in ARCHITECTURE.md. Every fake of that system is a **verified fake**: one shared contract suite runs against both the fake and the real adapter, and the fake must reject what the contract rejects. The real-adapter side is offline-assertable (request-shape assertions, recorded fixtures); live provider calls happen only in a bounded canary routed through the production composition.
+- **Release gate:** the v1 exit bar written as PLAN.md's final gate entry, with full demo-gate anatomy — journey (the kernel journey in a release build, unglamorous steps included), observations, runnability preconditions, and a serving chunk per step _through the production composition_. It gets a preflight and `GATE BLOCKED` semantics like any gate; discovering at the release gate that a kernel-journey step has no production-composition path is the failure this entry exists to move to Phase 3.
 
 ## Model Bindings
 
@@ -245,11 +248,17 @@ build on this name. Every UX.md flow must be
 traceable through the contract: for each kernel-journey step, name the
 API call or event that serves it; if a step has no serving contract
 (e.g. "reopen app → data restored" needs a list/read endpoint), add it.
+When the kernel journey or a v1 flow depends on an EXTERNAL SYSTEM (a
+paid API, third-party service — anything that will be faked in tests),
+give that integration a versioned WIRE CONTRACT section: exact
+request/response shapes, auth, error semantics — precise enough that a
+fake can be validated against it. Extend traceability to those steps:
+each names its wire contract. No external system → omit the section.
 Do not write implementation code. Output Markdown only.
 [paste PRD.md + UX.md]
 ```
 
-That traceability rule is load-bearing: a contract can silently lack the read/list operation a journey step depends on, and nothing downstream will ever notice — implementers build only what the contract names.
+That traceability rule is load-bearing: a contract can silently lack the read/list operation a journey step depends on, and nothing downstream will ever notice — implementers build only what the contract names. The wire-contract rule is the same failure at the external boundary: without it, the fake's convenience shape becomes the de-facto contract, every test passes against it, and the first real request is built at release time.
 
 PRD.md is written with frontmatter `status: draft` (UX.md and ARCHITECTURE.md are living docs — no stamps).
 
@@ -280,7 +289,16 @@ produce four complete markdown files:
    runnability preconditions — launch command, seed/fixture data, and
    which prior chunk serves each journey step; a journey that would
    otherwise touch production state names a disposable/fixture path
-   (fail-closed against non-disposable targets). For each chunk: files
+   (fail-closed against non-disposable targets). SAME-COMPOSITION RULE:
+   every gate launch command is the app's production entry point with
+   disposable config/fakes injected at seams — a bespoke gate-only
+   composition is a blocking finding. The LAST entry is the RELEASE
+   GATE: the kernel journey in a release build, same gate anatomy, each
+   step served by a chunk through the production composition; when
+   fakes stand in for an external system, one chunk before it is the
+   production-composition proof — the production entry point composes
+   fully and runs against a disposable target (live calls stay
+   canary-only). For each chunk: files
    touched, exact requirements, falsifiable acceptance criteria, what
    NOT to do. Max ~300 lines of new code per chunk.
 2. CONVENTIONS.md — naming, error handling style, folder rules, test
@@ -341,11 +359,16 @@ placeholder or template variable, every decision left open ("X or Y"),
 every UX.md flow step with no serving ARCHITECTURE.md contract, and —
 in PLAN.md — every DEMO GATE journey step with no serving chunk before
 the gate, plus every gate missing its runnability preconditions
-(launch command, seed data). Also flag: every PRD.md acceptance
-criterion that would be tagged `[e2e@gate-N]` (behavior only observable
-end-to-end in the running app) with no corresponding gate journey step
-in PLAN.md; and every fg/bg contrast ratio listed in DESIGN.md's token
-table that falls below WCAG AA.
+(launch command, seed data), every gate launch command that is not the
+production entry point with disposable inputs (a bespoke gate-only
+composition), a missing RELEASE GATE entry, and every RELEASE GATE
+journey step with no serving chunk through the production composition.
+Also flag: every external system in SPEC.md's kernel journey or a v1
+flow that ARCHITECTURE.md gives no wire contract; every PRD.md
+acceptance criterion that would be tagged `[e2e@gate-N]` (behavior only
+observable end-to-end in the running app) with no corresponding gate
+journey step in PLAN.md; and every fg/bg contrast ratio listed in
+DESIGN.md's token table that falls below WCAG AA.
 If a pre-built design system is attached, also list every token or
 component name DESIGN.md cites that does not exist in the system files.
 Report only findings with doc + quote. No rewrites.
@@ -399,7 +422,14 @@ Rules:
   on all of them), the human's walkthrough result as the completion artifact
   (screenshots optional). A journey step with no implementing task
   before the gate is a blocking finding — reorder or add the wiring
-  task; never emit a gate that isn't walkable at its position. A
+  task; never emit a gate that isn't walkable at its position. Every
+  gate launch command is the production entry point with disposable
+  inputs (same-composition rule) — a bespoke gate-only composition is
+  the same blocking finding. PLAN.md's RELEASE GATE becomes a gate
+  task too, same anatomy: its journey is the kernel journey in a
+  release build, each step traced to a task exercised through the
+  production composition, the production-composition proof task among
+  its dependencies. A
   skipped gate is marked GATE SKIPPED on the task, never deleted. Append
   one unglamorous step to every gate journey, drawn from PRD.md's
   error/edge-case list, rotating across gates: restart → offline →
@@ -416,6 +446,14 @@ Rules:
   journey is eventually walked, at latest the v1 exit bar. Feature work
   may proceed past a deferred crystallization task as part of the skip
   — the skip already accepted the debt.
+- Verified-fake rule (only when ARCHITECTURE.md has wire contracts):
+  a task producing a fake of an external system gets a `[contract]`
+  criterion running ONE shared suite against both the fake and the
+  real adapter, asserting the wire contract — the fake must reject
+  what the contract rejects. The real-adapter side is offline
+  (request-shape assertions, recorded fixtures); live provider calls
+  happen only in a bounded canary task routed through the production
+  composition.
 - The walking-skeleton milestone tasks come first and may not be
   reordered after feature tasks.
 - Tasks tiny: ~50–300 lines of code, one prompt each.
@@ -505,7 +543,12 @@ contrast/focus failures) and UX contract violations (screen structure or
 flow steps that diverge from UX.md), (7) test adequacy: an acceptance
 criterion with no test at its declared layer, a test that asserts
 nothing meaningful (runs without checking the outcome), or a test that
-mocks away the exact behavior the criterion requires. Each finding:
+mocks away the exact behavior the criterion requires, (8) composition
+and fake integrity: a runtime or gate path that composes bespoke
+wiring instead of the production entry point with injected seams, or a
+fake of an external system that diverges from its wire contract
+(accepts what the contract rejects, or lacks the shared contract
+suite). Each finding:
 file:line, severity, one-line fix. Objective checks only — no style
 opinions, no praise, no rewrites.
 [paste diff + contract sections + acceptance criteria]
@@ -546,7 +589,9 @@ Here are screenshots of the app and the UX.md + DESIGN.md contracts:
 that would most improve clarity and hierarchy. Findings only.
 ```
 
-**v1 exit bar:** the kernel journey passes end-to-end in a release build, witnessed by you, including the unglamorous steps (restart, offline, error paths named in the PRD), _and_ the kernel journey's crystallization-task e2e test is green in the release build. Every `GATE SKIPPED` entry in TASKS.md is listed here and either walked now or explicitly accepted (accepting a skipped gate also explicitly accepts — and records — its DEFERRED crystallization task); an unresolved `GATE BLOCKED` fails the bar outright — a gate that never became runnable is a defect, not debt. Every crystallization task across every gate must be Done or explicitly accepted with its skipped gate — a gate walked but never crystallized is an untested journey by the next change. "All tasks Done" is not the bar; this is.
+**v1 exit bar:** the exit bar is the **release gate** task (Verification Machinery) and runs like any gate — the agent preflights it (verify script, release build, launch via the production entry point, journey entry reachable; failure is `GATE BLOCKED`, fix tasks first). The bar: the kernel journey passes end-to-end in a release build through the production composition, witnessed by you, including the unglamorous steps (restart, offline, error paths named in the PRD), _and_ the kernel journey's crystallization-task e2e test is green in the release build, _and_ — when fakes stood in for an external system — the production-composition proof task and the verified-fake contract suites are Done/green. Every `GATE SKIPPED` entry in TASKS.md is listed here and either walked now or explicitly accepted (accepting a skipped gate also explicitly accepts — and records — its DEFERRED crystallization task); an unresolved `GATE BLOCKED` fails the bar outright — a gate that never became runnable is a defect, not debt. Every crystallization task across every gate must be Done or explicitly accepted with its skipped gate — a gate walked but never crystallized is an untested journey by the next change. "All tasks Done" is not the bar; this is.
+
+**Spawn route (pre-v1):** when fixing a `GATE BLOCKED` — any gate, including the release gate — reveals a missing subsystem or a new/changed contract (more than a few fix tasks, or a new ARCHITECTURE.md section), do not wedge it into the current TASKS.md: spawn a scoped child cycle in a new `specs/NNN-name/` dir (Phase 1→6 on the delta, Route C shape, ARCHITECTURE.md patched not regenerated). The parent gate stays `GATE BLOCKED` referencing the child spec; the stale-interface-block rule (Phase 7) runs on the parent's not-done tasks; the parent preflight re-runs only after the child cycle completes.
 
 ---
 
@@ -569,7 +614,7 @@ No verify script / journey suite yet (pre-v1.1 app, or all gates were skipped) �
 
 **Escalation rules:**
 
-- Any change that mid-flight touches a schema/API/module boundary stops and re-enters as Route C.
+- Any change that mid-flight touches a schema/API/module boundary stops and re-enters as Route C. (Pre-v1, the same discovery inside a blocked gate routes through the Spawn route in Phase 6b.)
 - Any change that mid-flight would drop or degrade user-visible behavior stops for your decision — same stop-the-line rule as Phase 5. This stays a hard stop in every medium. Route R additionally freezes on ANY user-visible change discovered mid-flight, not just a drop — a refactor that changes behavior isn't a refactor; same hard stop.
 - **Stale-interface-block rule:** any mid-cycle contract patch (CONSUMES/PRODUCES section of ARCHITECTURE.md changes) triggers a cheap pass that diffs old vs. new contract and updates the CONSUMES/PRODUCES blocks of every not-done TASKS.md task quoting the changed section — before the next implementation session starts. An implementer working from a stale interfaces block is the seam-bug failure mode rule 8 exists to close.
 

@@ -35,6 +35,7 @@ No visual styling, no colors, no code. If SPEC names a reference pack, adapt its
 - COMMIT to one concrete stack and one design per decision — no "e.g. X or Y", no alternatives left open.
 - **Name the test harness per layer, including the e2e/journey harness** — the walking skeleton needs it and CONVENTIONS.md's Test strategy (Phase 3) and every gate's crystallization task (Phase 4) build on this name.
 - **Traceability (load-bearing):** every UX.md flow must be traceable through the contract — for each kernel-journey step, name the API call or event that serves it; a step with no serving contract (e.g. "reopen app → data restored" needs a list/read endpoint) means add the contract. Implementers build only what the contract names.
+- **Wire contracts (conditional):** when the kernel journey or a v1 flow depends on an external system (a paid API, third-party service — anything that will be faked in tests), that integration gets a versioned **wire contract** section: exact request/response shapes, auth, error semantics — precise enough that a fake can be validated against it. Traceability extends to those steps: each names its wire contract. No external system → omit. Without this, the fake's convenience shape becomes the de-facto contract and the first real request is built at release time.
 
 Include an empty **Decision log** section at the end of the file — append-only, one line per future decision as `YYYY-MM-DD — decision — why`; Phase 7 doc sync and Route C patches append to it, never delete an earlier entry's why.
 
@@ -100,6 +101,12 @@ build on this name. Every UX.md flow must be traceable through the
 contract: for each kernel-journey step, name the API call or event
 that serves it; if a step has no serving contract (e.g. "reopen app →
 data restored" needs a list/read endpoint), add it.
+When the kernel journey or a v1 flow depends on an EXTERNAL SYSTEM (a
+paid API, third-party service — anything that will be faked in tests),
+give that integration a versioned WIRE CONTRACT section: exact
+request/response shapes, auth, error semantics — precise enough that a
+fake can be validated against it. Extend traceability to those steps:
+each names its wire contract. No external system → omit the section.
 Do not write implementation code. Output Markdown only.
 [embed PRD.md + UX.md]
 ```

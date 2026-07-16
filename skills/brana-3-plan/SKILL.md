@@ -16,7 +16,7 @@ The workflow's most leveraged phase: every implementation token downstream is sp
 
 Read the current cycle's PRD.md and SPEC.md design direction (latest `specs/NNN-name/`) and root ARCHITECTURE.md + UX.md. Act as a senior full-stack architect with strong product design taste. Produce four complete files:
 
-1. **PLAN.md** — implementation plan in ordered chunks. FIRST MILESTONE is the **WALKING SKELETON**: the thinnest end-to-end slice that makes the kernel journey pass in the real app (ugly is fine, fake is not). Later chunks deepen it. Every 2–3 chunks, insert a **DEMO GATE** — cadence is the target, **runnability is the constraint**: a gate sits only where the app launches and its journey is walkable end-to-end in the running app. Chunks between gates are vertical slices (each gate interval ends runnable, like the skeleton), never horizontal layers whose UI lands chunks later. No walkable point within ~4 chunks is a plan smell — restructure the chunks, don't stretch the gate. Each gate entry names: the exact journey to walk, what must be observed, and its **runnability preconditions** — the launch command, seed/fixture data the journey needs, and which prior chunk serves each journey step. A journey that would otherwise touch production state names a disposable/fixture path (fail-closed against non-disposable targets) as its launch precondition. For each chunk: files touched, exact requirements, falsifiable acceptance criteria, what NOT to do. Max ~300 lines of new code per chunk. Write to `specs/NNN-name/` with frontmatter `status: draft`.
+1. **PLAN.md** — implementation plan in ordered chunks. FIRST MILESTONE is the **WALKING SKELETON**: the thinnest end-to-end slice that makes the kernel journey pass in the real app (ugly is fine, fake is not). Later chunks deepen it. Every 2–3 chunks, insert a **DEMO GATE** — cadence is the target, **runnability is the constraint**: a gate sits only where the app launches and its journey is walkable end-to-end in the running app. Chunks between gates are vertical slices (each gate interval ends runnable, like the skeleton), never horizontal layers whose UI lands chunks later. No walkable point within ~4 chunks is a plan smell — restructure the chunks, don't stretch the gate. Each gate entry names: the exact journey to walk, what must be observed, and its **runnability preconditions** — the launch command, seed/fixture data the journey needs, and which prior chunk serves each journey step. A journey that would otherwise touch production state names a disposable/fixture path (fail-closed against non-disposable targets) as its launch precondition. **Same-composition rule:** every gate launch command is the app's production entry point with disposable config/fakes injected at seams — a bespoke gate-only composition is a blocking finding (it lets every gate pass while the production path stays unbuilt). The **last entry is the RELEASE GATE** (the v1 exit bar as a plan entry): the kernel journey in a release build, same gate anatomy, each step served by a chunk through the production composition; when fakes stand in for an external system, one chunk before it is the **production-composition proof** — the production entry point composes fully and runs against a disposable target (live calls stay canary-only). For each chunk: files touched, exact requirements, falsifiable acceptance criteria, what NOT to do. Max ~300 lines of new code per chunk. Write to `specs/NNN-name/` with frontmatter `status: draft`.
 2. **CONVENTIONS.md** — naming, error handling style, folder rules, test style, commit style, and **Test strategy**: which layer (`[unit]`/`[integration]`/`[contract]`/`[e2e@gate-N]`) verifies which criterion type, the frameworks for each, the e2e/journey-test harness named in ARCHITECTURE.md, and the verify command. Under 2 pages: every line is context each future task pays for. **Lint-over-prose rule:** a convention a machine can check becomes a lint rule at Task 0; prose is only for what lint can't see. Repo root (living doc).
 3. **DESIGN.md** — the design system contract, styling the screens UX.md already defined. Repo root (living doc). Include:
    - **Direction**: 3 adjectives, reference apps, one deliberate visual signature.
@@ -35,7 +35,7 @@ Do not write implementation code. Then run the consistency gate below. Do not sp
 
 Generated contracts routinely ship with the same fact stated two ways, unfilled placeholders, and open decisions — implementers don't halt on contradictions, they pick a clause arbitrarily per file.
 
-1. **Machine pass (mandatory, blocking)** — across SPEC, UX, PRD, ARCHITECTURE, PLAN, DESIGN, CONVENTIONS, FILE_STRUCTURE, list: every internal contradiction (same fact, different values in two places), every unresolved placeholder or template variable, every decision left open ("X or Y"), every UX.md flow step with no serving ARCHITECTURE.md contract, and — in PLAN.md — every DEMO GATE journey step with no serving chunk before the gate, plus every gate missing its runnability preconditions (launch command, seed data). Also flag: every PRD.md acceptance criterion that would be tagged `[e2e@gate-N]` (behavior only observable end-to-end in the running app) with no corresponding gate journey step in PLAN.md; and every fg/bg contrast ratio listed in DESIGN.md's token table that falls below WCAG AA. Pre-built design system attached → also list every token/component name DESIGN.md cites that doesn't exist in the system files. Fix all findings before proceeding. Machine pass clean → flip the `status:` stamp on SPEC.md, PRD.md, and PLAN.md from `draft` to `gate-passed` (Phase 4 refuses a `draft` PLAN.md).
+1. **Machine pass (mandatory, blocking)** — across SPEC, UX, PRD, ARCHITECTURE, PLAN, DESIGN, CONVENTIONS, FILE_STRUCTURE, list: every internal contradiction (same fact, different values in two places), every unresolved placeholder or template variable, every decision left open ("X or Y"), every UX.md flow step with no serving ARCHITECTURE.md contract, and — in PLAN.md — every DEMO GATE journey step with no serving chunk before the gate, every gate missing its runnability preconditions (launch command, seed data), every gate launch command that is not the production entry point with disposable inputs (a bespoke gate-only composition), a missing RELEASE GATE entry, and every RELEASE GATE journey step with no serving chunk through the production composition. Also flag: every external system in SPEC.md's kernel journey or a v1 flow that ARCHITECTURE.md gives no wire contract; every PRD.md acceptance criterion that would be tagged `[e2e@gate-N]` (behavior only observable end-to-end in the running app) with no corresponding gate journey step in PLAN.md; and every fg/bg contrast ratio listed in DESIGN.md's token table that falls below WCAG AA. Pre-built design system attached → also list every token/component name DESIGN.md cites that doesn't exist in the system files. Fix all findings before proceeding. Machine pass clean → flip the `status:` stamp on SPEC.md, PRD.md, and PLAN.md from `draft` to `gate-passed` (Phase 4 refuses a `draft` PLAN.md).
 2. **Human pass (advisory)** — present the machine findings plus per-doc summaries and remind the user: read SPEC.md and UX.md at minimum (~20 min each — they encode intent, which no machine check verifies; wrong-but-consistent docs pass every machine pass). "Continue" proceeds.
 
 ## Prompt mode templates
@@ -61,7 +61,16 @@ produce four complete markdown files:
    runnability preconditions — launch command, seed/fixture data, and
    which prior chunk serves each journey step; a journey that would
    otherwise touch production state names a disposable/fixture path
-   (fail-closed against non-disposable targets). For each chunk: files
+   (fail-closed against non-disposable targets). SAME-COMPOSITION RULE:
+   every gate launch command is the app's production entry point with
+   disposable config/fakes injected at seams — a bespoke gate-only
+   composition is a blocking finding. The LAST entry is the RELEASE
+   GATE: the kernel journey in a release build, same gate anatomy, each
+   step served by a chunk through the production composition; when
+   fakes stand in for an external system, one chunk before it is the
+   production-composition proof — the production entry point composes
+   fully and runs against a disposable target (live calls stay
+   canary-only). For each chunk: files
    touched, exact requirements, falsifiable acceptance criteria, what
    NOT to do. Max ~300 lines of new code per chunk.
 2. CONVENTIONS.md — naming, error handling style, folder rules, test
@@ -118,11 +127,16 @@ placeholder or template variable, every decision left open ("X or Y"),
 every UX.md flow step with no serving ARCHITECTURE.md contract, and —
 in PLAN.md — every DEMO GATE journey step with no serving chunk before
 the gate, plus every gate missing its runnability preconditions
-(launch command, seed data). Also flag: every PRD.md acceptance
-criterion that would be tagged `[e2e@gate-N]` (behavior only observable
-end-to-end in the running app) with no corresponding gate journey step
-in PLAN.md; and every fg/bg contrast ratio listed in DESIGN.md's token
-table that falls below WCAG AA.
+(launch command, seed data), every gate launch command that is not the
+production entry point with disposable inputs (a bespoke gate-only
+composition), a missing RELEASE GATE entry, and every RELEASE GATE
+journey step with no serving chunk through the production composition.
+Also flag: every external system in SPEC.md's kernel journey or a v1
+flow that ARCHITECTURE.md gives no wire contract; every PRD.md
+acceptance criterion that would be tagged `[e2e@gate-N]` (behavior only
+observable end-to-end in the running app) with no corresponding gate
+journey step in PLAN.md; and every fg/bg contrast ratio listed in
+DESIGN.md's token table that falls below WCAG AA.
 If a pre-built design system is attached, also list every token or
 component name DESIGN.md cites that does not exist in the system files.
 Report only findings with doc + quote. No rewrites.

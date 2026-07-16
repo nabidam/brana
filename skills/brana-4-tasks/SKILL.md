@@ -26,8 +26,9 @@ Read the current cycle's PLAN.md (latest `specs/NNN-name/`), root ARCHITECTURE.m
 
 Rules:
 
-- Preserve PLAN.md's **DEMO GATE** entries as explicit tasks: journey to walk, observations required, a **preflight block** (exact build/launch command — a disposable/fixture path, fail-closed against non-disposable targets, when the journey would otherwise touch production state; seed/fixture command if the journey needs data; and the task ids whose output the journey walks — the gate depends on all of them), the human's walkthrough result as the completion artifact (screenshots optional). A journey step with no implementing task before the gate is a blocking finding — reorder or add the wiring task; never emit a gate that isn't walkable at its position. A skipped gate is marked `GATE SKIPPED` on the task, never deleted. Append one unglamorous step to every gate journey, drawn from PRD.md's error/edge-case list, rotating across gates: restart → offline → invalid input → restart → ... — a gate never ships checking only the happy path.
+- Preserve PLAN.md's **DEMO GATE** entries as explicit tasks: journey to walk, observations required, a **preflight block** (exact build/launch command — a disposable/fixture path, fail-closed against non-disposable targets, when the journey would otherwise touch production state; seed/fixture command if the journey needs data; and the task ids whose output the journey walks — the gate depends on all of them), the human's walkthrough result as the completion artifact (screenshots optional). A journey step with no implementing task before the gate is a blocking finding — reorder or add the wiring task; never emit a gate that isn't walkable at its position. Every gate launch command is the production entry point with disposable inputs (same-composition rule) — a bespoke gate-only composition is the same blocking finding. PLAN.md's **RELEASE GATE** becomes a gate task too, same anatomy: its journey is the kernel journey in a release build, each step traced to a task exercised through the production composition, the production-composition proof task among its dependencies. A skipped gate is marked `GATE SKIPPED` on the task, never deleted. Append one unglamorous step to every gate journey, drawn from PRD.md's error/edge-case list, rotating across gates: restart → offline → invalid input → restart → ... — a gate never ships checking only the happy path.
 - Every DEMO GATE task is immediately followed by a **crystallization task**: blocked until the gate's walkthrough passes, it encodes the just-walked journey (including its unglamorous step) as an automated e2e test on the harness named in CONVENTIONS.md's Test strategy; the new test joins the journey suite. No feature task may start before its preceding gate's crystallization task is done. A `GATE SKIPPED` gate defers its crystallization task instead — mark it `DEFERRED` with the same visible-debt mark as the gate; it unblocks once the journey is eventually walked, at latest the v1 exit bar. Feature work may proceed past a deferred crystallization task as part of the skip — the skip already accepted the debt.
+- **Verified-fake rule** (only when ARCHITECTURE.md has wire contracts): a task producing a fake of an external system gets a `[contract]` criterion running ONE shared suite against both the fake and the real adapter, asserting the wire contract — the fake must reject what the contract rejects. The real-adapter side is offline (request-shape assertions, recorded fixtures); live provider calls happen only in a bounded canary task routed through the production composition.
 - The walking-skeleton milestone tasks come first and may not be reordered after feature tasks.
 - Tasks tiny — ~50–300 lines of new code, one prompt each. Task ids numbered fresh per cycle dir. Task 0 of a new app is always the scaffold (file tree from FILE_STRUCTURE.md, configs, data migrations, no feature logic); its smoke test is the app booting via a documented run command, recorded in CONVENTIONS.md.
 
@@ -73,7 +74,14 @@ Rules:
   on all of them), the human's walkthrough result as the completion artifact
   (screenshots optional). A journey step with no implementing task
   before the gate is a blocking finding — reorder or add the wiring
-  task; never emit a gate that isn't walkable at its position. A
+  task; never emit a gate that isn't walkable at its position. Every
+  gate launch command is the production entry point with disposable
+  inputs (same-composition rule) — a bespoke gate-only composition is
+  the same blocking finding. PLAN.md's RELEASE GATE becomes a gate
+  task too, same anatomy: its journey is the kernel journey in a
+  release build, each step traced to a task exercised through the
+  production composition, the production-composition proof task among
+  its dependencies. A
   skipped gate is marked GATE SKIPPED on the task, never deleted. Append
   one unglamorous step to every gate journey, drawn from PRD.md's
   error/edge-case list, rotating across gates: restart → offline →
@@ -90,6 +98,14 @@ Rules:
   is eventually walked, at latest the v1 exit bar. Feature work may
   proceed past a deferred crystallization task as part of the skip —
   the skip already accepted the debt.
+- Verified-fake rule (only when ARCHITECTURE.md has wire contracts):
+  a task producing a fake of an external system gets a [contract]
+  criterion running ONE shared suite against both the fake and the
+  real adapter, asserting the wire contract — the fake must reject
+  what the contract rejects. The real-adapter side is offline
+  (request-shape assertions, recorded fixtures); live provider calls
+  happen only in a bounded canary task routed through the production
+  composition.
 - The walking-skeleton milestone tasks come first and may not be
   reordered after feature tasks.
 - Tasks tiny: ~50–300 lines of code, one prompt each.
