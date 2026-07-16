@@ -1,5 +1,5 @@
 ---
-status: draft
+status: gate-passed
 profile: lite
 ---
 

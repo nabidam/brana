@@ -47,7 +47,7 @@ CREATE INDEX IF NOT EXISTS idx_entries_date ON entries(date);
 | `storage.add_entry(date: date, mood: int, note: str \| None) -> Entry` | returns saved row (id, date, mood, note, created_at) | raises `ValueError` on mood outside 1–5 (also enforced by CHECK) |
 | `storage.list_entries(limit: int = 30) -> list[Entry]` | newest date first, then newest created_at | — |
 | `storage.entries_between(start: date, end: date) -> list[Entry]` | inclusive range for reports | — |
-| `reports.build_report(period: Literal["week","month","year"], today: date) -> Report` | period bounds, per-bucket averages (day or month), period average = mean of daily averages, 1 decimal | — |
+| `reports.build_report(period: Literal["week","month","year"], today: date) -> Report` | period bounds, per-bucket averages (day buckets = mean of that day's entries; month buckets = mean of that month's daily averages), period average = mean of daily averages, 1 decimal | — |
 | CLI validation (in `cli.py`) | mood int 1–5; `--date` parsed as `YYYY-MM-DD`, must not be in the future | exit code 2, one-line stderr message naming valid range/format |
 
 `Entry` and `Report` are frozen dataclasses in their owning modules.
@@ -65,7 +65,7 @@ Exit codes: 0 success (including empty states), 2 validation error, 1 unexpected
 | 5. `report week` → average + per-day breakdown (S3) | `reports.build_report("week")` → `storage.entries_between` → `render.report_table` |
 | Empty/error states (S2/S3/S4) | `render.empty_state`, `cli` error path (stderr, exit 2) |
 
-No external systems → no wire contracts. No auth / no cross-boundary input → no threat model (lite qualification holds).
+No external systems → nothing crosses a wire, no cross-process contract fixtures needed. No auth / no cross-boundary input → no threat model (lite qualification holds).
 
 ## Error handling
 
