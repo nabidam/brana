@@ -11,7 +11,8 @@ from datetime import date
 
 import pytest
 
-from dally import render
+from dally import render, reports, storage
+from dally.reports import Heatmap
 from dally.storage import Entry
 
 
@@ -153,3 +154,67 @@ def test_report_table_uses_the_same_mood_palette(monkeypatch: pytest.MonkeyPatch
     )
     # Averages are colored through the single mood_style palette (nearest 1–5).
     assert seen and all(1 <= m <= 5 for m in seen)
+
+
+# --- S6 heatmap grid ---------------------------------------------------------
+
+
+def _heatmap() -> Heatmap:
+    # A realistic full calendar-year grid (12 well-spaced month columns), with a
+    # single logged mood-4 day so the palette path is exercised. Built through the
+    # real reports layer against the temp-DB fixture.
+    storage.add_entry(date(2026, 1, 1), 4, None)
+    return reports.build_heatmap(date(2026, 7, 17), year=2026)
+
+
+def test_heatmap_grid_has_seven_day_rows_and_labels(capsys: pytest.CaptureFixture[str]) -> None:
+    render.heatmap_grid(_heatmap())
+    out = capsys.readouterr().out
+    lines = [line for line in out.splitlines() if line.strip()]
+    for label in ("Sun", "Mon", "Sat"):
+        assert any(line.startswith(label) for line in lines)  # 7 day-of-week rows
+    assert "■" in out  # a logged day is a filled cell
+    assert "·" in out  # a windowed no-entry day is a distinct dot
+
+
+def test_heatmap_grid_has_month_labels_and_the_period_label(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    render.heatmap_grid(_heatmap())
+    out = capsys.readouterr().out
+    assert "Jan" in out and "Feb" in out  # month column labels
+    assert "2026" in out  # the window label
+
+
+def test_heatmap_grid_legend_names_all_five_numbers(capsys: pytest.CaptureFixture[str]) -> None:
+    render.heatmap_grid(_heatmap())
+    out = capsys.readouterr().out
+    # Mood never color-only — the legend spells out every number and the empty key.
+    for mood in ("1", "2", "3", "4", "5"):
+        assert mood in out
+    assert "no entry" in out
+
+
+def test_heatmap_grid_uses_the_single_mood_palette(monkeypatch: pytest.MonkeyPatch) -> None:
+    seen: list[int] = []
+    real_mood_style = render.mood_style
+
+    def spy(mood: int) -> str:
+        seen.append(mood)
+        return real_mood_style(mood)
+
+    monkeypatch.setattr(render, "mood_style", spy)
+    render.heatmap_grid(_heatmap())
+    # Cell + legend colors both flow through the shared 1–5 palette.
+    assert seen and all(1 <= m <= 5 for m in seen)
+
+
+def test_heatmap_grid_respects_no_color(
+    capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("NO_COLOR", "1")
+    render.heatmap_grid(_heatmap())
+    out = capsys.readouterr().out
+    assert "\x1b[" not in out  # no ANSI escapes emitted
+    # Still readable without color: day rows, month labels, and numbers survive.
+    assert "Sun" in out and "Jan" in out and "4" in out

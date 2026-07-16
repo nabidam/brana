@@ -10,12 +10,14 @@ via ``Text`` so brackets/emoji can never be mistaken for Rich markup.
 
 from __future__ import annotations
 
+import calendar
+
 from rich import box
 from rich.console import Console
 from rich.table import Table
 from rich.text import Text
 
-from dally.reports import Report
+from dally.reports import HeatCell, Heatmap, Report
 from dally.storage import Entry
 
 console = Console()
@@ -106,3 +108,76 @@ def report_table(report: Report) -> None:
 def empty_state(message: str) -> None:
     """A friendly one-line empty state (the caller decides the exit code)."""
     console.print(Text(message))
+
+
+# S6 — heatmap. 7 day-of-week rows (Sunday..Saturday) × week columns, `gh`-style.
+# Glyphs are chosen so an empty windowed day (`·`) is distinct from every mood
+# color (all `■`) and from a padding slot (blank) — never color alone.
+_DAY_LABELS = ("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
+_CELL = "■"
+_EMPTY_CELL = "·"
+
+
+def _cell_text(cell: HeatCell) -> Text:
+    """One grid glyph: colored mood square, empty-day dot, or blank padding."""
+    if cell.day is None:  # padding slot outside the window
+        return Text(" ")
+    if cell.average is None:  # windowed day with no entry
+        return Text(_EMPTY_CELL, style="dim")
+    return Text(_CELL, style=mood_style(_nearest_mood(cell.average)))
+
+
+def _month_header(weeks: list[list[HeatCell]]) -> Text:
+    """Month abbreviations placed above the column where each month first starts.
+
+    Abbreviations overflow rightward into later (blank) slots, GitHub-style —
+    columns are one glyph wide, so a 3-letter label spans three columns.
+    """
+    slots = [" "] * (len(weeks) + 3)
+    previous_month: int | None = None
+    next_free_column = 0  # earliest column a label may start, so labels never collide
+    for column, week in enumerate(weeks):
+        first_day = next((cell.day for cell in week if cell.day is not None), None)
+        if first_day is None:
+            continue
+        if first_day.month != previous_month:
+            previous_month = first_day.month
+            if column < next_free_column:  # too close to the last label — skip it
+                continue
+            abbreviation = calendar.month_abbr[first_day.month]
+            for offset, char in enumerate(abbreviation):
+                slots[column + offset] = char
+            next_free_column = column + len(abbreviation)
+    return Text("     " + "".join(slots).rstrip())  # 5-space day-label gutter
+
+
+def _legend(label: str) -> Text:
+    """Label plus a 1–5 color key (numbers always shown) and the empty marker."""
+    text = Text()
+    text.append(f"{label}   ", style="bold")
+    text.append("mood ")
+    for mood in range(1, 6):
+        text.append(str(mood))
+        text.append(_CELL, style=mood_style(mood))
+        text.append(" ")
+    text.append("  ")
+    text.append(_EMPTY_CELL, style="dim")
+    text.append(" no entry")
+    return text
+
+
+def heatmap_grid(heatmap: Heatmap) -> None:
+    """S6 — a GitHub-style mood calendar: month header, 7 day rows, legend.
+
+    Cells reuse the single 1–5 mood palette (`mood_style`); an empty windowed day
+    and a padding slot render distinct from every mood color. Mood is never
+    conveyed by color alone — the legend names the numbers. Rich handles
+    `NO_COLOR` natively, so the grid still reads without color.
+    """
+    console.print(_month_header(heatmap.weeks))
+    for row in range(7):
+        line = Text(f"{_DAY_LABELS[row]:<5}")
+        for week in heatmap.weeks:
+            line.append_text(_cell_text(week[row]))
+        console.print(line)
+    console.print(_legend(heatmap.label))

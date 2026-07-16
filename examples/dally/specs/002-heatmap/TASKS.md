@@ -76,6 +76,9 @@ aggregation already inside `build_report` into `daily_averages(entries)` and reu
 - **Context pack (hints):** `src/dally/reports.py`, `src/dally/storage.py` (Entry, entries_between),
   `tests/conftest.py` (temp-DB fixture), `tests/test_reports.py` (fixed-`today` test style).
   ARCHITECTURE.md §Contract surface, §Data model. Backend-only — no UX screens, no DESIGN.md.
+- **Done:** `f0729ad` — evidence `specs/002-heatmap/evidence/task-0.txt`. Verify green (57 passed;
+  9 new heatmap tests). `build_heatmap` default = 53-column trailing-52-week grid, `--year` =
+  calendar-year grid with padding; `daily_averages` extracted and reused by `build_report`.
 
 ## Task 1 — render.py: `heatmap_grid` + legend (S6)
 
@@ -119,6 +122,10 @@ define new mood colors. Blank cell for `average is None` and for padding (`day i
   console), `src/dally/reports.py` (Heatmap/HeatCell from task 0), `tests/test_render.py`.
   ARCHITECTURE.md §Module layout (render is pure formatting). **UX screen: S6.** DESIGN.md tokens:
   reuse the existing mood scale verbatim; airy `gh`-style density.
+- **Done:** `2f7100a` — evidence `specs/002-heatmap/evidence/task-1.txt`. Verify green (62 passed).
+  `heatmap_grid` prints 7 Sun..Sat rows, colored `■` cells via the shared 1–5 palette, `·` for empty
+  windowed days, blank padding; month header (collision-safe) + numbered legend + empty key;
+  NO_COLOR clean. Visual spot-check: trailing-52wk grid renders all 12 month labels.
 
 ## Task 2 — cli.py: `dally heatmap` command + `--year` validation
 
