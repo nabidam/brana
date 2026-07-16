@@ -22,22 +22,22 @@ flowchart LR
     P7 --> P7
 ```
 
-| Phase | Skill | Produces |
-|---|---|---|
-| 1 — Spec | `brana-1-spec` | `SPEC.md` (kernel/v1/backlog + kernel journey) |
-| 2 — Product & architecture | `brana-2-prd-arch` | `UX.md`, `PRD.md`, `ARCHITECTURE.md` |
-| 3 — Plan | `brana-3-plan` | `PLAN.md`, `CONVENTIONS.md`, `DESIGN.md`, `FILE_STRUCTURE.md` + consistency gate |
-| 4 — Tasks | `brana-4-tasks` | `TASKS.md` with context packs + demo-gate tasks |
-| 5 — Implement | `brana-5-implement` | code + tests + commit, *demonstrated* |
-| 6 — Review | `brana-6-review` | 6a code review (diffs) + 6b product walkthrough |
-| 7 — Change loop | `brana-7-change` | post-v1 changes routed A/B/C/R + doc sync |
+| Phase                      | Skill               | Produces                                                                         |
+| -------------------------- | ------------------- | -------------------------------------------------------------------------------- |
+| 1 — Spec                   | `brana-1-spec`      | `SPEC.md` (kernel/v1/backlog + kernel journey)                                   |
+| 2 — Product & architecture | `brana-2-prd-arch`  | `UX.md`, `PRD.md`, `ARCHITECTURE.md`                                             |
+| 3 — Plan                   | `brana-3-plan`      | `PLAN.md`, `CONVENTIONS.md`, `DESIGN.md`, `FILE_STRUCTURE.md` + consistency gate |
+| 4 — Tasks                  | `brana-4-tasks`     | `TASKS.md` with context packs + demo-gate tasks                                  |
+| 5 — Implement              | `brana-5-implement` | code + tests + commit, _demonstrated_                                            |
+| 6 — Review                 | `brana-6-review`    | 6a code review (diffs) + 6b product walkthrough                                  |
+| 7 — Change loop            | `brana-7-change`    | post-v1 changes routed A/B/C/R + doc sync                                        |
 
 Full canon: [WORKFLOW.md](WORKFLOW.md). Skill-by-skill guide: [skills/USAGE.md](skills/USAGE.md).
 
 ## What makes Brana different
 
 - **The deliverable is the running app, not the documents.** Done = demonstrated in the real app, with live verification evidence recorded per task.
-- **6b demo gate.** Every 2–3 tasks *you* launch the build and walk one scripted journey from UX.md. Findings become tasks before new features proceed. Skips are logged as visible debt, never silent.
+- **6b demo gate.** Every 2–3 tasks _you_ launch the build and walk one scripted journey from UX.md. Findings become tasks before new features proceed. Skips are logged as visible debt, never silent.
 - **UX.md** — the artifact most workflows skip. Screen inventory, navigation map, per-screen wireframes with empty/loading/error states. Without it, every task improvises its own interface.
 - **Scope cuts are hard stops.** An agent that discovers a spec'd behavior won't be built must stop and ask — documenting the cut in a gotchas file is laundering, not a decision.
 - **Copy-paste is canon.** Every prompt works by a human moving text between chat UIs — zero tooling required. Agent harnesses (Claude Code etc.) are an adaptation layer on top, not a dependency.
@@ -115,4 +115,4 @@ Issues and PRs welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). The one house
 
 ## License
 
-[MIT](LICENSE)
+Under [MIT](LICENSE) License 2026.
