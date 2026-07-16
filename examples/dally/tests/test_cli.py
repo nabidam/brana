@@ -170,3 +170,68 @@ def test_report_contract_drives_all_three_periods() -> None:
     for period in ("week", "month", "year"):
         result = runner.invoke(app, ["report", period])
         assert result.exit_code == 0  # empty periods still exit 0 (friendly no-data)
+
+
+# --- heatmap (S6) ------------------------------------------------------------
+
+
+def test_heatmap_is_registered_top_level() -> None:
+    result = runner.invoke(app, ["--help"])
+    assert result.exit_code == 0
+    assert "heatmap" in result.stdout  # top-level command, not under mood/report
+
+
+def test_heatmap_default_renders_trailing_year_grid() -> None:
+    storage.add_entry(date.today() - timedelta(days=3), 4, None)
+    storage.add_entry(date.today() - timedelta(days=10), 2, None)
+    result = runner.invoke(app, ["heatmap"])
+    assert result.exit_code == 0
+    assert "past 52 weeks" in result.stdout  # window label
+    assert "Sun" in result.stdout and "Sat" in result.stdout  # 7 day rows
+    assert "no entry" in result.stdout  # legend empty key
+
+
+def test_heatmap_year_renders_calendar_year_grid() -> None:
+    storage.add_entry(date(2025, 6, 1), 5, None)  # a day in 2025
+    result = runner.invoke(app, ["heatmap", "--year", "2025"])
+    assert result.exit_code == 0
+    assert "2025" in result.stdout  # year label
+    assert "Jan" in result.stdout  # month column labels
+
+
+def test_heatmap_future_year_exits_2_one_line_nothing_rendered() -> None:
+    future = date.today().year + 1
+    result = runner.invoke(app, ["heatmap", "--year", str(future)])
+    assert result.exit_code == 2
+    stderr = result.stderr.strip()
+    assert "\n" not in stderr  # single line
+    assert "future" in stderr.lower()
+    assert "Sun" not in result.stdout  # no grid rendered
+
+
+def test_heatmap_malformed_year_exits_2() -> None:
+    result = runner.invoke(app, ["heatmap", "--year", "abc"])
+    assert result.exit_code == 2  # Typer int parse (usage error, S5/S4)
+    assert result.stderr.strip()
+
+
+def test_heatmap_empty_window_friendly_exit_0() -> None:
+    result = runner.invoke(app, ["heatmap"])  # fresh temp DB, no entries
+    assert result.exit_code == 0
+    assert "No moods logged" in result.stdout
+    assert "add" in result.stdout  # suggests the next command
+    assert "Sun" not in result.stdout  # no blank grid
+
+
+def test_heatmap_contract_drives_exit_codes_and_shape() -> None:
+    storage.add_entry(date.today() - timedelta(days=2), 3, None)
+    storage.add_entry(date(2025, 3, 3), 4, None)
+
+    default = runner.invoke(app, ["heatmap"])
+    assert default.exit_code == 0 and "past 52 weeks" in default.stdout
+
+    year = runner.invoke(app, ["heatmap", "--year", "2025"])
+    assert year.exit_code == 0 and "2025" in year.stdout
+
+    assert runner.invoke(app, ["heatmap", "--year", str(date.today().year + 1)]).exit_code == 2
+    assert runner.invoke(app, ["heatmap", "--year", "abc"]).exit_code == 2

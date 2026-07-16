@@ -69,6 +69,13 @@ def _parse_date(raw: str | None) -> date:
     return parsed
 
 
+def _validate_year(year: int | None) -> int | None:
+    """Reject a future year; a non-integer is caught by Typer before we get here."""
+    if year is not None and year > date.today().year:
+        _fail(f"year must not be in the future (this year is {date.today().year})")
+    return year
+
+
 @mood_app.command("add")
 def add(
     mood: str = typer.Argument(..., metavar="1-5", help="Mood on a 1-5 scale."),
@@ -119,6 +126,27 @@ def report_month() -> None:
 def report_year() -> None:
     """Average + per-month breakdown for the current calendar year (S3)."""
     _show_report("year")
+
+
+@app.command("heatmap")
+def heatmap(
+    year: int | None = typer.Option(
+        None, "--year", metavar="YYYY", help="Calendar year to show (default: trailing 52 weeks)."
+    ),
+) -> None:
+    """Render a GitHub-style mood calendar heatmap (S6).
+
+    No ``--year`` → the trailing 52 weeks ending today; ``--year YYYY`` → that
+    calendar year. A future year exits 2 (S4). An empty window prints a friendly
+    empty state, exit 0.
+    """
+    valid_year = _validate_year(year)
+    heatmap_data = reports.build_heatmap(date.today(), valid_year)
+    if heatmap_data.total_logged == 0:
+        span = str(valid_year) if valid_year is not None else "the last year"
+        render.empty_state(f"No moods logged in {span} yet — try `dally mood add 4`")
+        return
+    render.heatmap_grid(heatmap_data)
 
 
 def main() -> None:

@@ -1,0 +1,13 @@
+$ real console script (disposable XDG) — task 2
+dally heatmap (seeded):
+  past 52 weeks   mood 1■ 2■ 3■ 4■ 5■   · no entry
+dally heatmap --year 2099 -> 'year must not be in the future (this year is 2026)' exit=2
+fresh dir -> 'No moods logged in the last year yet' exit=0
+
+$ bash tools/verify.sh
+==> detect-secrets (secret scan)
+no secrets found
+==> pytest
+.....................................................................    [100%]
+69 passed in 0.61s
+ALL CHECKS PASSED
