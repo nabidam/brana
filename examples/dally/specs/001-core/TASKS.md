@@ -431,6 +431,13 @@ Unknown period → Typer usage error (S5). No-data → friendly message, exit 0 
 - **Context pack (hints):** src/dally/cli.py, src/dally/render.py, src/dally/reports.py
   (signature per interfaces block); ARCHITECTURE.md §Contract surface; UX.md **S3, S5**,
   §Density & color notes; CONVENTIONS.md §Output style.
+- **Done:** `050963e` — evidence `specs/001-core/evidence/task-7.txt`. Verify green (48 passed);
+  driven through the **real `dally` console script** (fresh XDG_DATA_HOME): `report week` header
+  (period + range + average 3.0) + per-day breakdown, unlogged days blank (not zeroed); `report
+  month` no-data → friendly message exit 0; `report year` 12 month rows; unknown period `decade` →
+  Typer usage error exit 2 (S5). `render.report_table` shares the single mood_style palette (nearest
+  1–5), averages always shown as numbers. `dally report` = three thin commands (week/month/year)
+  over a shared `_show_report` helper; cli owns the clock (`today=date.today()`), reports stays pure.
 
 ## Task 8 — RELEASE GATE: kernel journey, release build
 
