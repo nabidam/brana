@@ -25,7 +25,7 @@ Reviewer must be a **different model than the implementer** — default Opus 4.8
 2. Read only the ARCHITECTURE.md contract sections the diff touches, plus CONVENTIONS.md, plus the reviewed tasks' acceptance criteria from TASKS.md. Diff touches UI → also DESIGN.md and the relevant UX.md screen sections.
 3. Report only:
    1. bugs / logic errors
-   2. security issues (injection, XSS, auth)
+   2. security issues (injection, XSS, auth) — judged against ARCHITECTURE.md's threat model when it exists
    3. race conditions
    4. contract violations
    5. convention violations
@@ -62,7 +62,7 @@ Here are screenshots of the app and the UX.md + DESIGN.md contracts:
 that would most improve clarity and hierarchy. Findings only.
 ```
 
-**v1 exit bar:** the exit bar is the **release-gate task** and runs like any gate — preflight it (verify script, release build, launch via the production entry point, journey entry reachable; failure is `GATE BLOCKED`, fix tasks first). The bar: the kernel journey passes end-to-end in a release build through the production composition, witnessed by the user, including the unglamorous steps (restart, offline, error paths named in the PRD), _and_ the kernel journey's crystallization-task e2e test is green in the release build, _and_ — when fakes stood in for an external system — the production-composition proof task and the verified-fake contract suites are Done/green. Every `GATE SKIPPED` entry in TASKS.md is listed here with its `UNWITNESSED` journey test, and each is either walked now or explicitly accepted (the automation exists — the missing human witness is the recorded, accepted debt); an unresolved `GATE BLOCKED` fails the bar outright — a gate that never became runnable is a defect, not debt. Every crystallization task across every gate must be Done — a gate walked but never crystallized is an untested journey by the next change. "All tasks Done" is not the bar; this is.
+**v1 exit bar:** the exit bar is the **release-gate task** and runs like any gate — preflight it (verify script, release build, launch via the production entry point, journey entry reachable; failure is `GATE BLOCKED`, fix tasks first). The bar: the kernel journey passes end-to-end in a release build through the production composition, witnessed by the user, including the unglamorous steps (restart, offline, error paths named in the PRD), _and_ the kernel journey's crystallization-task e2e test is green in the release build, _and_ — when fakes stood in for an external system — the production-composition proof task and the verified-fake contract suites are Done/green, _and_ every PRD NFR budget is measured via its named measurement in the release build — at or under budget, or explicitly accepted over with the number recorded. Every `GATE SKIPPED` entry in TASKS.md is listed here with its `UNWITNESSED` journey test, and each is either walked now or explicitly accepted (the automation exists — the missing human witness is the recorded, accepted debt); an unresolved `GATE BLOCKED` fails the bar outright — a gate that never became runnable is a defect, not debt. Every crystallization task across every gate must be Done — a gate walked but never crystallized is an untested journey by the next change. "All tasks Done" is not the bar; this is.
 
 **Spawn route (pre-v1):** when fixing a `GATE BLOCKED` — any gate, including the release gate — reveals a missing subsystem or a new/changed contract (more than a few fix tasks, or a new ARCHITECTURE.md section), spawn a scoped child cycle in a new `specs/NNN-name/` dir (Phase 1→6 on the delta, Route C shape, ARCHITECTURE.md patched not regenerated). The parent gate stays `GATE BLOCKED` referencing the child spec; the stale-interface-block and stale-plan rules run on the parent's not-done tasks and patched PLAN.md sections; the parent preflight re-runs only after the child cycle completes.
 
@@ -75,7 +75,8 @@ Lint and typecheck must be green before running this prompt — a finding a lint
 ```
 Review this diff against the attached contracts and acceptance criteria.
 Report only:
-(1) bugs/logic errors, (2) security issues, (3) race conditions,
+(1) bugs/logic errors, (2) security issues — judged against
+ARCHITECTURE.md's threat model when it exists, (3) race conditions,
 (4) contract violations, (5) convention violations, (6) UI-only: design
 contract violations (raw values where tokens exist, missing states,
 contrast/focus failures) and UX contract violations (screen structure or

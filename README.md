@@ -3,7 +3,7 @@
 **A 7-phase app-development workflow for AI coding agents that gates on the running app, not green tests.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.4.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.5.0-blue.svg)](CHANGELOG.md)
 [![Works with](https://img.shields.io/badge/works%20with-Claude%20Code%20·%20Cursor%20·%20Codex%20·%20any%20chat%20UI-8A2BE2.svg)](#installation)
 
 The failure mode Brana guards against: **every task green, every doc consistent-looking, app unusable.** Most agent workflows stop at code review — nothing ever launches the app, walks a user journey, or judges a screen. Brana's countermeasure is a set of contract documents plus a human demo gate every 2–3 tasks: you launch the build and walk a scripted journey before feature work continues.
@@ -43,6 +43,7 @@ Full canon: [WORKFLOW.md](WORKFLOW.md). Skill-by-skill guide: [skills/USAGE.md](
 - **Copy-paste is canon.** Every prompt works by a human moving text between chat UIs — zero tooling required. Agent harnesses (Claude Code etc.) are an adaptation layer on top, not a dependency.
 - **Cheap by design.** Expensive model plans, cheap model codes; fresh session per phase; diff-only reviews. Concrete model bindings included.
 - **Deterministic gates.** The structural half of both machine gates runs as a program — `tools/brana-gate` (stdlib-only Python) checks task graphs, gate walkability, contract quotes, and computed WCAG contrast; LLM passes cover only judgment. Review findings are confirmed with reproductions before they become fix tasks.
+- **Design reviewed, not just consistent.** An independent architecture review (failure handling, data-model flaws, races, scale, over-engineering, threat-model gaps) blocks Phase 3 — wrong-but-consistent designs no longer sail through. Unknowable decisions become time-boxed spike chunks instead of guesses; every NFR carries a budget + measurement, checked at the release gate.
 
 See [COMPARISON.md](COMPARISON.md) for an honest side-by-side with [Superpowers](https://github.com/obra/superpowers) and [Compound Engineering](https://github.com/EveryInc/compound-engineering) — including what Brana adopted from each and where they're stronger.
 

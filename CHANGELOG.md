@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.5.0 — 2026-07-16
+
+Closes the design-correctness gap from the v1.3 expert critique: the pipeline was Opus-writes → mechanical consistency check → implementation — nobody ever reviewed the design itself, and wrong-but-consistent architecture passes every machine pass by definition. Plus NFR/security traceability, which functional flows had and non-functional requirements didn't.
+
+- **Architecture review (blocks Phase 3):** one independent, findings-only review of ARCHITECTURE.md against PRD + UX at Phase 2 exit, under 6a's independence rules (no author rationale; fresh session; different model/vendor preferred). Fixed categories: missing failure handling, data-model flaws, concurrency/ordering hazards, first-thing-that-breaks at 10×, over-engineering (a module serving no requirement), simplest-credible-alternative per major decision (no credible answer is itself a finding), threat-model gaps. The human arbitrates — accepting a design finding is a product decision — and ARCHITECTURE.md is patched before Phase 3.
+- **Spike escape valve:** ARCHITECTURE.md still forbids open "X or Y" decisions, but a decision genuinely unresolvable by reasoning now gets a `SPIKE: <question>` marker (candidates, leading candidate, deciding measurement) instead of a guess. Phase 3 turns each marker into a time-boxed spike chunk at the head of PLAN.md — throwaway code allowed, falsifiable answer criterion, Decision log entry replaces the marker; an overturning result triggers the stale-plan and stale-interface-block rules. Consistency gate flags markers with no spike chunk and spike chunks with no answer criterion.
+- **NFR traceability (same shape as flow traceability):** every PRD non-functional requirement carries a budget + measurement (the command or procedure producing the number); the consistency gate flags any NFR with no serving mechanism (verify-script check, tagged criterion, or release-gate observation step); the release gate measures every budget in the release build — at or under, or explicitly accepted over with the number recorded.
+- **Threat model (conditional):** apps with auth, user data, or external input get a threat-model section in ARCHITECTURE.md — trust boundaries, authN/Z per surface, input-validation strategy, secrets handling. 6a's security category now reviews against it instead of against vibes; the architecture review checks it for gaps. No such surface → omit, pay nothing.
+- **Verify-script hardening:** every stack wires a dependency audit (npm audit / pip-audit / equivalent) and a secret scan at Task 0, both failing the script — alongside the existing a11y check for UI stacks.
+- Doc set: WORKFLOW.md (Verification Machinery, model bindings, Phases 2/3/5/6), brana-2/3/5/6 skills, USAGE.md, README, manifests.
+
 ## 1.4.0 — 2026-07-16
 
 Closes two guarantee-breaking seams found by an expert critique of v1.3, plus two cheap rule fixes. Theme: the workflow's own Reality Rule 8 applied to the workflow itself — gate checks that are mechanical now run as code, not as a cheap model's recall.

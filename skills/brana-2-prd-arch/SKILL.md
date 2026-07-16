@@ -5,7 +5,7 @@ description: "Use when a finalized SPEC.md exists and the user wants UX design, 
 
 # Phase 2 — UX.md + PRD.md + ARCHITECTURE.md
 
-Three documents, in this order: UX → PRD → ARCHITECTURE (screens inform requirements; both inform architecture). UX.md is the missing artifact most workflows skip — without it, implementers get tokens and adjectives but no screens, every task improvises its own interface, and the result is incoherent. ARCHITECTURE.md becomes the single "current truth" every future impact analysis reads.
+Three documents, in this order: UX → PRD → ARCHITECTURE (screens inform requirements; both inform architecture), then an independent architecture review before Phase 3. UX.md is the missing artifact most workflows skip — without it, implementers get tokens and adjectives but no screens, every task improvises its own interface, and the result is incoherent. ARCHITECTURE.md becomes the single "current truth" every future impact analysis reads.
 
 ## Modes
 
@@ -28,7 +28,7 @@ No visual styling, no colors, no code. If SPEC names a reference pack, adapt its
 
 **Tell the user to read UX.md and walk the flows before proceeding** — UX.md encodes intent no machine check can verify; a step that feels wrong on paper will be wrong in the app, and this is the cheapest moment to fix it.
 
-**Step 2 — PRD.md** (from SPEC.md + UX.md). Include: functional requirements, non-functional requirements, user stories, acceptance criteria, validation rules, error cases, edge cases (offline, empty states), constraints, out-of-scope, future improvements. Acceptance criteria must be FALSIFIABLE: observable behavior a human can verify in the running app ("restart the app; saved items are listed"), never adjectives ("clean") and never process facts ("tests pass"). Preserve the Kernel/v1/Backlog split — do not promote backlog items. Do not discuss implementation. Write to the same `specs/NNN-name/` dir with frontmatter `status: draft` (UX.md and ARCHITECTURE.md are living docs — no stamps).
+**Step 2 — PRD.md** (from SPEC.md + UX.md). Include: functional requirements, non-functional requirements, user stories, acceptance criteria, validation rules, error cases, edge cases (offline, empty states), constraints, out-of-scope, future improvements. Acceptance criteria must be FALSIFIABLE: observable behavior a human can verify in the running app ("restart the app; saved items are listed"), never adjectives ("clean") and never process facts ("tests pass"). Every non-functional requirement carries a **budget and a measurement** — the observable number plus the command or procedure that produces it ("cold start under 2s, measured by X"); an NFR without a measurement is a placeholder. The consistency gate (Phase 3) flags any NFR with no serving mechanism, and the release gate measures every budget. Preserve the Kernel/v1/Backlog split — do not promote backlog items. Do not discuss implementation. Write to the same `specs/NNN-name/` dir with frontmatter `status: draft` (UX.md and ARCHITECTURE.md are living docs — no stamps).
 
 **Step 3 — ARCHITECTURE.md** (from PRD.md + UX.md). Act as a principal software architect. Include: system overview, module responsibilities and boundaries, data model / DB schema (DDL with indices and constraints), API contract (endpoints, request/response shapes, status codes, errors, auth), component hierarchy mapped to UX.md screen ids, dependency graph, error handling strategy, configuration strategy. Rules:
 
@@ -36,10 +36,14 @@ No visual styling, no colors, no code. If SPEC names a reference pack, adapt its
 - **Name the test harness per layer, including the e2e/journey harness** — the walking skeleton needs it and CONVENTIONS.md's Test strategy (Phase 3) and every gate's crystallization task (Phase 4) build on this name.
 - **Traceability (load-bearing):** every UX.md flow must be traceable through the contract — for each kernel-journey step, name the API call or event that serves it; a step with no serving contract (e.g. "reopen app → data restored" needs a list/read endpoint) means add the contract. Implementers build only what the contract names.
 - **Wire contracts (conditional):** when the kernel journey or a v1 flow depends on an external system (a paid API, third-party service — anything that will be faked in tests), that integration gets a versioned **wire contract** section: exact request/response shapes, auth, error semantics — precise enough that a fake can be validated against it. Traceability extends to those steps: each names its wire contract. No external system → omit. Without this, the fake's convenience shape becomes the de-facto contract and the first real request is built at release time.
+- **Threat model (conditional):** when the app has auth, stores user data, or accepts external input, include a **threat model** section: trust boundaries (who can send what to which surface), authN/authZ model per surface, input-validation strategy at each boundary, secrets handling (where keys live, what is never logged). No such surface → omit. 6a's security category reviews against this section, not against vibes.
+- **Spike markers:** a decision genuinely unresolvable by reasoning (novel integration, unproven performance) is not left open as "X or Y": mark it `SPIKE: <question>` with the candidate answers, the leading candidate (design against it), and the measurement that decides. Phase 3 turns each marker into a time-boxed spike chunk at the head of PLAN.md.
 
 Include an empty **Decision log** section at the end of the file — append-only, one line per future decision as `YYYY-MM-DD — decision — why`; Phase 7 doc sync and Route C patches append to it, never delete an earlier entry's why.
 
 No implementation code. Write to repo root — living doc, patched forever after.
+
+**Step 4 — Architecture review (blocks Phase 3).** The consistency gate checks that docs agree; nothing else checks the design is any good — wrong-but-consistent architecture passes every machine pass. One independent review, findings-only, 6a independence rules: the reviewer gets ARCHITECTURE.md + PRD.md + UX.md, never the author's rationale; fresh session, different model than the author where possible (cross-vendor via prompt mode preferred; a same-vendor fresh session is weaker independence, still better than none). Categories: (1) module/flow with no failure handling, (2) data-model flaws (missing constraint/index/key for a named flow), (3) concurrency/ordering hazards, (4) first thing that breaks at 10× data when a requirement implies growth, (5) over-engineering — a module serving no PRD requirement, (6) per major decision, the simplest credible alternative and why the chosen design beats it (no credible answer is a finding), (7) threat-model gaps when the section exists. **The user arbitrates the findings** — accepting one is a product decision, not a mechanical fix; patch ARCHITECTURE.md before Phase 3 starts.
 
 Do not proceed to planning — that is Phase 3, a fresh session.
 
@@ -76,8 +80,12 @@ empty states), constraints, out-of-scope, future improvements.
 Acceptance criteria must be FALSIFIABLE: observable behavior a human can
 verify in the running app ("restart the app; saved items are listed"),
 never adjectives ("clean", "minimalist") and never process facts ("tests
-pass"). Preserve the Kernel/v1/Backlog split — do not promote backlog
-items. Do not discuss implementation. Output Markdown only.
+pass"). Every non-functional requirement carries a BUDGET and a
+MEASUREMENT: the observable number plus the command or procedure that
+produces it ("cold start under 2s, measured by <command>"); an NFR
+without a measurement is a placeholder. Preserve the Kernel/v1/Backlog
+split — do not promote backlog items. Do not discuss implementation.
+Output Markdown only.
 [embed SPEC.md + UX.md]
 ```
 
@@ -107,6 +115,41 @@ give that integration a versioned WIRE CONTRACT section: exact
 request/response shapes, auth, error semantics — precise enough that a
 fake can be validated against it. Extend traceability to those steps:
 each names its wire contract. No external system → omit the section.
+When the app has AUTH, STORES USER DATA, or ACCEPTS EXTERNAL INPUT,
+include a THREAT MODEL section: trust boundaries (who can send what to
+which surface), authN/authZ model per surface, input-validation
+strategy at each boundary, secrets handling (where keys live, what is
+never logged). No such surface → omit.
+A decision genuinely unresolvable by reasoning (novel integration,
+unproven performance) is not left open as "X or Y": mark it
+`SPIKE: <question>` with the candidate answers, the leading candidate
+(design against it), and the measurement that decides.
 Do not write implementation code. Output Markdown only.
 [embed PRD.md + UX.md]
 ```
+
+Architecture review (fresh session, different model/vendor than the author — cross-vendor preferred):
+
+```
+Review ARCHITECTURE.md against the PRD and UX below. You did not write
+it; judge the design, not the prose. Report only findings:
+(1) a module or flow with no failure handling — what happens when this
+call fails, times out, returns partial data?
+(2) data-model flaws: a missing constraint, index, or key for a named
+flow; a shape that breaks a stated requirement,
+(3) concurrency/ordering hazards: two flows racing on the same state;
+an event order the design assumes but nothing enforces,
+(4) scale: the first thing that breaks at 10x data or users, when any
+stated requirement implies growth,
+(5) over-engineering: a module, layer, or abstraction serving no PRD
+requirement — name the requirement or flag it,
+(6) per major decision: the simplest credible alternative and why the
+chosen design beats it — no credible answer is itself a finding,
+(7) threat-model gaps (when the section exists): a trust boundary
+crossed without validation; an authZ check missing for a named flow.
+Each finding: section, severity, one-line consequence. No rewrites, no
+style opinions, no praise.
+[embed ARCHITECTURE.md + PRD.md + UX.md]
+```
+
+The user arbitrates the findings; ARCHITECTURE.md is patched before Phase 3.
