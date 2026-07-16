@@ -1,0 +1,28 @@
+# Task 0 evidence — scaffold + verify script
+# captured: 2026-07-16T19:23:05Z
+# command: bash tools/verify.sh  (+ dally --help boot check)
+
+$ dally --help
+ Usage: dally [OPTIONS] COMMAND [ARGS]...                                       
+                                                                                
+│ mood    Log and list mood entries.                                           │
+│ report  View mood averages over time.                                        │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+
+$ bash tools/verify.sh
+==> ruff check
+All checks passed!
+==> ruff format --check
+7 files already formatted
+==> mypy (strict on src/)
+Success: no issues found in 5 source files
+==> pip-audit (dally dependency closure)
+
+No known vulnerabilities found
+==> detect-secrets (secret scan)
+no secrets found
+==> pytest
+..                                                                       [100%]
+2 passed in 0.13s
+ALL CHECKS PASSED
