@@ -117,6 +117,9 @@ Raises, never prints or exits.
 - **Context pack (hints):** src/dally/storage.py, tests/conftest.py (fixture from task 0);
   ARCHITECTURE.md §Data model, §Contract surface, §Error handling; CONVENTIONS.md §Test strategy
   (no SQLite mocks — real temp DB). Backend-only: no UX.md/DESIGN.md.
+- **Done:** `f350419` — evidence `specs/001-core/evidence/task-1.txt`. Verify green (10 passed);
+  real temp-dir SQLite exercises round-trip unicode, recreate-after-delete, ordering, inclusive
+  range, same-day duplicates, mood-range ValueError (writes nothing), Entry frozen shape.
 
 ## Task 2 — render.py: mood scale, confirmation, entries table, empty state
 
