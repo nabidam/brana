@@ -1,4 +1,4 @@
-# Brana — App Development Workflow (v1.3)
+# Brana — App Development Workflow (v1.4)
 
 Consolidated from 5 agent proposals, revised after a v1 post-mortem. Optimized for token efficiency + output quality. Works for any app idea. Folds in tested patterns from two public workflows ([superpowers](https://github.com/obra/superpowers), [compound-engineering](https://github.com/EveryInc/compound-engineering)): path-based delegation, task interface blocks, live verification evidence, reviewer independence, and doc status stamps. Pre-release lineage (internal v2.0–v2.2) is in CHANGELOG.md.
 
@@ -53,6 +53,7 @@ The failure mode this workflow guards against: every task green, every doc consi
 - **Evidence file:** `specs/NNN-name/evidence/task-N.txt` — the exercised command plus the last ~30 lines of its output, captured live at task completion. The TASKS.md done-mark references its path.
 - **Production composition:** the app's real entry point with its production wiring. Disposable/fixture modes inject config, seams, and fakes _inside_ that composition — never a parallel gate-only assembly. A gate's launch command is the production entry point with disposable inputs; a bespoke gate runtime is a blocking finding (it lets every gate pass while the production path stays unbuilt).
 - **Wire contract** (conditional — only when the kernel journey or a v1 flow depends on an external system that will be faked): a versioned, exact request/response contract for that integration — shapes, auth, error semantics — specified in ARCHITECTURE.md. Every fake of that system is a **verified fake**: one shared contract suite runs against both the fake and the real adapter, and the fake must reject what the contract rejects. The real-adapter side is offline-assertable (request-shape assertions, recorded fixtures); live provider calls happen only in a bounded canary routed through the production composition.
+- **Gate linter:** `tools/brana-gate` (single-file Python 3.11+, stdlib only) — the deterministic half of both machine gates. `brana-gate tasks TASKS.md --plan PLAN.md --arch ARCHITECTURE.md` runs every cross-referencing task-gate check (chunk coverage, dep cycles, skeleton ordering, layer tags, `[e2e@gate-N]`↔journey membership, PRODUCES→`[contract]`, gate preflight fields, crystallization adjacency, release gate, CONSUMES exact-match, wire-contract obligations); `brana-gate docs` scans for unresolved placeholders and **computes** WCAG contrast from DESIGN.md's tables — a contrast ratio is never an LLM's to compute. Where the tool is present its clean exit is the mandatory blocking half of the gate; the LLM pass shrinks to the judgment checklist (contradictions, open decisions, semantic serving). Copy-paste mode keeps the full LLM prompts as fallback. This applies Reality Rule 8 to the workflow itself: gate checks that are mechanical run as code, not as a cheap model's recall.
 - **Release gate:** the v1 exit bar written as PLAN.md's final gate entry, with full demo-gate anatomy — journey (the kernel journey in a release build, unglamorous steps included), observations, runnability preconditions, and a serving chunk per step _through the production composition_. It gets a preflight and `GATE BLOCKED` semantics like any gate; discovering at the release gate that a kernel-journey step has no production-composition path is the failure this entry exists to move to Phase 3.
 
 ## Model Bindings
@@ -64,7 +65,8 @@ Tier language elsewhere in this doc stays for portability; these are the current
 | P1 gap-check / interview | Haiku 4.5 / Sonnet 5 | Gemini Flash / Pro |
 | P2 UX.md + PRD.md | Sonnet 5 | Gemini Pro |
 | P2 ARCHITECTURE.md, P3 (all four docs), P7 impact analysis | Opus 4.8 | Gemini Pro |
-| Consistency-gate + task-gate machine passes, doc sync, code map | Haiku 4.5 | Gemini Flash |
+| Consistency-gate + task-gate judgment passes (structural half is `tools/brana-gate`, zero tokens), doc sync, code map | Haiku 4.5 | Gemini Flash |
+| 6a finding confirmation | Sonnet 5 | Gemini Pro |
 | P4 task split, P5 implementation, 6a fixer | Sonnet 5 | Gemini Pro |
 | P5 pure boilerplate | Haiku 4.5 | Gemini Flash |
 | P5 escalation (failed twice) | Opus 4.8 | Gemini Pro |
@@ -81,6 +83,7 @@ Copy-paste is canon; this section translates it when the workflow runs inside ag
 - **Reading roams, writing doesn't.** The agent may read any file in the repo (task-named files plus whatever it needs), but "only modify files listed in the task" stays a hard rule.
 - **Sessions:** fresh conversation per phase; in Phase 5, one session per 2–3-task batch, cleared at each demo gate.
 - **Gates are soft stops:** at a demo-gate task the agent preflights (build, launch, journey entry reachable — failure is `GATE BLOCKED`, fixed before the walk), then halts its turn, prints the journey script plus launch command, and waits; "continue" skips and logs `GATE SKIPPED`. At the consistency gate and the task gate the machine pass hard-blocks and the agent fixes its findings; the consistency gate's human read is advisory (SPEC.md + UX.md flagged).
+- **Machine gates run script-first:** where `tools/brana-gate` is present (copy it into the repo at Task 0, or run it from the Brana checkout), the agent runs it and fixes its findings to a clean exit before the LLM judgment pass; the LLM pass covers only what the script can't parse.
 - **Scope cuts are hard stops:** the agent states the cut and ends its turn. No default-proceed.
 - **Phase 7:** the agent self-triages A/B/C/R, announces the route + one-line reason, and proceeds; you override by replying. The agent applies doc-sync corrections directly and creates `specs/NNN-name/` dirs itself.
 - **Escalation counting:** "failed twice" = two failed attempts within the batch session; then the human switches the session to Opus.
@@ -349,7 +352,7 @@ With a pre-built design system, item 3 switches to adoption-map mode (see Extern
 
 Generated contracts routinely ship with the same fact stated two different ways, unfilled template placeholders, and decisions left open — proof nobody read them. Agents don't halt on contradictions; they pick a clause arbitrarily, per file. Two checks, both cheap:
 
-1. **Machine pass** (Haiku/Flash tier):
+1. **Machine pass** — script-first in agent mode: run `brana-gate docs` over all eight docs (unresolved placeholders; every DESIGN.md contrast ratio computed, stated-vs-computed mismatches flagged) and fix to a clean exit; then the LLM pass (Haiku/Flash tier) covers the judgment remainder — contradictions, open decisions, unserved flow steps, gate/composition checks. Copy-paste mode: the full prompt below is the whole pass.
 
 ```
 Here are this project's contract docs: [paste SPEC, UX, PRD, ARCHITECTURE,
@@ -436,16 +439,17 @@ Rules:
   invalid input → restart → ... — a gate never ships checking only the
   happy path.
 - Every DEMO GATE task is immediately followed by a **crystallization
-  task**: blocked until the gate's walkthrough passes, it encodes the
-  just-walked journey (including its unglamorous step) as an automated
-  e2e test on the harness named in CONVENTIONS.md's Test strategy; the
-  new test joins the journey suite. No feature task may start before
-  its preceding gate's crystallization task is done. A `GATE SKIPPED`
-  gate defers its crystallization task instead — mark it `DEFERRED`
-  with the same visible-debt mark as the gate; it unblocks once the
-  journey is eventually walked, at latest the v1 exit bar. Feature work
-  may proceed past a deferred crystallization task as part of the skip
-  — the skip already accepted the debt.
+  task**: it encodes the gate's scripted journey (including its
+  unglamorous step) as an automated e2e test on the harness named in
+  CONVENTIONS.md's Test strategy; the new test joins the journey suite.
+  No feature task may start before its preceding gate's crystallization
+  task is done. A `GATE SKIPPED` gate does NOT defer the encoding —
+  writing the e2e needs only the scripted journey, not a walkthrough:
+  the crystallization task runs immediately and its test is marked
+  `UNWITNESSED` (same visible-debt mark as the gate) until the journey
+  is eventually walked, at latest the v1 exit bar. Feature work
+  proceeds once the unwitnessed test is green — a skip costs human
+  attention debt, never automation debt.
 - Verified-fake rule (only when ARCHITECTURE.md has wire contracts):
   a task producing a fake of an external system gets a `[contract]`
   criterion running ONE shared suite against both the fake and the
@@ -461,13 +465,15 @@ Output TASKS.md as a numbered list. Do not write any code.
 [paste PLAN.md + UX.md flow section + PRD.md error/edge-case list]
 ```
 
+**Task schema (agent mode):** each task is a heading plus one fenced ```toml block — `id`, `type` (scaffold/feature/gate/crystallization/fix/proof/spike), `chunk`, `deps`, `files`, `consumes`/`produces` (exact quotes), `skeleton`, `fake_of`, `[[criteria]]` (text + layer, `gate` on e2e), and for gate tasks a `[gate]` table (`n`, `release`, `launch`, `seed`, `unglamorous`, `[[gate.journey]]` step + serving task id); full schema in `tools/brana-gate --help`. The format exists so the task gate's structural half runs as a program, not as a model's recall; prose around the blocks stays free-form.
+
 Write TASKS.md with frontmatter `status: draft` — the task gate below flips it. Context packs are predictions made before code exists — treat them as hints. At implementation time paste what actually exists. Interfaces blocks are firmer than packs: they quote the contract, and contract changes route through the docs, not through a task improvising. Isolation is for token budgets, not for truth: the demo gates exist precisely because bugs live in the seams between well-tested tasks.
 
 ### Task Gate (blocks Phase 5)
 
 The consistency gate checks Phase 3's output; without this gate, Phase 4's output is self-certified — the splitter stamps its own TASKS.md and the first integrity check is a gate preflight *during* implementation, the most expensive moment to learn a journey step has no serving task. Every check below is cross-referencing, not judgment; machine pass only — intent was already checked at the consistency gate, and TASKS.md is a mechanical derivation of PLAN.md.
 
-**Machine pass** (Haiku/Flash tier, fresh session):
+**Machine pass** — script-first in agent mode: `brana-gate tasks TASKS.md --plan PLAN.md --arch ARCHITECTURE.md` covers every structural check in the list below; fix to a clean exit, then the LLM pass (Haiku/Flash tier, fresh session) covers only the judgment remainder — is a journey step *semantically* served by the task that claims it, does a criterion actually restate its PLAN.md requirement. Copy-paste mode: the full prompt below is the whole pass.
 
 ```
 Here are TASKS.md, PLAN.md, and ARCHITECTURE.md's interface and wire-
@@ -550,6 +556,8 @@ root cause, then either provide corrected code or, if the plan itself is
 wrong, rewrite the affected PLAN.md section.
 ```
 
+**Stale-plan rule:** any mid-cycle PLAN.md section rewrite — an escalation verdict, a spawn-route patch, a human edit — flips PLAN.md's stamp back to `draft` and TASKS.md's with it, until a scoped re-gate is clean: the consistency-gate checks re-run on the patched section, the task gate (`brana-gate tasks`) re-runs on every task serving the patched chunk, and affected tasks/gate journeys are updated — all before the next implementation session. A plan edited mid-flight without re-gating is the same self-certification seam the task gate exists to close. (Contract patches additionally trigger the stale-interface-block rule, Phase 7.)
+
 Run/verify each task yourself; fix env issues manually (don't burn tokens on `npm install` problems).
 
 ---
@@ -588,16 +596,19 @@ opinions, no praise, no rewrites.
 [paste diff + contract sections + acceptance criteria]
 ```
 
-Write findings to `specs/NNN-name/reviews/REVIEW_N.md`. Each finding becomes a TASKS.md fix task quoting file:line and referencing the review file's path — findings are never fixed off the review output directly.
+**Findings are unverified claims.** Before findings become fix tasks, a confirmation pass (fixer-tier model) runs: a bug, logic error, or race condition gets a reproduction — a failing test or concrete repro steps; a contract, convention, or design violation gets both sides quoted (code line + contract line). A finding that fails confirmation escalates to the human with the failed-confirmation note — never silently dropped, never blindly fixed; an LLM reviewer's false positive turned into a fix task is churn plus regression risk. The reproduction test lands with the fix and joins the suite.
+
+Write findings to `specs/NNN-name/reviews/REVIEW_N.md` with each finding's confirmation status. Each confirmed finding becomes a TASKS.md fix task quoting file:line and referencing the review file's path — findings are never fixed off the review output directly.
 
 **Compound rule:** when the same specific rule or pattern — not the same numbered category — repeats a second time in one review cycle, its fix task also adds a CONVENTIONS.md line or a lint rule closing that class — the same class never needs a reviewer's eyes again.
 
 Fixer prompt (feed findings back to the implementation model):
 
 ```
-A senior engineer reviewed your code and found these issues: [paste].
-Apply these fixes. All existing tests must still pass. Output only the
-changed files.
+A senior engineer reviewed your code; these findings are confirmed with
+reproductions: [paste confirmed findings + repros]. Apply these fixes;
+each repro test must now pass and join the suite. All existing tests
+must still pass. Output only the changed files.
 ```
 
 ### 6b — Product review (the demo gate)
@@ -623,9 +634,9 @@ Here are screenshots of the app and the UX.md + DESIGN.md contracts:
 that would most improve clarity and hierarchy. Findings only.
 ```
 
-**v1 exit bar:** the exit bar is the **release gate** task (Verification Machinery) and runs like any gate — the agent preflights it (verify script, release build, launch via the production entry point, journey entry reachable; failure is `GATE BLOCKED`, fix tasks first). The bar: the kernel journey passes end-to-end in a release build through the production composition, witnessed by you, including the unglamorous steps (restart, offline, error paths named in the PRD), _and_ the kernel journey's crystallization-task e2e test is green in the release build, _and_ — when fakes stood in for an external system — the production-composition proof task and the verified-fake contract suites are Done/green. Every `GATE SKIPPED` entry in TASKS.md is listed here and either walked now or explicitly accepted (accepting a skipped gate also explicitly accepts — and records — its DEFERRED crystallization task); an unresolved `GATE BLOCKED` fails the bar outright — a gate that never became runnable is a defect, not debt. Every crystallization task across every gate must be Done or explicitly accepted with its skipped gate — a gate walked but never crystallized is an untested journey by the next change. "All tasks Done" is not the bar; this is.
+**v1 exit bar:** the exit bar is the **release gate** task (Verification Machinery) and runs like any gate — the agent preflights it (verify script, release build, launch via the production entry point, journey entry reachable; failure is `GATE BLOCKED`, fix tasks first). The bar: the kernel journey passes end-to-end in a release build through the production composition, witnessed by you, including the unglamorous steps (restart, offline, error paths named in the PRD), _and_ the kernel journey's crystallization-task e2e test is green in the release build, _and_ — when fakes stood in for an external system — the production-composition proof task and the verified-fake contract suites are Done/green. Every `GATE SKIPPED` entry in TASKS.md is listed here with its `UNWITNESSED` journey test, and each is either walked now or explicitly accepted (the automation exists — the missing human witness is the recorded, accepted debt); an unresolved `GATE BLOCKED` fails the bar outright — a gate that never became runnable is a defect, not debt. Every crystallization task across every gate must be Done — a gate walked but never crystallized is an untested journey by the next change. "All tasks Done" is not the bar; this is.
 
-**Spawn route (pre-v1):** when fixing a `GATE BLOCKED` — any gate, including the release gate — reveals a missing subsystem or a new/changed contract (more than a few fix tasks, or a new ARCHITECTURE.md section), do not wedge it into the current TASKS.md: spawn a scoped child cycle in a new `specs/NNN-name/` dir (Phase 1→6 on the delta, Route C shape, ARCHITECTURE.md patched not regenerated). The parent gate stays `GATE BLOCKED` referencing the child spec; the stale-interface-block rule (Phase 7) runs on the parent's not-done tasks; the parent preflight re-runs only after the child cycle completes.
+**Spawn route (pre-v1):** when fixing a `GATE BLOCKED` — any gate, including the release gate — reveals a missing subsystem or a new/changed contract (more than a few fix tasks, or a new ARCHITECTURE.md section), do not wedge it into the current TASKS.md: spawn a scoped child cycle in a new `specs/NNN-name/` dir (Phase 1→6 on the delta, Route C shape, ARCHITECTURE.md patched not regenerated). The parent gate stays `GATE BLOCKED` referencing the child spec; the stale-interface-block rule (Phase 7) and the stale-plan rule (Phase 5) run on the parent's not-done tasks and patched PLAN.md sections; the parent preflight re-runs only after the child cycle completes.
 
 ---
 
@@ -651,6 +662,7 @@ No verify script / journey suite yet (pre-v1.1 app, or all gates were skipped) �
 - Any change that mid-flight touches a schema/API/module boundary stops and re-enters as Route C. (Pre-v1, the same discovery inside a blocked gate routes through the Spawn route in Phase 6b.)
 - Any change that mid-flight would drop or degrade user-visible behavior stops for your decision — same stop-the-line rule as Phase 5. This stays a hard stop in every medium. Route R additionally freezes on ANY user-visible change discovered mid-flight, not just a drop — a refactor that changes behavior isn't a refactor; same hard stop.
 - **Stale-interface-block rule:** any mid-cycle contract patch (CONSUMES/PRODUCES section of ARCHITECTURE.md changes) triggers a cheap pass that diffs old vs. new contract and updates the CONSUMES/PRODUCES blocks of every not-done TASKS.md task quoting the changed section — before the next implementation session starts. An implementer working from a stale interfaces block is the seam-bug failure mode rule 8 exists to close.
+- **Stale-plan rule (Phase 5) applies here too:** a mid-cycle PLAN.md section rewrite reverts PLAN.md and TASKS.md to `draft` until the scoped re-gate (consistency checks on the patched section, task gate on the tasks serving the patched chunk) is clean.
 
 **Review policy:** Routes B/C get one 6a review of the full feature diff plus one 6b walkthrough before merge. Route A gets 6a only if it touches logic, auth, or data handling. Route R gets one 6a review of the full diff always (6a category 7 — test adequacy — matters most on a refactor) and 6b only if the diff touched UI.
 

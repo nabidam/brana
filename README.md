@@ -3,7 +3,7 @@
 **A 7-phase app-development workflow for AI coding agents that gates on the running app, not green tests.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.4.0-blue.svg)](CHANGELOG.md)
 [![Works with](https://img.shields.io/badge/works%20with-Claude%20Code%20·%20Cursor%20·%20Codex%20·%20any%20chat%20UI-8A2BE2.svg)](#installation)
 
 The failure mode Brana guards against: **every task green, every doc consistent-looking, app unusable.** Most agent workflows stop at code review — nothing ever launches the app, walks a user journey, or judges a screen. Brana's countermeasure is a set of contract documents plus a human demo gate every 2–3 tasks: you launch the build and walk a scripted journey before feature work continues.
@@ -42,6 +42,7 @@ Full canon: [WORKFLOW.md](WORKFLOW.md). Skill-by-skill guide: [skills/USAGE.md](
 - **Scope cuts are hard stops.** An agent that discovers a spec'd behavior won't be built must stop and ask — documenting the cut in a gotchas file is laundering, not a decision.
 - **Copy-paste is canon.** Every prompt works by a human moving text between chat UIs — zero tooling required. Agent harnesses (Claude Code etc.) are an adaptation layer on top, not a dependency.
 - **Cheap by design.** Expensive model plans, cheap model codes; fresh session per phase; diff-only reviews. Concrete model bindings included.
+- **Deterministic gates.** The structural half of both machine gates runs as a program — `tools/brana-gate` (stdlib-only Python) checks task graphs, gate walkability, contract quotes, and computed WCAG contrast; LLM passes cover only judgment. Review findings are confirmed with reproductions before they become fix tasks.
 
 See [COMPARISON.md](COMPARISON.md) for an honest side-by-side with [Superpowers](https://github.com/obra/superpowers) and [Compound Engineering](https://github.com/EveryInc/compound-engineering) — including what Brana adopted from each and where they're stronger.
 
@@ -102,6 +103,7 @@ COMPARISON.md      Brana vs Superpowers vs Compound Engineering
 skills/            one skill per phase (brana-1-spec … brana-7-change)
   README.md        phase ↔ skill map
   USAGE.md         detailed per-skill guide
+tools/brana-gate   deterministic half of the machine gates (Python 3.11+, stdlib only)
 docs/history/      pre-release drafts
 ```
 
