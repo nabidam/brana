@@ -1,0 +1,29 @@
+# Task 2 evidence — render.py mood palette, confirmation, table, empty state
+# captured: 2026-07-16T19:34:26Z
+# command: bash tools/verify.sh + live render sanity
+
+==> ruff check
+All checks passed!
+==> ruff format --check
+9 files already formatted
+==> mypy (strict on src/)
+Success: no issues found in 5 source files
+==> pip-audit (dally dependency closure)
+
+No known vulnerabilities found
+==> detect-secrets (secret scan)
+no secrets found
+==> pytest
+................                                                         [100%]
+16 passed in 0.17s
+ALL CHECKS PASSED
+
+$ live render (S1 confirmation, S2 table, empty state):
+✓ 2026-07-15  mood 4  good run
+                                     
+   Date           Mood     Note      
+ ─────────────────────────────────── 
+   2026-07-15        4     café 🎉   
+   2026-07-14        2     meh       
+                                     
+No moods logged yet — try dally mood add 4
