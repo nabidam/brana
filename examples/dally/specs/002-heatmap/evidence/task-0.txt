@@ -1,0 +1,18 @@
+$ bash tools/verify.sh (task 0 — reports.build_heatmap)
+...
+==> pytest
+........                                                                 [100%]
+
+Full verify tail:
+Success: no issues found in 5 source files
+==> pip-audit (dally dependency closure)
+
+[notice] A new release of pip is available: 26.0.1 -> 26.1.2
+[notice] To update, run: pip install --upgrade pip
+No known vulnerabilities found
+==> detect-secrets (secret scan)
+no secrets found
+==> pytest
+.........................................................                [100%]
+57 passed in 0.43s
+ALL CHECKS PASSED

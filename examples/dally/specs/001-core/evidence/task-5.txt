@@ -1,0 +1,10 @@
+# Task 5 evidence — crystallize gate 1 as journey e2e
+# captured: 2026-07-16T20:49:20Z
+# command: pytest tests/test_journey.py + full verify
+
+============================== 1 passed in 0.19s ===============================
+
+==> pytest
+............................                                             [100%]
+28 passed in 0.26s
+ALL CHECKS PASSED

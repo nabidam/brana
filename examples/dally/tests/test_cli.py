@@ -1,0 +1,237 @@
+"""Task 3 tests for the CLI commands.
+
+Drives the real Typer app in-process via CliRunner (ARCHITECTURE.md §Test
+harness). Click 8.4 separates streams, so confirmations/tables are asserted on
+``result.stdout`` and validation errors on ``result.stderr``. Dates are relative
+to ``date.today()`` so the suite never couples to a wall-clock literal. The
+autouse ``dally_data_dir`` fixture gives each test a throwaway DB.
+"""
+
+from __future__ import annotations
+
+from datetime import date, timedelta
+
+import pytest
+from typer.testing import CliRunner
+
+from dally import cli, storage
+from dally.cli import app
+
+runner = CliRunner()
+
+
+def _iso(days_ago: int) -> str:
+    return (date.today() - timedelta(days=days_ago)).isoformat()
+
+
+def test_add_prints_confirmation_with_today_mood_and_note() -> None:
+    result = runner.invoke(app, ["mood", "add", "4", "--note", "good run"])
+    assert result.exit_code == 0
+    assert date.today().isoformat() in result.stdout
+    assert "4" in result.stdout
+    assert "good run" in result.stdout
+
+
+def test_add_backdated_confirms_the_past_date() -> None:
+    past = _iso(2)
+    result = runner.invoke(app, ["mood", "add", "2", "--date", past])
+    assert result.exit_code == 0
+    assert past in result.stdout
+
+
+@pytest.mark.parametrize("bad_mood", ["0", "6", "abc"])
+def test_invalid_mood_exits_2_with_one_line_naming_range(bad_mood: str) -> None:
+    result = runner.invoke(app, ["mood", "add", bad_mood])
+    assert result.exit_code == 2
+    stderr = result.stderr.strip()
+    assert "\n" not in stderr  # single line
+    assert "1" in stderr and "5" in stderr  # names the valid range
+
+
+def test_invalid_adds_write_nothing() -> None:
+    for bad in ["0", "6", "abc"]:
+        runner.invoke(app, ["mood", "add", bad])
+    result = runner.invoke(app, ["mood", "list"])
+    assert result.exit_code == 0
+    assert "No moods logged yet" in result.stdout
+
+
+def test_list_shows_both_entries_newest_first_note_intact() -> None:
+    runner.invoke(app, ["mood", "add", "4", "--note", "good run", "--date", _iso(1)])
+    runner.invoke(app, ["mood", "add", "2", "--note", "café 🎉"])  # today
+    result = runner.invoke(app, ["mood", "list"])
+    assert result.exit_code == 0
+    assert result.stdout.index(date.today().isoformat()) < result.stdout.index(_iso(1))
+    assert "café 🎉" in result.stdout
+    assert "good run" in result.stdout
+
+
+def test_list_empty_state_suggests_add_exit_0() -> None:
+    result = runner.invoke(app, ["mood", "list"])
+    assert result.exit_code == 0
+    assert "No moods logged yet" in result.stdout
+    assert "dally mood add 4" in result.stdout
+
+
+def test_malformed_and_future_dates_exit_2_write_nothing() -> None:
+    malformed = runner.invoke(app, ["mood", "add", "3", "--date", "2026-13-45"])
+    assert malformed.exit_code == 2
+    assert "YYYY-MM-DD" in malformed.stderr
+    assert "\n" not in malformed.stderr.strip()
+
+    future = runner.invoke(app, ["mood", "add", "3", "--date", _iso(-1)])
+    assert future.exit_code == 2
+    assert "future" in future.stderr.lower()
+
+    listed = runner.invoke(app, ["mood", "list"])
+    assert listed.exit_code == 0
+    assert "No moods logged yet" in listed.stdout
+
+
+def test_contract_commands_drive_exit_codes_and_shape() -> None:
+    ok = runner.invoke(app, ["mood", "add", "5", "--note", "x", "--date", date.today().isoformat()])
+    assert ok.exit_code == 0
+    assert date.today().isoformat() in ok.stdout
+
+    listed = runner.invoke(app, ["mood", "list"])
+    assert listed.exit_code == 0
+
+    bad = runner.invoke(app, ["mood", "add", "9"])
+    assert bad.exit_code == 2
+    assert bad.stderr.strip()
+
+
+def test_main_converts_unexpected_error_to_exit_1_no_traceback(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr("sys.argv", ["dally", "mood", "list"])
+
+    def boom() -> list[storage.Entry]:
+        raise RuntimeError("db exploded")
+
+    monkeypatch.setattr(storage, "list_entries", boom)
+
+    with pytest.raises(SystemExit) as excinfo:
+        cli.main()
+    assert excinfo.value.code == 1
+    err = capsys.readouterr().err
+    assert "unexpected error" in err
+    assert "Traceback" not in err
+
+
+def _this_monday() -> date:
+    today = date.today()
+    return today - timedelta(days=today.weekday())
+
+
+def test_report_week_shows_average_and_per_day_breakdown() -> None:
+    monday = _this_monday()
+    tuesday = monday + timedelta(days=1)
+    # Seed via storage (no future-date guard) so both days land in the current
+    # ISO-week window regardless of which weekday the suite runs on.
+    storage.add_entry(monday, 4, None)
+    storage.add_entry(tuesday, 2, None)
+
+    result = runner.invoke(app, ["report", "week"])
+    assert result.exit_code == 0
+    assert monday.isoformat() in result.stdout
+    assert tuesday.isoformat() in result.stdout
+    # Mean of daily averages (4.0, 2.0) = 3.0 — unlogged days excluded, not zeroed.
+    assert "3.0" in result.stdout
+
+
+def test_report_month_no_data_prints_friendly_message_exit_0() -> None:
+    result = runner.invoke(app, ["report", "month"])  # fresh temp DB, no entries
+    assert result.exit_code == 0
+    assert "month" in result.stdout
+    assert "add" in result.stdout  # suggests the next command
+
+
+def test_report_year_one_row_per_month_empty_months_blank() -> None:
+    year = date.today().year
+    storage.add_entry(date(year, 1, 15), 5, None)
+    storage.add_entry(date(year, 2, 15), 1, None)
+
+    result = runner.invoke(app, ["report", "year"])
+    assert result.exit_code == 0
+    # All twelve month labels present (one row per month).
+    for month in range(1, 13):
+        assert f"{year}-{month:02d}" in result.stdout
+    assert "5.0" in result.stdout  # January bucket
+    assert "1.0" in result.stdout  # February bucket
+
+
+def test_report_unknown_period_is_usage_error() -> None:
+    result = runner.invoke(app, ["report", "decade"])
+    assert result.exit_code == 2  # Typer usage error (S5)
+
+
+def test_report_contract_drives_all_three_periods() -> None:
+    for period in ("week", "month", "year"):
+        result = runner.invoke(app, ["report", period])
+        assert result.exit_code == 0  # empty periods still exit 0 (friendly no-data)
+
+
+# --- heatmap (S6) ------------------------------------------------------------
+
+
+def test_heatmap_is_registered_top_level() -> None:
+    result = runner.invoke(app, ["--help"])
+    assert result.exit_code == 0
+    assert "heatmap" in result.stdout  # top-level command, not under mood/report
+
+
+def test_heatmap_default_renders_trailing_year_grid() -> None:
+    storage.add_entry(date.today() - timedelta(days=3), 4, None)
+    storage.add_entry(date.today() - timedelta(days=10), 2, None)
+    result = runner.invoke(app, ["heatmap"])
+    assert result.exit_code == 0
+    assert "past 52 weeks" in result.stdout  # window label
+    assert "Sun" in result.stdout and "Sat" in result.stdout  # 7 day rows
+    assert "no entry" in result.stdout  # legend empty key
+
+
+def test_heatmap_year_renders_calendar_year_grid() -> None:
+    storage.add_entry(date(2025, 6, 1), 5, None)  # a day in 2025
+    result = runner.invoke(app, ["heatmap", "--year", "2025"])
+    assert result.exit_code == 0
+    assert "2025" in result.stdout  # year label
+    assert "Jan" in result.stdout  # month column labels
+
+
+def test_heatmap_future_year_exits_2_one_line_nothing_rendered() -> None:
+    future = date.today().year + 1
+    result = runner.invoke(app, ["heatmap", "--year", str(future)])
+    assert result.exit_code == 2
+    stderr = result.stderr.strip()
+    assert "\n" not in stderr  # single line
+    assert "future" in stderr.lower()
+    assert "Sun" not in result.stdout  # no grid rendered
+
+
+def test_heatmap_malformed_year_exits_2() -> None:
+    result = runner.invoke(app, ["heatmap", "--year", "abc"])
+    assert result.exit_code == 2  # Typer int parse (usage error, S5/S4)
+    assert result.stderr.strip()
+
+
+def test_heatmap_empty_window_friendly_exit_0() -> None:
+    result = runner.invoke(app, ["heatmap"])  # fresh temp DB, no entries
+    assert result.exit_code == 0
+    assert "No moods logged" in result.stdout
+    assert "add" in result.stdout  # suggests the next command
+    assert "Sun" not in result.stdout  # no blank grid
+
+
+def test_heatmap_contract_drives_exit_codes_and_shape() -> None:
+    storage.add_entry(date.today() - timedelta(days=2), 3, None)
+    storage.add_entry(date(2025, 3, 3), 4, None)
+
+    default = runner.invoke(app, ["heatmap"])
+    assert default.exit_code == 0 and "past 52 weeks" in default.stdout
+
+    year = runner.invoke(app, ["heatmap", "--year", "2025"])
+    assert year.exit_code == 0 and "2025" in year.stdout
+
+    assert runner.invoke(app, ["heatmap", "--year", str(date.today().year + 1)]).exit_code == 2
+    assert runner.invoke(app, ["heatmap", "--year", "abc"]).exit_code == 2

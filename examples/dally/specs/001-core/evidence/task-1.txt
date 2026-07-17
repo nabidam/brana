@@ -1,0 +1,19 @@
+# Task 1 evidence — storage.py schema init + entry CRUD
+# captured: 2026-07-16T19:29:33Z
+# command: bash tools/verify.sh (real temp-dir SQLite, no mocks)
+
+==> ruff check
+All checks passed!
+==> ruff format --check
+8 files already formatted
+==> mypy (strict on src/)
+Success: no issues found in 5 source files
+==> pip-audit (dally dependency closure)
+
+No known vulnerabilities found
+==> detect-secrets (secret scan)
+no secrets found
+==> pytest
+..........                                                               [100%]
+10 passed in 0.20s
+ALL CHECKS PASSED

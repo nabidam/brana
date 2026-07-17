@@ -1,0 +1,9 @@
+$ python -m pytest tests/test_journey.py -v
+configfile: pyproject.toml
+plugins: anyio-4.14.0, asyncio-1.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 2 items
+
+tests/test_journey.py ..                                                 [100%]
+
+============================== 2 passed in 0.20s ===============================
