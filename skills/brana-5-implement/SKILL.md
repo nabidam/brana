@@ -41,7 +41,7 @@ Task 0 is always the scaffold: file tree from FILE_STRUCTURE.md, configs, data m
 
 Stuck after two failed attempts within the batch session → stop and tell the user to escalate to Opus-tier with: task spec, current code, failing output, summary of attempts. The escalation may conclude the plan itself is wrong — then the fix is a PLAN.md edit, not more code attempts.
 
-**Stale-plan rule:** any mid-cycle PLAN.md section rewrite (escalation verdict, spawn-route patch, human edit) reverts PLAN.md's stamp — and TASKS.md's — to `draft` until a scoped re-gate is clean: consistency checks re-run on the patched section, `tools/brana-gate tasks` re-runs on every task serving the patched chunk, and affected tasks/gate journeys are updated — before the next implementation session. A plan edited mid-flight without re-gating is the same self-certification seam the task gate closes. (Contract patches additionally trigger the stale-interface-block rule, Phase 7.)
+**Stale-plan rule:** any mid-cycle PLAN.md section rewrite (escalation verdict, spawn-route patch, human edit) reverts PLAN.md's stamp — and TASKS.md's — to `draft` until a scoped re-gate is clean: consistency checks re-run on the patched section, `brana-gate tasks` (resolve `brana-gate` via bundled `scripts/brana_gate.py` beside this SKILL.md, else PATH) re-runs on every task serving the patched chunk, and affected tasks/gate journeys are updated — before the next implementation session. A plan edited mid-flight without re-gating is the same self-certification seam the task gate closes. (Contract patches additionally trigger the stale-interface-block rule, Phase 7.)
 
 ## Prompt mode template
 

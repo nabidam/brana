@@ -5,6 +5,8 @@ description: "Use when PLAN.md exists and the user wants it split into implement
 
 # Phase 4 — TASKS.md
 
+**Locating `brana-gate`:** every `brana-gate` invocation below resolves in order — (1) `scripts/brana_gate.py` bundled beside this SKILL.md (run `python3 <skill-dir>/scripts/brana_gate.py ...`); (2) `brana-gate` on PATH; (3) `tools/brana-gate` when the working directory is the Brana repo itself. None found -> state which locations were checked, then the full checklist runs as the LLM pass (copy-paste mode).
+
 Split the plan into tasks small enough that each fits one implementation prompt. Task size is the workflow's unit of safety: a task that fits in one prompt can be verified, committed, and rolled back alone. Blocked until the Phase 3 consistency gate's machine pass is clean — refuse a PLAN.md still stamped `status: draft`; point back to Phase 3. Route B delta (no PLAN.md): the mini-spec must be stamped `gate-passed` by impact analysis. **Route S delta (SPEC.md `profile: lite`, no PLAN.md):** refuse a SPEC.md still stamped `draft`; split from SPEC.md's kernel journey + acceptance criteria and ARCHITECTURE.md; author the DEMO GATE (≥1) and RELEASE GATE tasks directly here with full gate anatomy (journey, preflight block, unglamorous step, crystallization task); the task gate runs `brana-gate tasks` without `--plan` (chunk checks skip) and every other check stands.
 
 ## Modes
@@ -34,7 +36,7 @@ Rules:
 
 Context packs are predictions made before code exists — mark them as hints; the implementation session verifies against real files. Interfaces blocks are firmer than packs: they quote the contract, and contract changes route through the docs, not through a task improvising. Isolation is for token budgets, not for truth: demo gates exist precisely because bugs live in the seams between well-tested tasks.
 
-**Task schema (agent mode):** each task is a heading plus one fenced ```toml block — `id`, `type` (scaffold/feature/gate/crystallization/fix/proof/spike), `chunk`, `deps`, `files`, `consumes`/`produces` (exact quotes), `skeleton`, `fake_of`, `[[criteria]]` (text + layer, `gate` on e2e), and for gate tasks a `[gate]` table (`n`, `release`, `launch`, `seed`, `unglamorous`, `[[gate.journey]]` step + serving task id); full schema in `tools/brana-gate --help`. The format exists so the task gate's structural half runs as a program, not as a model's recall; prose around the blocks stays free-form.
+**Task schema (agent mode):** each task is a heading plus one fenced ```toml block — `id`, `type` (scaffold/feature/gate/crystallization/fix/proof/spike), `chunk`, `deps`, `files`, `consumes`/`produces` (exact quotes), `skeleton`, `fake_of`, `[[criteria]]` (text + layer, `gate` on e2e), and for gate tasks a `[gate]` table (`n`, `release`, `launch`, `seed`, `unglamorous`, `[[gate.journey]]` step + serving task id); full schema in `brana-gate --help`. The format exists so the task gate's structural half runs as a program, not as a model's recall; prose around the blocks stays free-form.
 
 Write TASKS.md to the same `specs/NNN-name/` dir with frontmatter `status: draft` — the task gate below flips it to `ready` (Phase 5 refuses a draft TASKS.md). Do not write any code. Task completions done-mark against `specs/NNN-name/evidence/task-N.txt` (Verification Machinery in WORKFLOW.md) — TASKS.md need not restate the format, only that done-marks reference it.
 
@@ -42,7 +44,7 @@ Write TASKS.md to the same `specs/NNN-name/` dir with frontmatter `status: draft
 
 Without this gate TASKS.md is self-certified — the splitter stamps its own output and the first integrity check is a gate preflight *during* Phase 5, the most expensive moment to learn a journey step has no serving task. Every check is cross-referencing, not judgment; machine pass only — intent was already checked at the Phase 3 consistency gate, and TASKS.md is a mechanical derivation of PLAN.md.
 
-**Script-first:** run `tools/brana-gate tasks TASKS.md --plan PLAN.md --arch ARCHITECTURE.md` — it covers every structural check in the list below deterministically; fix findings to a clean exit. Then an LLM pass (fresh session, Haiku/Flash tier) covers only the judgment remainder: is a journey step *semantically* served by the task claiming it; does a criterion actually restate its PLAN.md requirement. Copy-paste mode (no tool): the full checklist is the LLM pass. Against TASKS.md + PLAN.md + ARCHITECTURE.md's interface and wire-contract sections, list:
+**Script-first:** run `brana-gate tasks TASKS.md --plan PLAN.md --arch ARCHITECTURE.md` — it covers every structural check in the list below deterministically; fix findings to a clean exit. Then an LLM pass (fresh session, Haiku/Flash tier) covers only the judgment remainder: is a journey step *semantically* served by the task claiming it; does a criterion actually restate its PLAN.md requirement. Copy-paste mode (no tool): the full checklist is the LLM pass. Against TASKS.md + PLAN.md + ARCHITECTURE.md's interface and wire-contract sections, list:
 
 - every PLAN.md chunk with no task implementing it, and every task serving no chunk;
 - every dependency cycle, and every walking-skeleton task ordered after a feature task;
