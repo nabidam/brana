@@ -115,6 +115,20 @@ The full pipeline is sized for apps worth eight documents; a small tool isn't, a
 
 **Escalation (hard rule):** mid-flight discovery of a second subsystem, an external system, or a schema/module-boundary change beyond the lite ARCHITECTURE.md → stop, tell the user, and upgrade: write the missing docs for the delta (Route C shape), re-run the consistency gate, then continue. A lite profile that has outgrown itself and keeps going is the same self-certification seam the gates exist to close. Phase 7 is unchanged — living docs exist in both profiles, so the change loop and its routes work identically.
 
+**Route C delta qualification:** a Route C change cycle runs the same four-criteria check against the *delta*, not the whole app: the delta touches one subsystem; ≤ ~15 estimated tasks; the delta introduces no *new* external system (an existing integration already documented in ARCHITECTURE.md does not disqualify — its wire contract and fake already exist); the delta's own stakes are low. All four hold → the cycle's SPEC.md gets `profile: lite` (Phase 2/3/4 lite deltas apply to the cycle docs; living root docs are patched as always). The original v1's profile is irrelevant — a full-profile app can and should take lite change cycles when the delta qualifies.
+
+## Delivery Contract
+
+A user's speed constraint ("fast delivery", "no demo gates", "just ship it so I can test") is a routing signal, not a prose note. Left unstructured, it produces the worst of both worlds — full-profile documents with ad-hoc waiver frontmatter invented at Phase 4, which no gate validates and the next phase can't trust.
+
+**Speed signal rule (hard):** when the user signals speed at cycle entry, the agent must — before drafting SPEC.md — (1) run the profile qualification (Route S, or its Route C delta form) and propose `lite` if it holds, and (2) propose an explicit delivery contract naming exactly what is waived and what verifies instead. Waivers bolted onto a finished full-profile doc set are the anti-pattern this section exists to kill: the route is chosen at entry, when the ceremony hasn't been paid yet.
+
+**Vocabulary (closed):** SPEC.md frontmatter, one line — `delivery: demo_gates=waived walkthrough=waived canary=required` — keys `demo_gates`, `walkthrough`, `canary`; values `required` (default when absent) | `waived`. Nothing else is a waivable unit: the task gate, verify script, evidence files, crystallization tasks, and the release-gate task itself are load-bearing in every contract (a waived `walkthrough` means the release gate's journey is verified by its crystallized e2e suite instead of a human walk; the gate task still exists and still blocks).
+
+**Waiver adds no scope (hard rule):** a waiver names its substitute from machinery the cycle already has — the verify script, the test suite, the crystallized journey tests. If the proposed substitute requires *building new tooling*, that tooling is a feature: it goes through the v1 provenance check (Phase 1) as process-derived scope, priced in tasks, and enters v1 only by the user's explicit call. "We waived the demo gate, therefore we must build a dry-run CLI" is scope amplification wearing a waiver's clothes — the user may well want the CLI, but they order it; the waiver never does.
+
+**Enforcement:** TASKS.md frontmatter may only *echo* SPEC.md's `delivery:` line verbatim — it never introduces waiver keys of its own. `brana-gate tasks --spec SPEC.md` checks both directions: invalid contract tokens in SPEC.md, and any ad-hoc waiver/exception key in TASKS.md frontmatter. Downstream phases read the contract from SPEC.md, the stamped source of truth.
+
 ## External Design Inputs (optional)
 
 Two kinds of pre-existing design input slot into the workflow as phase inputs — no extra phases. A design system replaces _generation_; reference apps ground _judgment_. Neither replaces UX.md: a design system is vocabulary, not sentences, and a fully themed component kit arranged badly is still a bad app.
@@ -196,13 +210,17 @@ Do not add features. Do not design.
 
 Fold the result back into SPEC.md: **Kernel** (with the kernel journey verbatim), **v1**, **Backlog**. The kernel journey is the walking-skeleton target (Phase 5) and the standing demo-gate script (Phase 6b). Convenience features (scheduling, power-user overrides, localization, theming and their kin) are backlog by default — they enter v1 only by your explicit call.
 
+**Provenance check (part of the scope challenge):** every v1 bullet traces to one of — user-stated, kernel-derived, or **process-derived** (the workflow's own machinery wanting a deliverable: verification tooling, output/formatting modules, audit commands, migration helpers). Process-derived bullets are presented to the user as a named list with a rough task cost each, and enter v1 only by explicit call — same standing as convenience features. The workflow has execution discipline by construction; this check is its scope discipline: nothing the process invented rides into v1 unbilled.
+
+**Minimal-form rule (hard):** when the user describes a deliverable with minimizing language — "just a flag", "only a dry-run argument", "a simple X" — the spec commits to the minimal form that satisfies the stated need. Elaborations (a second mode, a dedicated module, a separate CLI, sentinel test suites around it) are backlog by default, listed as named options with cost; they enter v1 only by the user's explicit call, never by silent inclusion. One sentence of user intent must not compound into three tasks without the user seeing the multiplication.
+
 **Integration check (before writing SPEC.md):** combine the answers gathered so far and surface non-obvious consequences no single question covered ("X plus Y together means Z is lost on restart") — one open probe per genuine combination effect. An answer revealing genuine uncertainty is recorded as an explicit assumption in SPEC.md, never silently resolved.
 
 **Design direction (required, 3–5 lines):** product personality as 3 adjectives, 2–3 reference apps whose look is the target, platform density, accessibility floor (WCAG AA). Feeds UX.md and DESIGN.md. If you have a pre-built design system or a reference pack, name them here instead — see External Design Inputs.
 
-**Profile choice (last step, user confirms):** check the Route S qualification (single subsystem, ≤ ~15 estimated tasks, no external systems, low stakes — see Route S — Lite v1 Profile). All four hold → propose `profile: lite`; any fails → `profile: full` (the default). Record it in the frontmatter.
+**Profile choice (last step, user confirms):** check the Route S qualification (single subsystem, ≤ ~15 estimated tasks, no external systems, low stakes — see Route S — Lite v1 Profile; Route C cycles use the delta qualification there). All four hold → propose `profile: lite`; any fails → `profile: full` (the default). Record it in the frontmatter. A user speed signal makes this proposal mandatory-before-drafting and adds a delivery contract — see Delivery Contract; both land in the frontmatter, chosen here, never invented at Phase 4.
 
-Keep SPEC.md under 500 words plus the kernel section (lite: ~700 words including the acceptance-criteria section that replaces PRD.md). Write it with frontmatter `status: draft` (plus `profile: lite` when chosen).
+Keep SPEC.md under 500 words plus the kernel section (lite: ~700 words including the acceptance-criteria section that replaces PRD.md). Write it with frontmatter `status: draft` (plus `profile: lite` and a `delivery:` line when chosen).
 
 **Spec self-review (after writing, before handing over):** re-read the file fresh — (1) placeholders/TBDs, (2) internal contradictions, (3) scope: fits one cycle or needs decomposition, (4) ambiguity: any requirement readable two ways → pick one and make it explicit. Fix inline, then ask the human to read it. Catches at zero cost what the Phase 3 consistency gate would catch two phases later.
 
@@ -218,6 +236,8 @@ Keep SPEC.md under 500 words plus the kernel section (lite: ~700 words including
 ### UX.md — the missing artifact
 
 Without this document, implementers get tokens and adjectives but no screens — every task improvises its own interface, and the result is incoherent. UX.md is the floor plan that DESIGN.md later paints. Component hierarchies and token sheets do not substitute for it.
+
+**Screens are interactive UI only.** A CLI command, log stream, or operator terminal output is not a screen and gets no wireframe, empty state, or navigation entry. Such surfaces get an **operator surface note** instead — one short block per surface: name, invocation, output format in one or two lines, error/exit convention. The note lives in UX.md (an "Operator surfaces" section) so it stays a living doc, but it costs sentences, not ceremony. Downstream: tasks touching only an operator surface reference the note in their context pack and do **not** load DESIGN.md — output-style rules for terminals live in CONVENTIONS.md (≤5 lines). Writing S-numbered wireframes for `--help` output is the tell that this rule was skipped.
 
 ```
 You are a senior product designer. From the SPEC below, produce UX.md:
@@ -540,7 +560,14 @@ Rules:
   composition.
 - The walking-skeleton milestone tasks come first and may not be
   reordered after feature tasks.
-- Tasks tiny: ~50–300 lines of code, one prompt each.
+- Tasks tiny: ~50–300 lines of code, one prompt each — but the count
+  is a cost, not a virtue: emit the FEWEST tasks that respect the cap.
+  Two consecutive tasks in a linear dependency whose primary file is
+  the same merge into one unless the merged task would exceed the cap.
+- No catch-all task: a final "fill remaining gaps" task depending on
+  (nearly) every other task is a blocking finding — every acceptance
+  criterion belongs to the task that owns the behavior. Gate and
+  crystallization tasks are the only sanctioned wide-dependency tasks.
 Output TASKS.md as a numbered list. Do not write any code.
 [paste PLAN.md + UX.md flow section + PRD.md error/edge-case list]
 ```
@@ -553,7 +580,7 @@ Write TASKS.md with frontmatter `status: draft` — the task gate below flips it
 
 The consistency gate checks Phase 3's output; without this gate, Phase 4's output is self-certified — the splitter stamps its own TASKS.md and the first integrity check is a gate preflight *during* implementation, the most expensive moment to learn a journey step has no serving task. Every check below is cross-referencing, not judgment; machine pass only — intent was already checked at the consistency gate, and TASKS.md is a mechanical derivation of PLAN.md.
 
-**Machine pass** — script-first in agent mode: `brana-gate tasks TASKS.md --plan PLAN.md --arch ARCHITECTURE.md` covers every structural check in the list below; fix to a clean exit, then the LLM pass (Haiku/Flash tier, fresh session) covers only the judgment remainder — is a journey step *semantically* served by the task that claims it, does a criterion actually restate its PLAN.md requirement. Copy-paste mode: the full prompt below is the whole pass.
+**Machine pass** — script-first in agent mode: `brana-gate tasks TASKS.md --plan PLAN.md --arch ARCHITECTURE.md --spec SPEC.md` covers every structural check in the list below; fix to a clean exit, then the LLM pass (Haiku/Flash tier, fresh session) covers only the judgment remainder — is a journey step *semantically* served by the task that claims it, does a criterion actually restate its PLAN.md requirement. Copy-paste mode: the full prompt below is the whole pass.
 
 ```
 Here are TASKS.md, PLAN.md, and ARCHITECTURE.md's interface and wire-
@@ -577,7 +604,11 @@ contract sections: [paste]. Findings in TASKS.md only — list:
 - a missing RELEASE GATE task; and — when ARCHITECTURE.md has wire
   contracts — a production-composition proof absent from the release
   gate's dependencies, plus every fake-producing task missing its
-  shared-suite `[contract]` criterion.
+  shared-suite `[contract]` criterion;
+- every catch-all task: a non-gate, non-crystallization task that
+  depends on (nearly) every other task and produces nothing;
+- every waiver/exception key in TASKS.md frontmatter that is not a
+  verbatim echo of SPEC.md's `delivery:` contract line.
 Report only findings with task id + quote. No rewrites.
 ```
 
@@ -733,7 +764,7 @@ Who routes: in agent mode the agent self-triages, announces the chosen route + o
 | --------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **A — trivial**       | Bugfix, copy change, config tweak                                | Short-lived branch (Git Rule 3, human may waive per instance) → hand-write one task → Phase 5 → verify (incl. journey suite) green before merge. No doc updates unless a behavior contract changed. Styling still obeys DESIGN.md tokens. |
 | **B — small feature** | Fits existing architecture, no schema/API/module-boundary change | Mini-spec → impact analysis → Phase 4 on the delta → Phase 5/6 (incl. 6b).                                                                                                                                              |
-| **C — big feature**   | New module, schema migration, new integration                    | Full Phase 1→6 scoped to the delta: new `specs/NNN-name/` dir; Opus patches ARCHITECTURE.md/UX.md, never regenerates.                                                                                                    |
+| **C — big feature**   | New module, schema migration, new integration                    | Full Phase 1→6 scoped to the delta: new `specs/NNN-name/` dir; Opus patches ARCHITECTURE.md/UX.md, never regenerates. Phase 1 runs the **Route C delta qualification** (Route S section) — a qualifying delta takes `profile: lite` regardless of the app's own profile. A user speed signal triggers the Delivery Contract rules at cycle entry.                                                                                                    |
 | **R — refactor**      | Refactor, dependency upgrade, debt paydown; no user-visible behavior change intended | Feature branch → verify + journey suite green BEFORE, as baseline → chunked tasks (~300-line cap, one green commit each) → verify green after each chunk → 6a on the full diff → doc sync (append Decision log entry if a boundary moved) → 6b only if UI touched → merge. |
 
 No verify script / journey suite yet (pre-v1.1 app, or all gates were skipped) → Route R's and Route A's baseline preconditions are unsatisfiable as written; the route's first task is the backfill: create the verify script and crystallize the kernel journey, before any chunked/behavior work starts.

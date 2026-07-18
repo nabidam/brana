@@ -4,10 +4,15 @@ r"""brana-gate — deterministic half of Brana's machine gates.
 Python 3.11+, stdlib only. Exit codes: 0 clean, 1 findings, 2 usage/parse error.
 
 Subcommands:
-  tasks TASKS.md [--plan PLAN.md] [--arch ARCHITECTURE.md]
+  tasks TASKS.md [--plan PLAN.md] [--arch ARCHITECTURE.md] [--spec SPEC.md]
       Structural task-gate checks (Phase 4). Covers every cross-referencing
       check in WORKFLOW.md's task gate; the LLM pass covers only judgment
       (semantic serving, contradictions, prose placeholders).
+      With --spec, also validates the delivery contract: SPEC.md frontmatter
+      may carry `delivery: key=required|waived ...` (keys: demo_gates,
+      walkthrough, canary); TASKS.md frontmatter may only echo it verbatim —
+      any other waiver/exception key is a finding (waivers are declared in
+      SPEC.md at cycle entry, never invented at Phase 4).
   docs FILE [FILE...]
       Consistency-gate scriptable checks (Phase 3): unresolved placeholders,
       and computed WCAG contrast for DESIGN.md token tables (never ask an
@@ -69,6 +74,54 @@ def norm(s: str) -> str:
 TOML_BLOCK = re.compile(r"^```toml\s*$(.*?)^```\s*$", re.M | re.S)
 LAYERS = {"unit", "integration", "contract", "e2e"}
 TYPES = {"scaffold", "feature", "gate", "crystallization", "fix", "proof", "spike"}
+DELIVERY_KEYS = {"demo_gates", "walkthrough", "canary"}
+DELIVERY_VALUES = {"required", "waived"}
+WAIVERISH = re.compile(r"waiv|exception|skip", re.I)
+
+
+def parse_frontmatter(text: str) -> dict[str, str]:
+    m = re.match(r"\A---\s*\n(.*?)\n---\s*(?:\n|\Z)", text, re.S)
+    if not m:
+        return {}
+    fm: dict[str, str] = {}
+    for line in m.group(1).splitlines():
+        k, sep, v = line.partition(":")
+        if sep and k.strip():
+            fm[k.strip()] = v.strip()
+    return fm
+
+
+def parse_delivery(raw: str, loc_name: str) -> dict[str, str] | None:
+    contract: dict[str, str] = {}
+    for token in re.split(r"[,\s]+", raw.strip()):
+        if not token:
+            continue
+        k, sep, v = token.partition("=")
+        if not sep or k not in DELIVERY_KEYS or v not in DELIVERY_VALUES:
+            find(loc_name, "delivery", f'invalid delivery token "{token}" (keys: {sorted(DELIVERY_KEYS)}, values: {sorted(DELIVERY_VALUES)})')
+            return None
+        contract[k] = v
+    return contract
+
+
+def check_delivery(tasks_path: Path, spec_path: Path | None) -> None:
+    tasks_fm = parse_frontmatter(tasks_path.read_text(encoding="utf-8"))
+    spec_delivery_raw = None
+    if spec_path:
+        spec_fm = parse_frontmatter(spec_path.read_text(encoding="utf-8"))
+        spec_delivery_raw = spec_fm.get("delivery")
+        if spec_delivery_raw is not None:
+            parse_delivery(spec_delivery_raw, spec_path.name)
+    for k, v in tasks_fm.items():
+        if k == "delivery":
+            if spec_path is None:
+                find(tasks_path.name, "delivery", "frontmatter declares a delivery contract; re-run with --spec SPEC.md to verify it against the source of truth")
+            elif spec_delivery_raw is None:
+                find(tasks_path.name, "delivery", "frontmatter declares a delivery contract but SPEC.md frontmatter has none — waivers are declared in SPEC.md at cycle entry")
+            elif norm(v) != norm(spec_delivery_raw):
+                find(tasks_path.name, "delivery", f'delivery contract "{v}" does not echo SPEC.md\'s "{spec_delivery_raw}" verbatim')
+        elif k != "status" and (WAIVERISH.search(k) or WAIVERISH.search(v)):
+            find(tasks_path.name, "delivery", f'ad-hoc waiver key "{k}: {v}" — the only sanctioned waiver channel is SPEC.md\'s delivery contract, echoed as `delivery:`')
 
 
 def parse_tasks(path: Path) -> list[dict]:
@@ -127,6 +180,16 @@ def check_tasks(tasks_path: Path, plan_path: Path | None, arch_path: Path | None
         for t in tasks:
             if t.get("skeleton") and order.get(t.get("id"), -1) > first_feature:
                 find(loc(t), "skeleton", "walking-skeleton task ordered after a feature task")
+
+    # catch-all sweeper: a non-gate task depending on nearly everything and
+    # producing nothing means criteria weren't distributed to their owners
+    n_other = len(by_id) - 1
+    if n_other >= 4:
+        for t in tasks:
+            if t.get("type") in {"gate", "crystallization"}:
+                continue
+            if len(set(t.get("deps", []))) >= max(3, -(-n_other * 4 // 5)) and not t.get("produces"):
+                find(loc(t), "catch-all", "depends on nearly every other task and produces nothing — distribute its criteria to the tasks that own the behavior")
 
     # chunk coverage (needs PLAN.md)
     if plan_path:
@@ -343,9 +406,9 @@ def main(argv: list[str]) -> int:
     try:
         if cmd == "tasks":
             if not args:
-                print("usage: brana-gate tasks TASKS.md [--plan PLAN.md] [--arch ARCHITECTURE.md]", file=sys.stderr)
+                print("usage: brana-gate tasks TASKS.md [--plan PLAN.md] [--arch ARCHITECTURE.md] [--spec SPEC.md]", file=sys.stderr)
                 return 2
-            plan = arch = None
+            plan = arch = spec = None
             pos = []
             it = iter(args)
             for a in it:
@@ -353,9 +416,12 @@ def main(argv: list[str]) -> int:
                     plan = Path(next(it))
                 elif a == "--arch":
                     arch = Path(next(it))
+                elif a == "--spec":
+                    spec = Path(next(it))
                 else:
                     pos.append(Path(a))
             check_tasks(pos[0], plan, arch)
+            check_delivery(pos[0], spec)
         elif cmd == "docs":
             if not args:
                 print("usage: brana-gate docs FILE [FILE...]", file=sys.stderr)

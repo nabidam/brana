@@ -16,11 +16,13 @@ Every change after v1 enters through triage. The living docs (ARCHITECTURE.md, U
 
 Self-triage: pick the route, announce it + a one-line reason, and proceed — the user overrides by replying. Wrong-way-cheap mistakes are caught by the escalation rules below.
 
+**Speed signal (hard rule):** the user saying "fast delivery", "no demo gates", "just ship it so I can test" or kin at cycle entry makes two proposals mandatory *before any cycle doc is drafted*: (1) the lite profile if the delta qualification holds; (2) an explicit delivery contract in the cycle SPEC.md's frontmatter (`delivery: demo_gates=waived ...` — closed vocabulary, WORKFLOW.md Delivery Contract). A waiver's substitute verification reuses existing machinery — never new tooling; tooling the process wants is process-derived scope for Phase 1's provenance check, priced and confirmed by the user. Waivers invented in TASKS.md frontmatter are a `brana-gate tasks --spec` finding.
+
 | Route | Change type | Path |
 |---|---|---|
 | **A — trivial** | Bugfix, copy change, config tweak | Short-lived branch (Git Rule 3, human may waive per instance) → one hand-written task → Phase 5 (`brana-5-implement`) → verify (incl. journey suite) green before merge. No doc updates unless a behavior contract changed. Styling still obeys DESIGN.md tokens. |
 | **B — small feature** | Fits existing architecture, no schema/API/module-boundary change | Mini-spec → impact analysis → Phase 4 on the delta → Phase 5/6 (incl. 6b). Feature branch. |
-| **C — big feature** | New module, schema migration, new integration | Full Phase 1→6 scoped to the delta (`brana-1` … `brana-6`), new `specs/NNN-name/` dir. ARCHITECTURE.md and UX.md are patched (Opus-tier), never regenerated. Feature branch. |
+| **C — big feature** | New module, schema migration, new integration | Full Phase 1→6 scoped to the delta (`brana-1` … `brana-6`), new `specs/NNN-name/` dir. Phase 1 runs the **Route C delta qualification** (WORKFLOW.md, Route S): delta in one subsystem, ≤ ~15 tasks, no *new* external system (an integration already in ARCHITECTURE.md doesn't disqualify), delta stakes low → the cycle takes `profile: lite` regardless of the app's own profile. ARCHITECTURE.md and UX.md are patched (Opus-tier), never regenerated. Feature branch. |
 | **R — refactor** | Refactor, dependency upgrade, debt paydown; no user-visible behavior change intended | Feature branch → verify + journey suite green BEFORE, as baseline → chunked tasks (~300-line cap, one green commit each) → verify green after each chunk → 6a on the full diff → doc sync (append **Decision log** entry if a boundary moved) → 6b only if UI touched → merge. |
 
 No verify script / journey suite yet (pre-v1.1 app, or all gates were skipped) → Route R's and Route A's baseline preconditions are unsatisfiable as written; the route's first task is the backfill: create the verify script and crystallize the kernel journey, before any chunked/behavior work starts.

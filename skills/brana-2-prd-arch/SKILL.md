@@ -24,6 +24,8 @@ Locate the current cycle's SPEC.md (latest `specs/NNN-name/SPEC.md`). **`profile
 4. Key flows: the kernel journey plus the 2–3 next-most-common journeys, step by step as "user sees X, does Y, system responds Z" — with exact screen ids.
 5. Density & hierarchy notes per screen: what is one click away, what is deliberately buried behind disclosure.
 
+**Screens are interactive UI only (hard rule).** A CLI command, log stream, or operator terminal output is never a screen: no S-id, no wireframe, no empty/loading/error-state ceremony, no navigation entry. Such surfaces get an **operator surface note** in a separate "Operator surfaces" UX.md section — per surface: name, invocation, output format in 1–2 lines, error/exit convention. Downstream, tasks touching only an operator surface reference the note and do **not** load DESIGN.md (terminal style rules live in CONVENTIONS.md, ≤5 lines). Wireframing `--help` output is the tell this rule was skipped.
+
 No visual styling, no colors, no code. If SPEC names a reference pack, adapt its _patterns_ (navigation structure, disclosure, information density) — never clone layouts. Write to repo root — living doc, patched forever after.
 
 **Tell the user to read UX.md and walk the flows before proceeding** — UX.md encodes intent no machine check can verify; a step that feels wrong on paper will be wrong in the app, and this is the cheapest moment to fix it.

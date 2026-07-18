@@ -32,7 +32,9 @@ Rules:
 - Every DEMO GATE task is immediately followed by a **crystallization task**: it encodes the gate's scripted journey (including its unglamorous step) as an automated e2e test on the harness named in CONVENTIONS.md's Test strategy; the new test joins the journey suite. No feature task may start before its preceding gate's crystallization task is done. A `GATE SKIPPED` gate does NOT defer the encoding — writing the e2e needs only the scripted journey, not a walkthrough: the crystallization task runs immediately and its test is marked `UNWITNESSED` (same visible-debt mark as the gate) until the journey is eventually walked, at latest the v1 exit bar. Feature work proceeds once the unwitnessed test is green — a skip costs human attention debt, never automation debt.
 - **Verified-fake rule** (only when ARCHITECTURE.md has wire contracts): a task producing a fake of an external system gets a `[contract]` criterion running ONE shared suite against both the fake and the real adapter, asserting the wire contract — the fake must reject what the contract rejects. The real-adapter side is offline (request-shape assertions, recorded fixtures); live provider calls happen only in a bounded canary task routed through the production composition.
 - The walking-skeleton milestone tasks come first and may not be reordered after feature tasks.
-- Tasks tiny — ~50–300 lines of new code, one prompt each. Task ids numbered fresh per cycle dir. Task 0 of a new app is always the scaffold (file tree from FILE_STRUCTURE.md, configs, data migrations, no feature logic); its smoke test is the app booting via a documented run command, recorded in CONVENTIONS.md.
+- Tasks tiny — ~50–300 lines of new code, one prompt each — but the count is a cost, not a virtue: emit the FEWEST tasks that respect the cap. **Merge bias:** two consecutive tasks in a linear dependency whose primary file is the same merge into one unless the merged task would exceed the cap. Task ids numbered fresh per cycle dir. Task 0 of a new app is always the scaffold (file tree from FILE_STRUCTURE.md, configs, data migrations, no feature logic); its smoke test is the app booting via a documented run command, recorded in CONVENTIONS.md.
+- **No catch-all task:** a final "fill remaining gaps" task depending on (nearly) every other task is a blocking finding — every acceptance criterion belongs to the task that owns the behavior. Gate and crystallization tasks are the only sanctioned wide-dependency tasks. `brana-gate` flags this deterministically.
+- **Delivery contract echo only:** TASKS.md frontmatter carries `status:` and, when SPEC.md declares one, a verbatim `delivery:` echo — never waiver/exception keys of its own. Waivers are chosen in SPEC.md at cycle entry (WORKFLOW.md, Delivery Contract); a waiver's substitute verification reuses existing machinery and never adds tasks. Tasks serving only operator surfaces (CLI/log output) reference UX.md's operator surface note and load no DESIGN.md.
 
 Context packs are predictions made before code exists — mark them as hints; the implementation session verifies against real files. Interfaces blocks are firmer than packs: they quote the contract, and contract changes route through the docs, not through a task improvising. Isolation is for token budgets, not for truth: demo gates exist precisely because bugs live in the seams between well-tested tasks.
 
@@ -44,7 +46,7 @@ Write TASKS.md to the same `specs/NNN-name/` dir with frontmatter `status: draft
 
 Without this gate TASKS.md is self-certified — the splitter stamps its own output and the first integrity check is a gate preflight *during* Phase 5, the most expensive moment to learn a journey step has no serving task. Every check is cross-referencing, not judgment; machine pass only — intent was already checked at the Phase 3 consistency gate, and TASKS.md is a mechanical derivation of PLAN.md.
 
-**Script-first:** run `brana-gate tasks TASKS.md --plan PLAN.md --arch ARCHITECTURE.md` — it covers every structural check in the list below deterministically; fix findings to a clean exit. Then an LLM pass (fresh session, Haiku/Flash tier) covers only the judgment remainder: is a journey step *semantically* served by the task claiming it; does a criterion actually restate its PLAN.md requirement. Copy-paste mode (no tool): the full checklist is the LLM pass. Against TASKS.md + PLAN.md + ARCHITECTURE.md's interface and wire-contract sections, list:
+**Script-first:** run `brana-gate tasks TASKS.md --plan PLAN.md --arch ARCHITECTURE.md --spec SPEC.md` — it covers every structural check in the list below deterministically; fix findings to a clean exit. Then an LLM pass (fresh session, Haiku/Flash tier) covers only the judgment remainder: is a journey step *semantically* served by the task claiming it; does a criterion actually restate its PLAN.md requirement. Copy-paste mode (no tool): the full checklist is the LLM pass. Against TASKS.md + PLAN.md + ARCHITECTURE.md's interface and wire-contract sections, list:
 
 - every PLAN.md chunk with no task implementing it, and every task serving no chunk;
 - every dependency cycle, and every walking-skeleton task ordered after a feature task;
@@ -52,7 +54,9 @@ Without this gate TASKS.md is self-certified — the splitter stamps its own out
 - every CONSUMES quote with no earlier task whose PRODUCES matches it and no ARCHITECTURE.md section stating it;
 - every acceptance criterion missing its layer tag; every `[e2e@gate-N]` criterion absent from gate N's journey; every task with a PRODUCES block missing its `[contract]` criterion;
 - every gate task missing a preflight field (launch command; seed/fixture command when the journey needs data; dependency ids) or not immediately followed by its crystallization task; every gate journey missing its unglamorous step;
-- a missing RELEASE GATE task; and — when ARCHITECTURE.md has wire contracts — a production-composition proof absent from the release gate's dependencies, plus every fake-producing task missing its shared-suite `[contract]` criterion.
+- a missing RELEASE GATE task; and — when ARCHITECTURE.md has wire contracts — a production-composition proof absent from the release gate's dependencies, plus every fake-producing task missing its shared-suite `[contract]` criterion;
+- every catch-all task: a non-gate, non-crystallization task depending on (nearly) every other task and producing nothing;
+- every waiver/exception key in TASKS.md frontmatter that is not a verbatim echo of SPEC.md's `delivery:` contract line.
 
 Mandatory and blocking: fix all findings, re-run until clean, then flip TASKS.md `status: draft` → `ready`. A gate unwalkable on paper here is the same gate that would go `GATE BLOCKED` mid-implementation — this pass moves that discovery to the cheapest moment.
 
@@ -128,7 +132,13 @@ Rules:
   composition.
 - The walking-skeleton milestone tasks come first and may not be
   reordered after feature tasks.
-- Tasks tiny: ~50–300 lines of code, one prompt each.
+- Tasks tiny: ~50–300 lines of code, one prompt each — but emit the
+  FEWEST tasks that respect the cap: two consecutive tasks in a linear
+  dependency sharing a primary file merge unless the merge exceeds it.
+- No catch-all task: a final "fill remaining gaps" task depending on
+  (nearly) every other task is a blocking finding — every criterion
+  belongs to the task owning the behavior; only gate and
+  crystallization tasks may depend wide.
 Task done-marks reference `specs/NNN-name/evidence/task-N.txt`
 (Verification Machinery in WORKFLOW.md) — note this in TASKS.md, do
 not restate the format.
@@ -160,6 +170,10 @@ contract sections: [embed]. Findings in TASKS.md only — list:
 - a missing RELEASE GATE task; and — when ARCHITECTURE.md has wire
   contracts — a production-composition proof absent from the release
   gate's dependencies, plus every fake-producing task missing its
-  shared-suite [contract] criterion.
+  shared-suite [contract] criterion;
+- every catch-all task: a non-gate, non-crystallization task depending
+  on (nearly) every other task and producing nothing;
+- every waiver/exception key in TASKS.md frontmatter that is not a
+  verbatim echo of SPEC.md's delivery contract line.
 Report only findings with task id + quote. No rewrites.
 ```

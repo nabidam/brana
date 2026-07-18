@@ -30,6 +30,8 @@ Two paths — pick by what the user has:
 2. Identify the **KERNEL**: the 3–5 features without which the product is pointless. Everything else goes to a ranked v1.1+ backlog. Convenience features (scheduling, power-user overrides, localization, theming and kin) are backlog by default — they enter v1 only by the user's explicit call.
 3. Write the **KERNEL JOURNEY**: one end-to-end user story, step by step, exercising every kernel feature ("create an item → see the result → close app → reopen → the item is still there"). It becomes the walking-skeleton target (Phase 5) and the standing demo-gate script (Phase 6b).
 4. Flag any spec'd feature that undermines the core promise if built shallowly — those are kernel or cut, never "shallow v1". Present flags to the user for the call.
+5. **Provenance check:** every v1 bullet traces to user-stated, kernel-derived, or **process-derived** (workflow machinery wanting a deliverable: verification tooling, output/formatting modules, audit commands). Process-derived bullets go to the user as a named list with rough task cost each — they enter v1 only by explicit call, same standing as convenience features.
+6. **Minimal-form rule (hard):** minimizing language from the user ("just a flag", "only a dry-run argument") caps the deliverable at the minimal form satisfying the stated need. Elaborations — a second mode, a dedicated module, a separate CLI, sentinel suites — are backlog by default, listed as named options with cost; silent inclusion is the amplification failure this rule exists to kill.
 
 **Integration check (before writing SPEC.md):** combine the answers gathered so far and surface non-obvious consequences no single question covered ("X plus Y together means Z is lost on restart") — one open probe per genuine combination effect. An answer revealing genuine uncertainty is recorded as an explicit assumption in SPEC.md, never silently resolved.
 
@@ -44,9 +46,11 @@ The final SPEC.md covers:
 7. Design direction (3–5 lines, required — feeds UX.md and DESIGN.md): product personality as 3 adjectives, 2–3 reference apps whose look is the target, platform density, accessibility floor (WCAG AA). If the user has a pre-built design system or an annotated reference-screenshot pack, name them here instead ("Design system: X. Deltas: [any]" / "Reference pack: references/"). No answer → propose a direction and confirm; never leave "clean and modern".
 8. Out-of-scope
 
-**Profile choice (last step, user confirms):** check the Route S qualification (WORKFLOW.md, Route S — Lite v1 Profile): single subsystem, ≤ ~15 estimated tasks, no external system in the kernel journey or a v1 flow, low stakes (no multi-user data, no payments). All four hold → propose `profile: lite`: PRD folds into a SPEC acceptance-criteria section (falsifiable; NFR budgets+measurements if any), UX.md/ARCHITECTURE.md ship mini/lite, PLAN.md/FILE_STRUCTURE.md are cut, DESIGN.md only if UI-heavy. Any criterion fails → `profile: full` (default). Downstream phases read the stamp; mid-flight outgrowth is a hard stop + upgrade.
+**Profile choice (last step, user confirms):** check the Route S qualification (WORKFLOW.md, Route S — Lite v1 Profile): single subsystem, ≤ ~15 estimated tasks, no external system in the kernel journey or a v1 flow, low stakes (no multi-user data, no payments). Route C change cycles use the **delta qualification** instead — same four criteria against the delta only; an existing integration already in ARCHITECTURE.md does not disqualify. All four hold → propose `profile: lite`: PRD folds into a SPEC acceptance-criteria section (falsifiable; NFR budgets+measurements if any), UX.md/ARCHITECTURE.md ship mini/lite, PLAN.md/FILE_STRUCTURE.md are cut, DESIGN.md only if UI-heavy. Any criterion fails → `profile: full` (default). Downstream phases read the stamp; mid-flight outgrowth is a hard stop + upgrade.
 
-Keep it under 500 words plus the kernel section (lite: ~700 words including the acceptance-criteria section). Write to `specs/001-core/SPEC.md` for a new app (later cycles: next `specs/NNN-name/`) with frontmatter `status: draft` plus `profile: lite|full` — the Phase 3 consistency gate flips status to `gate-passed`.
+**Speed signal (hard rule):** the user saying "fast delivery", "no demo gates", "just ship it so I can test" or kin makes two things mandatory *before drafting SPEC.md*: (1) run the profile qualification and propose lite if it holds; (2) propose an explicit **delivery contract** — frontmatter line `delivery: demo_gates=waived walkthrough=waived canary=required` (closed keys: `demo_gates`, `walkthrough`, `canary`; values `required`|`waived`; see WORKFLOW.md, Delivery Contract). A waiver names its substitute from machinery the cycle already has (verify script, test suite, crystallized journeys) — a substitute requiring *new tooling* is process-derived scope for the provenance check, never a waiver by-product. Waivers invented later in TASKS.md frontmatter are a gate finding.
+
+Keep it under 500 words plus the kernel section (lite: ~700 words including the acceptance-criteria section). Write to `specs/001-core/SPEC.md` for a new app (later cycles: next `specs/NNN-name/`) with frontmatter `status: draft` plus `profile: lite|full` (and the `delivery:` line when chosen) — the Phase 3 consistency gate flips status to `gate-passed`.
 
 **Spec self-review (after writing, before handing over):** re-read the file fresh — (1) placeholders/TBDs, (2) internal contradictions, (3) scope: fits one cycle or needs decomposition, (4) ambiguity: any requirement readable two ways → pick one and make it explicit. Fix inline, then ask the user to read it. Catches at zero cost what the Phase 3 consistency gate would catch two phases later.
 
@@ -90,6 +94,13 @@ Here is my spec: [embed]. You are a ruthless product owner.
    result → close app → reopen → the item is still there").
 4. Flag any spec'd feature that undermines the core promise if built
    shallowly — those are kernel or cut, never "shallow v1".
+5. Mark every v1 bullet's provenance: user-stated, kernel-derived, or
+   process-derived (tooling the process wants, not the user). List the
+   process-derived ones separately with a rough cost — they need my
+   explicit call to stay in v1.
+6. Where I used minimizing language ("just", "only a"), hold the
+   deliverable to its minimal form; list elaborations as options, do
+   not fold them in.
 Do not add features. Do not design.
 ```
 
