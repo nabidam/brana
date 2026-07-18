@@ -1,0 +1,10 @@
+$ gate 2 (release) walkthrough — human, 2026-07-17
+Preflight (agent, live):
+  python -m build --wheel  → dist/dally-0.1.0-py3-none-any.whl
+  pip install dist/dally-0.1.0-py3-none-any.whl  (fresh venv)
+  which dally → <venv>/bin/dally  (real console entry reachable)
+  XDG_DATA_HOME=/tmp/dally-gate2 (fresh temp dir, not under $HOME)
+Walkthrough (human):
+  All 7 kernel-journey steps confirmed through the installed wheel.
+  Unglamorous: invalid mood input and future-date entry rejected as scripted.
+Result: GATE 2 WALKED — PASS. No findings, no fix tasks.

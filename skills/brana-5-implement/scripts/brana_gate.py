@@ -13,10 +13,29 @@ Subcommands:
       walkthrough, canary); TASKS.md frontmatter may only echo it verbatim —
       any other waiver/exception key is a finding (waivers are declared in
       SPEC.md at cycle entry, never invented at Phase 4).
+      When any task carries a done-mark, done-mark integrity is also checked
+      (Phase 5 re-runs, stale-plan re-gates, the v1 exit bar): a done-mark
+      line must quote a commit SHA and an evidence-file path, the evidence
+      file must exist and be non-empty, and no task may be done before its
+      deps are resolved (Done, or a gate WALKED/SKIPPED). Done-mark grammar
+      (markdown lines after the task's TOML block, before the next task):
+
+          - **Done:** `70116c3` — evidence `specs/001-core/evidence/task-0.txt`. <notes>
+          - **GATE 1 WALKED — PASS** (date, human) — evidence `specs/.../task-4.txt`.
+          - **GATE 1 SKIPPED** ...            # no evidence required
+
   docs FILE [FILE...]
       Consistency-gate scriptable checks (Phase 3): unresolved placeholders,
       and computed WCAG contrast for DESIGN.md token tables (never ask an
       LLM to compute a contrast ratio).
+  claims FILE [FILE...] [--root DIR]
+      Doc-grounding check (Phase 6 exit bar, Phase 7 doc sync): every
+      backticked repo-relative path a doc cites must exist in the working
+      tree. Run AFTER implementation — planning docs legitimately cite
+      future files. Tokens are checked only when path-shaped (a known code
+      extension, or the first segment is an existing directory under --root,
+      default CWD); slash-delimited identifiers (branch names, git refs,
+      routes, signatures) are skipped, as are fenced code blocks.
 
 TASKS.md task schema (one fenced ```toml block per task heading):
 
@@ -135,15 +154,85 @@ def parse_tasks(path: Path) -> list[dict]:
             find(f"{path.name}:{line}", "parse", f"block {i} is not valid TOML: {e}")
             continue
         t["_line"] = line
+        t["_start"], t["_end"] = m.start(), m.end()
         tasks.append(t)
     return tasks
 
 
-def check_tasks(tasks_path: Path, plan_path: Path | None, arch_path: Path | None) -> None:
+# ------------------------------------------------------------- done-marks
+
+DONE_LINE = re.compile(r"^\s*-\s*\*\*Done:?\*\*.*$", re.I | re.M)
+GATE_MARK = re.compile(r"^\s*-\s*\*\*GATE\s+\d+\s+(WALKED\s*[—-]\s*PASS|SKIPPED)\b.*$", re.I | re.M)
+SHA_TOKEN = re.compile(r"`([0-9a-f]{7,40})`")
+EVIDENCE_TOKEN = re.compile(r"`([^`\s]*evidence/[^`\s]+)`")
+
+
+def evidence_exists(token: str, tasks_path: Path) -> bool | None:
+    """True/False = resolved and (non-empty) exists / missing-or-empty;
+    None = no candidate root resolves (running outside the repo) — skip."""
+    candidates = [Path(token), tasks_path.parent / token]
+    if len(tasks_path.resolve().parents) >= 3:
+        candidates.append(tasks_path.resolve().parents[2] / token)  # specs/NNN-name/TASKS.md -> repo root
+    hit = False
+    for c in candidates:
+        if c.exists():
+            return c.is_file() and c.stat().st_size > 0
+        if c.parent.is_dir():
+            hit = True  # the evidence/ dir (or its parent) exists; the file genuinely doesn't
+    return False if hit else None
+
+
+def check_done_marks(tasks_path: Path, text: str, tasks: list[dict]) -> None:
+    """Done-mark integrity — runs only when at least one mark is present, so
+    a fresh Phase 4 TASKS.md (no marks yet) pays nothing."""
+    loc = lambda t: f"{tasks_path.name}:{t.get('_line', '?')} task {t.get('id', '?')}"
+    resolved: dict[int, bool] = {}   # id -> deps may build on it (Done / WALKED / SKIPPED)
+    done: dict[int, bool] = {}       # id -> has a Done mark
+    marks: list[tuple[dict, str, bool]] = []  # (task, mark line, is_done_line)
+
+    for i, t in enumerate(tasks):
+        region_end = tasks[i + 1]["_start"] if i + 1 < len(tasks) else len(text)
+        region = text[t["_end"]: region_end]
+        tid = t.get("id")
+        d = DONE_LINE.search(region)
+        g = GATE_MARK.search(region)
+        if isinstance(tid, int):
+            done[tid] = d is not None
+            resolved[tid] = d is not None or g is not None
+        if d:
+            marks.append((t, d.group(0), True))
+        if g:
+            skipped = "SKIPPED" in g.group(1).upper()
+            if not skipped:
+                marks.append((t, g.group(0), False))
+
+    if not marks:
+        return
+
+    for t, line, is_done in marks:
+        if is_done and not SHA_TOKEN.search(line):
+            find(loc(t), "done-mark", "Done mark has no backticked commit SHA")
+        ev = EVIDENCE_TOKEN.search(line)
+        if not ev:
+            find(loc(t), "evidence", ("Done" if is_done else "GATE WALKED") + " mark has no backticked evidence-file path")
+        else:
+            state = evidence_exists(ev.group(1), tasks_path)
+            if state is False:
+                find(loc(t), "evidence", f'evidence file "{ev.group(1)}" is missing or empty')
+
+    for t in tasks:
+        tid = t.get("id")
+        if isinstance(tid, int) and done.get(tid):
+            for dep in t.get("deps", []):
+                if dep in resolved and not resolved[dep]:
+                    find(loc(t), "done-order", f"marked Done but dep {dep} has no completion mark — completed out of dependency order")
+
+
+def check_tasks(tasks_path: Path, plan_path: Path | None, arch_path: Path | None) -> list[dict]:
     tasks = parse_tasks(tasks_path)
     if not tasks:
         find(tasks_path.name, "parse", "no ```toml task blocks found")
-        return
+        return []
     loc = lambda t: f"{tasks_path.name}:{t.get('_line', '?')} task {t.get('id', '?')}"
 
     by_id: dict[int, dict] = {}
@@ -307,6 +396,8 @@ def check_tasks(tasks_path: Path, plan_path: Path | None, arch_path: Path | None
         if not proof_ids & set(rg.get("deps", [])):
             find(loc(rg), "proof", "ARCHITECTURE.md has wire contracts but the release gate lists no production-composition proof task in deps")
 
+    return tasks
+
 
 def cyclic_path(by_id: dict, start: int, target: int) -> bool:
     seen, stack = set(), [start]
@@ -396,6 +487,60 @@ def check_docs(paths: list[Path]) -> None:
                              f"stated ratio {stated.group(1)}:1 but computed {ratio:.2f}:1")
 
 
+# ---------------------------------------------------------------- claims gate
+
+BACKTICK_TOKEN = re.compile(r"`([^`\n]+)`")
+CODE_EXTS = {
+    "py", "ts", "tsx", "js", "jsx", "mjs", "cjs", "rs", "go", "rb", "java", "kt",
+    "swift", "c", "h", "cpp", "hpp", "cs", "sh", "bash", "zsh", "sql", "css",
+    "scss", "html", "vue", "svelte", "md", "json", "toml", "yaml", "yml", "txt",
+    "csv", "env", "lock", "cfg", "ini", "prisma", "proto",
+}
+SEGMENT = re.compile(r"^[\w.@\[\]-]+$")
+
+
+def claim_status(token: str, doc: Path, root: Path) -> str:
+    """'exists' | 'missing' (path-shaped, nowhere on disk) | 'skip' (not a path claim)."""
+    tok = token.strip().rstrip("/")
+    if (
+        "/" not in tok
+        or any(ch in tok for ch in " \t*?{}<>|()=:$~,")
+        or tok.startswith(("http", "/", "-", "."))
+        or "NNN" in tok
+        or "\\" in tok
+    ):
+        return "skip"
+    for base in (root, doc.parent):
+        if (base / tok).exists():
+            return "exists"
+    segs = tok.split("/")
+    if not all(SEGMENT.match(s) for s in segs if s):
+        return "skip"
+    ext = segs[-1].rsplit(".", 1)[-1].lower() if "." in segs[-1] else ""
+    first_is_dir = (root / segs[0]).is_dir() or (doc.parent / segs[0]).is_dir()
+    return "missing" if ext in CODE_EXTS or first_is_dir else "skip"
+
+
+def check_claims(paths: list[Path], root: Path) -> None:
+    for p in paths:
+        text = p.read_text(encoding="utf-8")
+        fenced = False
+        seen: set[str] = set()
+        for i, line in enumerate(text.splitlines(), 1):
+            if line.lstrip().startswith("```"):
+                fenced = not fenced
+                continue
+            if fenced:
+                continue
+            for m in BACKTICK_TOKEN.finditer(line):
+                tok = m.group(1)
+                if tok in seen:
+                    continue
+                seen.add(tok)
+                if claim_status(tok, p, root) == "missing":
+                    find(f"{p.name}:{i}", "claims", f'cited path "{tok}" does not exist in the working tree')
+
+
 # ----------------------------------------------------------------------- cli
 
 def main(argv: list[str]) -> int:
@@ -420,13 +565,27 @@ def main(argv: list[str]) -> int:
                     spec = Path(next(it))
                 else:
                     pos.append(Path(a))
-            check_tasks(pos[0], plan, arch)
+            parsed = check_tasks(pos[0], plan, arch)
             check_delivery(pos[0], spec)
+            check_done_marks(pos[0], pos[0].read_text(encoding="utf-8"), parsed)
         elif cmd == "docs":
             if not args:
                 print("usage: brana-gate docs FILE [FILE...]", file=sys.stderr)
                 return 2
             check_docs([Path(a) for a in args])
+        elif cmd == "claims":
+            root = Path.cwd()
+            files = []
+            it = iter(args)
+            for a in it:
+                if a == "--root":
+                    root = Path(next(it))
+                else:
+                    files.append(Path(a))
+            if not files:
+                print("usage: brana-gate claims FILE [FILE...] [--root DIR]", file=sys.stderr)
+                return 2
+            check_claims(files, root)
         else:
             print(f"unknown subcommand {cmd!r}; see --help", file=sys.stderr)
             return 2

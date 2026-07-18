@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.8.0 — 2026-07-18
+
+Grounding release, from a survey of script-backed skill systems (superpowers, compound-engineering): the two seams where the workflow still trusted a model asserting what a script could prove. Both land as `brana-gate` extensions — no new tools, no new install surface; every check follows the existing contract (stdlib-only, findings + exit codes, bundled per-skill).
+
+- **Done-mark integrity (`brana-gate tasks`, fires only when done-marks exist):** the done-mark grammar is now machine-checked — every `- **Done:**` line must quote a backticked commit SHA and an evidence-file path, every `GATE n WALKED — PASS` line its evidence path, the evidence file must exist and be non-empty, and no task may be Done before its deps are resolved (Done, or gate WALKED/SKIPPED). Runs at Phase 5 re-runs, stale-plan re-gates, and the v1 exit bar preflight. An evidence-less done-mark was previously only prose ("doesn't pass the exit bar") — a reviewer's recall; now it's a finding. First run caught two real drifts in the shipped dally example (gate 2 walked without an evidence path; task 9 Done without a SHA) — both fixed.
+- **`brana-gate claims` (new subcommand):** grounds a doc against the working tree — every backticked repo-relative path it cites must exist. Post-implementation only (planning docs legitimately cite future files): closes Phase 7 doc sync (living docs after every merged B/C/R feature) and joins the v1 exit bar. Path-shaped tokens only (known code extension, or first segment is an existing directory); branch names, routes, and signatures are skipped, as are fenced code blocks — measured false-positive rate on the repo's own docs: one, an illustrative example path.
+- **Evaluated and rejected** (keeping the no-unnecessary-addons rule): a task-state engine (no concurrent writers in Brana — folded the real gap into the gate instead), project-type/port resolvers (no observed demo-gate false verdicts yet; add scoped, on evidence), subagent handoff packagers (Phase 5's pass-paths-not-prose delegate protocol already prevents paraphrase loss), session-transcript miners (crystallization tasks capture lessons deliberately; transcript formats are an unstable dependency).
+- Doc set: WORKFLOW.md (gate-linter bullet, Completing a task grammar, v1 exit bar, Doc sync), brana-5/6/7 skills, USAGE.md, README badge, manifests; `sync-gate.sh` now bundles into brana-6-review too (five skills).
+
 ## 1.7.0 — 2026-07-18
 
 Closes the scope-discipline gap found by the quick_pipeline post-mortem: the workflow had execution discipline (gates, evidence, contracts) but no scope discipline — a user's "fast delivery, just a dry-run argument" produced a full-profile Route C cycle with ad-hoc waiver frontmatter invented at Phase 4, UX screens for a CLI, ~900 lines of process-invented tooling, mergeable task pairs, and a catch-all gap-sweep task. Every fix lands where the fat entered, not where it surfaced.

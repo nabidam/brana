@@ -1,6 +1,6 @@
 # Brana Skills — Usage Guide
 
-Seven skills implementing Brana, the 6-phase app-dev workflow + Phase 7 change loop (WORKFLOW.md v1.7). Each skill has **run** mode (executes in Claude Code, Agent Adaptation Layer applies) and **prompt** mode (emits paste-ready blocks for external chat UIs — copy-paste is the workflow's canon medium).
+Seven skills implementing Brana, the 6-phase app-dev workflow + Phase 7 change loop (WORKFLOW.md v1.8). Each skill has **run** mode (executes in Claude Code, Agent Adaptation Layer applies) and **prompt** mode (emits paste-ready blocks for external chat UIs — copy-paste is the workflow's canon medium).
 
 The workflow's guard: every task green, every doc consistent-looking, app unusable. Countermeasures baked into the skills — the deliverable is the running app; Done = demonstrated (with live verification evidence); demo gate every 2–3 tasks; scope cuts are hard stops; consistency gate before tasks; task gate before implementation; per-cycle docs carry `status:` stamps (`draft` → `gate-passed`; TASKS.md `draft` → `ready` via the task gate) that downstream phases refuse to consume unstamped.
 
@@ -94,7 +94,7 @@ TASKS.md per task: id, objective, dependencies, files, acceptance criteria (**ob
 
 **6b product review (demo gate)** — you + the running app, zero tokens: launch, walk the scripted journey, check falsifiable criteria, judge against UX.md/DESIGN.md and your own eyes ("passes contracts but looks wrong" is valid — contracts are floors). Screenshots optional (→ `specs/NNN-name/screenshots/`) — they enable fix prompts and the optional vision pass. Findings become head-of-queue tasks; feature work does not resume past a failed gate.
 
-**v1 exit bar:** the release-gate task, preflighted like any gate — kernel journey end-to-end in a release build through the production composition, witnessed, including restart/offline/error paths; production-composition proof + verified-fake suites green when fakes stood in; every PRD NFR budget measured at or under budget (or explicitly accepted over); every `GATE SKIPPED` listed with its `UNWITNESSED` journey test, walked now or explicitly accepted; unresolved `GATE BLOCKED` fails the bar. "All tasks Done" is not the bar. Blocked-gate fixes that reveal a missing subsystem spawn a child spec cycle (Spawn route), never a wedge into the current TASKS.md.
+**v1 exit bar:** the release-gate task, preflighted like any gate (preflight includes a `brana-gate tasks` re-run — done-mark integrity: SHA + existing non-empty evidence file per Done mark, deps resolved in order) — kernel journey end-to-end in a release build through the production composition, witnessed, including restart/offline/error paths; production-composition proof + verified-fake suites green when fakes stood in; every PRD NFR budget measured at or under budget (or explicitly accepted over); every `GATE SKIPPED` listed with its `UNWITNESSED` journey test, walked now or explicitly accepted; unresolved `GATE BLOCKED` fails the bar. "All tasks Done" is not the bar. Blocked-gate fixes that reveal a missing subsystem spawn a child spec cycle (Spawn route), never a wedge into the current TASKS.md.
 
 ### Phase 7 — `/brana-7-change [request]`
 
@@ -111,7 +111,7 @@ Agent **self-triages** A/B/C/R, announces route + one-line reason, proceeds; you
 
 Escalations: mid-flight boundary touch → re-enter as C; mid-flight behavior drop → hard stop for your decision (Route R also freezes on ANY user-visible change discovered mid-flight, not just a drop). Stale-interface-block rule: a mid-cycle CONSUMES/PRODUCES patch triggers a pass that updates every not-done task quoting the changed section, before the next implementation session. Stale-plan rule: a mid-cycle PLAN.md section rewrite reverts PLAN.md + TASKS.md to `draft` until a scoped re-gate (consistency checks on the patched section, `brana-gate tasks` on its tasks) is clean. B/C get one 6a of the full feature diff + one 6b walkthrough before merge; Route R gets one 6a always and 6b only if UI was touched; Route A gets 6a only if it touches logic, auth, or data handling. Redesigns start from observed failures feeding a **UX.md patch first** — retokening without touching UX.md repaints the same wrong rooms. Impact analysis covers architecture fit + UX screens/flows + affected files + doc sections to patch.
 
-**Doc sync (mandatory after every B/C/R merge):** ARCHITECTURE/UX/DESIGN vs the feature diff; amend every now-false statement directly — never a deviations appendix. If a module boundary moved, append a Decision log line to ARCHITECTURE.md. `FILE_STRUCTURE.md` is per-cycle, archived with its `specs/NNN-name/` dir, and is never compared here.
+**Doc sync (mandatory after every B/C/R merge):** ARCHITECTURE/UX/DESIGN vs the feature diff; amend every now-false statement directly — never a deviations appendix. If a module boundary moved, append a Decision log line to ARCHITECTURE.md. Close the sync with `brana-gate claims` over the living docs — every cited path must exist in the working tree. `FILE_STRUCTURE.md` is per-cycle, archived with its `specs/NNN-name/` dir, and is never compared here.
 
 ---
 
