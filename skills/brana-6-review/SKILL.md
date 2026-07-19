@@ -32,6 +32,7 @@ Reviewer must be a **different model than the implementer** — default Opus 4.8
    6. UI-only: design contract violations (raw values where DESIGN.md tokens exist, missing component/view states, contrast/focus failures) and **UX contract violations** (screen structure or flow steps diverging from UX.md). With a pre-built design system: bypassed the system (hand-rolled what it provides).
    7. test adequacy: an acceptance criterion with no test at its declared layer, a test that asserts nothing meaningful (runs without checking the outcome), or a test that mocks away the exact behavior the criterion requires.
    8. composition and fake integrity: a runtime or gate path that composes bespoke wiring instead of the production entry point with injected seams, or a fake of an external system that diverges from its wire contract (accepts what the contract rejects, or lacks the shared contract suite).
+   9. dependency-plan violations: hand-rolled code duplicating a package ARCHITECTURE.md's dependency plan names, or an import of a package the plan doesn't name.
 
    Each finding: file:line, severity (high/med/low), one-line fix. Objective checks only — no style opinions, no praise, no rewrites.
 4. **Confirmation pass — findings are unverified claims.** Before any finding becomes a fix task (fixer-tier model): a bug, logic error, or race condition gets a reproduction — a failing test or concrete repro steps; a contract, convention, or design violation gets both sides quoted (code line + contract line). A finding that fails confirmation escalates to the user with the failed-confirmation note — never silently dropped, never blindly fixed; a reviewer false positive turned into a fix task is churn plus regression risk. The reproduction test lands with the fix and joins the suite.
@@ -88,7 +89,9 @@ and fake integrity: a runtime or gate path that composes bespoke
 wiring instead of the production entry point with injected seams, or a
 fake of an external system that diverges from its wire contract
 (accepts what the contract rejects, or lacks the shared contract
-suite). Each finding:
+suite), (9) dependency-plan violations: hand-rolled code duplicating
+a package ARCHITECTURE.md's dependency plan names, or an import of a
+package the plan doesn't name. Each finding:
 file:line, severity, one-line fix. Objective checks only — no style
 opinions, no praise, no rewrites.
 [embed diff + relevant ARCHITECTURE.md sections + CONVENTIONS.md

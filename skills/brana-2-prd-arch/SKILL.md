@@ -14,7 +14,7 @@ Three documents, in this order: UX → PRD → ARCHITECTURE (screens inform requ
 
 ## Run mode
 
-Locate the current cycle's SPEC.md (latest `specs/NNN-name/SPEC.md`). **`profile: lite` in its frontmatter → Route S deltas apply:** skip Step 2 entirely (criteria live in SPEC.md); Step 1 produces the mini UX.md (screen list with ids, kernel flow step-by-step, one line per screen on empty/error states); Step 3 produces the lite ARCHITECTURE.md (stack commitment, data model, API/contract surface, kernel-journey traceability, Decision log — no module ceremony; threat model still applies if its trigger does, which should instead fail the lite qualification — flag it); Step 4 becomes advisory — offer it once, and a skip is recorded in SPEC.md as an accepted-risk line.
+Locate the current cycle's SPEC.md (latest `specs/NNN-name/SPEC.md`). **`profile: lite` in its frontmatter → Route S deltas apply:** skip Step 2 entirely (criteria live in SPEC.md); Step 1 produces the mini UX.md (screen list with ids, kernel flow step-by-step, one line per screen on empty/error states); Step 3 produces the lite ARCHITECTURE.md (stack commitment, dependency plan — same rules, same user approval, data model, API/contract surface — a well-known external integration gets its compact wire contract here (≤1 page: endpoints, shapes, error semantics; verified-fake rule stands), kernel-journey traceability, Decision log — no module ceremony; threat model still applies if its trigger does, which should instead fail the lite qualification — flag it); Step 4 becomes advisory — offer it once, and a skip is recorded in SPEC.md as an accepted-risk line.
 
 **Step 1 — UX.md** (from SPEC.md). Act as a senior product designer. Produce:
 
@@ -35,17 +35,20 @@ No visual styling, no colors, no code. If SPEC names a reference pack, adapt its
 **Step 3 — ARCHITECTURE.md** (from PRD.md + UX.md). Act as a principal software architect. Include: system overview, module responsibilities and boundaries, data model / DB schema (DDL with indices and constraints), API contract (endpoints, request/response shapes, status codes, errors, auth), component hierarchy mapped to UX.md screen ids, dependency graph, error handling strategy, configuration strategy. Rules:
 
 - COMMIT to one concrete stack and one design per decision — no "e.g. X or Y", no alternatives left open.
+- **Dependency plan (required section; buy is the default):** for every capability an established package serves, one line — `capability → package @ exact version → what it replaces` — with versions the **latest stable/LTS at writing time, verified against the package registry, never recalled from memory**. A hand-rolled capability names its reason: no credible package, trivial (< ~30 lines), or core domain logic (the thing the product *is*). Sprawl guard: a package must serve a *named* capability — no speculative utilities, no left-pad dependencies; selection bar per pick: actively maintained, license compatible, transitive tree proportionate to the need (non-obvious picks get a Decision-log line). **User approval (hard rule):** present the package list — one line each on what it does and why this one (AskUserQuestion for contested picks) — before finalizing ARCHITECTURE.md. No package enters the plan unapproved; no package enters the code that isn't in the plan (Phase 5 hard stop). Task 0 installs at pinned versions; 6a flags violations both directions.
 - **Name the test harness per layer, including the e2e/journey harness** — the walking skeleton needs it and CONVENTIONS.md's Test strategy (Phase 3) and every gate's crystallization task (Phase 4) build on this name.
 - **Traceability (load-bearing):** every UX.md flow must be traceable through the contract — for each kernel-journey step, name the API call or event that serves it; a step with no serving contract (e.g. "reopen app → data restored" needs a list/read endpoint) means add the contract. Implementers build only what the contract names.
 - **Wire contracts (conditional):** when the kernel journey or a v1 flow depends on an external system (a paid API, third-party service — anything that will be faked in tests), that integration gets a versioned **wire contract** section: exact request/response shapes, auth, error semantics — precise enough that a fake can be validated against it. Traceability extends to those steps: each names its wire contract. No external system → omit. Without this, the fake's convenience shape becomes the de-facto contract and the first real request is built at release time.
 - **Threat model (conditional):** when the app has auth, stores user data, or accepts external input, include a **threat model** section: trust boundaries (who can send what to which surface), authN/authZ model per surface, input-validation strategy at each boundary, secrets handling (where keys live, what is never logged). No such surface → omit. 6a's security category reviews against this section, not against vibes.
 - **Spike markers:** a decision genuinely unresolvable by reasoning (novel integration, unproven performance) is not left open as "X or Y": mark it `SPIKE: <question>` with the candidate answers, the leading candidate (design against it), and the measurement that decides. Phase 3 turns each marker into a time-boxed spike chunk at the head of PLAN.md.
 
+- **Forward constraints (only when `specs/ROADMAP.md` exists):** one line per future milestone naming what this design must not preclude — and nothing more; future milestones are never designed here.
+
 Include an empty **Decision log** section at the end of the file — append-only, one line per future decision as `YYYY-MM-DD — decision — why`; Phase 7 doc sync and Route C patches append to it, never delete an earlier entry's why.
 
 No implementation code. Write to repo root — living doc, patched forever after.
 
-**Step 4 — Architecture review (blocks Phase 3).** The consistency gate checks that docs agree; nothing else checks the design is any good — wrong-but-consistent architecture passes every machine pass. One independent review, findings-only, 6a independence rules: the reviewer gets ARCHITECTURE.md + PRD.md + UX.md, never the author's rationale; fresh session, different model than the author where possible (cross-vendor via prompt mode preferred; a same-vendor fresh session is weaker independence, still better than none). Categories: (1) module/flow with no failure handling, (2) data-model flaws (missing constraint/index/key for a named flow), (3) concurrency/ordering hazards, (4) first thing that breaks at 10× data when a requirement implies growth, (5) over-engineering — a module serving no PRD requirement, (6) per major decision, the simplest credible alternative and why the chosen design beats it (no credible answer is a finding), (7) threat-model gaps when the section exists. **The user arbitrates the findings** — accepting one is a product decision, not a mechanical fix; patch ARCHITECTURE.md before Phase 3 starts.
+**Step 4 — Architecture review (blocks Phase 3).** The consistency gate checks that docs agree; nothing else checks the design is any good — wrong-but-consistent architecture passes every machine pass. One independent review, findings-only, 6a independence rules: the reviewer gets ARCHITECTURE.md + PRD.md + UX.md, never the author's rationale; fresh session, different model than the author where possible (cross-vendor via prompt mode preferred; a same-vendor fresh session is weaker independence, still better than none). Categories: (1) module/flow with no failure handling, (2) data-model flaws (missing constraint/index/key for a named flow), (3) concurrency/ordering hazards, (4) first thing that breaks at 10× data when a requirement implies growth, (5) over-engineering — a module serving no PRD requirement, (6) per major decision, the simplest credible alternative and why the chosen design beats it (no credible answer is a finding), (7) threat-model gaps when the section exists, (8) build-vs-buy — a designed module duplicating an established, maintained package (name the package), and any dependency-plan entry failing the selection bar. **The user arbitrates the findings** — accepting one is a product decision, not a mechanical fix; patch ARCHITECTURE.md before Phase 3 starts.
 
 Do not proceed to planning — that is Phase 3, a fresh session.
 
@@ -107,7 +110,14 @@ Rules: COMMIT to one concrete stack and one design per decision — no
 "e.g. X or Y", no alternatives left open. Name the e2e/journey-test
 harness as part of the stack commitment — CONVENTIONS.md's Test
 strategy (Phase 3) and every gate's crystallization task (Phase 4)
-build on this name. Every UX.md flow must be traceable through the
+build on this name. Include a DEPENDENCY PLAN section — buy is the
+default: for every capability an established package serves, one line
+`capability → package @ exact latest-stable/LTS version → what it
+replaces` (I will verify versions against the registry); hand-rolled
+capabilities name their reason (no credible package, trivial < ~30
+lines, or core domain logic). No speculative utilities; trivial
+helpers stay hand-rolled. I approve this list before the doc is
+final. Every UX.md flow must be traceable through the
 contract: for each kernel-journey step, name the API call or event
 that serves it; if a step has no serving contract (e.g. "reopen app →
 data restored" needs a list/read endpoint), add it.
@@ -148,7 +158,11 @@ requirement — name the requirement or flag it,
 (6) per major decision: the simplest credible alternative and why the
 chosen design beats it — no credible answer is itself a finding,
 (7) threat-model gaps (when the section exists): a trust boundary
-crossed without validation; an authZ check missing for a named flow.
+crossed without validation; an authZ check missing for a named flow,
+(8) build-vs-buy: a designed module duplicating an established,
+maintained package (name the package), and any dependency-plan entry
+failing the selection bar — unmaintained, license conflict, or a
+transitive tree out of proportion to the need.
 Each finding: section, severity, one-line consequence. No rewrites, no
 style opinions, no praise.
 [embed ARCHITECTURE.md + PRD.md + UX.md]

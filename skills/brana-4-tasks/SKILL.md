@@ -7,7 +7,7 @@ description: "Use when PLAN.md exists and the user wants it split into implement
 
 **Locating `brana-gate`:** every `brana-gate` invocation below resolves in order — (1) `scripts/brana_gate.py` bundled beside this SKILL.md (run `python3 <skill-dir>/scripts/brana_gate.py ...`); (2) `brana-gate` on PATH; (3) `tools/brana-gate` when the working directory is the Brana repo itself. None found -> state which locations were checked, then the full checklist runs as the LLM pass (copy-paste mode).
 
-Split the plan into tasks small enough that each fits one implementation prompt. Task size is the workflow's unit of safety: a task that fits in one prompt can be verified, committed, and rolled back alone. Blocked until the Phase 3 consistency gate's machine pass is clean — refuse a PLAN.md still stamped `status: draft`; point back to Phase 3. Route B delta (no PLAN.md): the mini-spec must be stamped `gate-passed` by impact analysis. **Route S delta (SPEC.md `profile: lite`, no PLAN.md):** refuse a SPEC.md still stamped `draft`; split from SPEC.md's kernel journey + acceptance criteria and ARCHITECTURE.md; author the DEMO GATE (≥1) and RELEASE GATE tasks directly here with full gate anatomy (journey, preflight block, unglamorous step, crystallization task); the task gate runs `brana-gate tasks` without `--plan` (chunk checks skip) and every other check stands.
+Split the plan into tasks small enough that each fits one implementation prompt. Task size is the workflow's unit of safety: a task that fits in one prompt can be verified, committed, and rolled back alone. Blocked until the Phase 3 consistency gate's machine pass is clean — refuse a PLAN.md still stamped `status: draft`; point back to Phase 3. Route B delta (no PLAN.md): the mini-spec must be stamped `gate-passed` by impact analysis. **Route S delta (SPEC.md `profile: lite`, no PLAN.md):** refuse a SPEC.md still stamped `draft`; split from SPEC.md's kernel journey + acceptance criteria and ARCHITECTURE.md; author the DEMO GATE (≥1) and RELEASE GATE tasks directly here with full gate anatomy (journey, preflight block, unglamorous step, crystallization task) — **≤ ~5 tasks: the mid demo gate folds into the release gate, one gate total**; the task gate runs `brana-gate tasks` without `--plan` (chunk checks skip) and every other check stands.
 
 ## Modes
 
@@ -34,11 +34,14 @@ Rules:
 - The walking-skeleton milestone tasks come first and may not be reordered after feature tasks.
 - Tasks tiny — ~50–300 lines of new code, one prompt each — but the count is a cost, not a virtue: emit the FEWEST tasks that respect the cap. **Merge bias:** two consecutive tasks in a linear dependency whose primary file is the same merge into one unless the merged task would exceed the cap. Task ids numbered fresh per cycle dir. Task 0 of a new app is always the scaffold (file tree from FILE_STRUCTURE.md, configs, data migrations, no feature logic); its smoke test is the app booting via a documented run command, recorded in CONVENTIONS.md.
 - **No catch-all task:** a final "fill remaining gaps" task depending on (nearly) every other task is a blocking finding — every acceptance criterion belongs to the task that owns the behavior. Gate and crystallization tasks are the only sanctioned wide-dependency tasks. `brana-gate` flags this deterministically.
+- **Ceremony scales with risk:** a **boundary task** (CONSUMES/PRODUCES cross a module boundary or touch a wire contract; Task 0; gate and crystallization tasks) carries the full interfaces block + context pack. An **interior task** (single module, no cross-module contract) carries only objective, files, deps, layer-tagged criteria — no interfaces block; its context pack is just its file list. A PRODUCES consumed only inside the same module needs no `[contract]` criterion. Boundary task missing its block → blocking finding; interior task with full ceremony → token-waste warning.
 - **Delivery contract echo only:** TASKS.md frontmatter carries `status:` and, when SPEC.md declares one, a verbatim `delivery:` echo — never waiver/exception keys of its own. Waivers are chosen in SPEC.md at cycle entry (WORKFLOW.md, Delivery Contract); a waiver's substitute verification reuses existing machinery and never adds tasks. Tasks serving only operator surfaces (CLI/log output) reference UX.md's operator surface note and load no DESIGN.md.
 
 Context packs are predictions made before code exists — mark them as hints; the implementation session verifies against real files. Interfaces blocks are firmer than packs: they quote the contract, and contract changes route through the docs, not through a task improvising. Isolation is for token budgets, not for truth: demo gates exist precisely because bugs live in the seams between well-tested tasks.
 
 **Task schema (agent mode):** each task is a heading plus one fenced ```toml block — `id`, `type` (scaffold/feature/gate/crystallization/fix/proof/spike), `chunk`, `deps`, `files`, `consumes`/`produces` (exact quotes), `skeleton`, `fake_of`, `[[criteria]]` (text + layer, `gate` on e2e), and for gate tasks a `[gate]` table (`n`, `release`, `launch`, `seed`, `unglamorous`, `[[gate.journey]]` step + serving task id); full schema in `brana-gate --help`. The format exists so the task gate's structural half runs as a program, not as a model's recall; prose around the blocks stays free-form.
+
+**Downgrade valve (before the task gate):** the real task count now exists — Phase 1's was an estimate. `profile: full` and the split comes out ≤ ~15 tasks, single subsystem, no novel external integration → stop and offer the user retro-lite: docs already written stay (sunk, still true), downstream ceremony shrinks to the lite shape (gate cadence per lite scaling, interior-task slimming), SPEC.md's stamp amended to `profile: lite` with a Decision-log line. `brana-gate tasks --spec` flags the condition as a non-blocking `retro-lite candidate` warning; record the user's call either way.
 
 Write TASKS.md to the same `specs/NNN-name/` dir with frontmatter `status: draft` — the task gate below flips it to `ready` (Phase 5 refuses a draft TASKS.md). Do not write any code. Task completions done-mark against `specs/NNN-name/evidence/task-N.txt` (Verification Machinery in WORKFLOW.md) — TASKS.md need not restate the format, only that done-marks reference it.
 
@@ -135,6 +138,13 @@ Rules:
 - Tasks tiny: ~50–300 lines of code, one prompt each — but emit the
   FEWEST tasks that respect the cap: two consecutive tasks in a linear
   dependency sharing a primary file merge unless the merge exceeds it.
+- Ceremony scales with risk: a BOUNDARY task (CONSUMES/PRODUCES cross
+  a module boundary or touch a wire contract; Task 0; gate and
+  crystallization tasks) carries the full interfaces block + context
+  pack. An INTERIOR task (single module, no cross-module contract)
+  carries only objective, files, deps, layer-tagged criteria — no
+  interfaces block, context pack is just its file list. A PRODUCES
+  consumed only inside the same module needs no [contract] criterion.
 - No catch-all task: a final "fill remaining gaps" task depending on
   (nearly) every other task is a blocking finding — every criterion
   belongs to the task owning the behavior; only gate and

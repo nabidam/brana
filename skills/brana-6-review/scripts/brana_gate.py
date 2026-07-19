@@ -13,6 +13,9 @@ Subcommands:
       walkthrough, canary); TASKS.md frontmatter may only echo it verbatim —
       any other waiver/exception key is a finding (waivers are declared in
       SPEC.md at cycle entry, never invented at Phase 4).
+      With --spec, also runs the downgrade valve: `profile: full` with a
+      final split of ≤15 tasks prints a non-blocking `retro-lite candidate`
+      warning (WORKFLOW.md, Phase 4 downgrade valve).
       When any task carries a done-mark, done-mark integrity is also checked
       (Phase 5 re-runs, stale-plan re-gates, the v1 exit bar): a done-mark
       line must quote a commit SHA and an evidence-file path, the evidence
@@ -26,8 +29,11 @@ Subcommands:
 
   docs FILE [FILE...]
       Consistency-gate scriptable checks (Phase 3): unresolved placeholders,
-      and computed WCAG contrast for DESIGN.md token tables (never ask an
-      LLM to compute a contrast ratio).
+      computed WCAG contrast for DESIGN.md token tables (never ask an
+      LLM to compute a contrast ratio), and profile-stamp integrity: a
+      frontmatter `profile: full` with no `profile-reason:` is a finding —
+      the Route S qualification never ran (docs with no profile key are
+      grandfathered).
   claims FILE [FILE...] [--root DIR]
       Doc-grounding check (Phase 6 exit bar, Phase 7 doc sync): every
       backticked repo-relative path a doc cites must exist in the working
@@ -78,10 +84,15 @@ import tomllib
 from pathlib import Path
 
 FINDINGS: list[str] = []
+WARNINGS: list[str] = []
 
 
 def find(loc: str, check: str, msg: str) -> None:
     FINDINGS.append(f"{loc}: [{check}] {msg}")
+
+
+def warn(loc: str, check: str, msg: str) -> None:
+    WARNINGS.append(f"{loc}: [{check}] WARNING: {msg}")
 
 
 def norm(s: str) -> str:
@@ -121,6 +132,19 @@ def parse_delivery(raw: str, loc_name: str) -> dict[str, str] | None:
             return None
         contract[k] = v
     return contract
+
+
+def check_profile(spec_path: Path | None, task_count: int) -> None:
+    """Downgrade valve: a full-profile cycle whose real split fits lite is flagged
+    as a retro-lite candidate (warning, non-blocking — the user makes the call)."""
+    if spec_path is None or task_count == 0:
+        return
+    fm = parse_frontmatter(spec_path.read_text(encoding="utf-8"))
+    profile = fm.get("profile", "").split("#")[0].strip()
+    if profile == "full" and task_count <= 15:
+        warn(spec_path.name, "profile",
+             f"profile: full but only {task_count} task(s) — retro-lite candidate; "
+             "offer the user the lite downgrade (WORKFLOW.md, Phase 4 downgrade valve)")
 
 
 def check_delivery(tasks_path: Path, spec_path: Path | None) -> None:
@@ -441,6 +465,11 @@ def contrast(fg: str, bg: str) -> float:
 def check_docs(paths: list[Path]) -> None:
     for p in paths:
         text = p.read_text(encoding="utf-8")
+        fm = parse_frontmatter(text)
+        if fm.get("profile", "").split("#")[0].strip() == "full" and not fm.get("profile-reason"):
+            find(p.name, "profile",
+                 "profile: full with no profile-reason — the Route S qualification never ran; "
+                 "record the failing criterion (`profile-reason: <criterion>`) or re-qualify for lite")
         for i, line in enumerate(text.splitlines(), 1):
             if line.lstrip().startswith("```"):
                 continue
@@ -567,6 +596,7 @@ def main(argv: list[str]) -> int:
                     pos.append(Path(a))
             parsed = check_tasks(pos[0], plan, arch)
             check_delivery(pos[0], spec)
+            check_profile(spec, len(parsed))
             check_done_marks(pos[0], pos[0].read_text(encoding="utf-8"), parsed)
         elif cmd == "docs":
             if not args:
@@ -594,7 +624,9 @@ def main(argv: list[str]) -> int:
         return 2
     for f in FINDINGS:
         print(f)
-    print(f"brana-gate: {len(FINDINGS)} finding(s)", file=sys.stderr)
+    for w in WARNINGS:
+        print(w)
+    print(f"brana-gate: {len(FINDINGS)} finding(s), {len(WARNINGS)} warning(s)", file=sys.stderr)
     return 1 if FINDINGS else 0
 
 

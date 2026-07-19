@@ -1,4 +1,4 @@
-# Brana — App Development Workflow (v1.6)
+# Brana — App Development Workflow (v1.9)
 
 Consolidated from 5 agent proposals, revised after a v1 post-mortem. Optimized for token efficiency + output quality. Works for any app idea. Folds in tested patterns from two public workflows ([superpowers](https://github.com/obra/superpowers), [compound-engineering](https://github.com/EveryInc/compound-engineering)): path-based delegation, task interface blocks, live verification evidence, reviewer independence, and doc status stamps. Pre-release lineage (internal v2.0–v2.2) is in CHANGELOG.md.
 
@@ -99,9 +99,11 @@ Copy-paste is canon; this section translates it when the workflow runs inside ag
 
 The full pipeline is sized for apps worth eight documents; a small tool isn't, and an unsanctioned skip breaks chain-shaped guarantees silently (each gate assumes the last). Route S is the sanctioned off-ramp: fewer artifacts, same load-bearing links.
 
-**Qualify (all four, decided at Phase 1 end, user confirms):** single subsystem; ≤ ~15 estimated tasks; no external system in the kernel journey or a v1 flow (no wire contracts); low stakes (no multi-user data, no payments). SPEC.md frontmatter records the choice: `profile: lite` (absent = full). Downstream phases read the stamp.
+**Qualify (all four, decided at Phase 1 end, user confirms):** single subsystem; ≤ ~15 estimated tasks; no **novel** external integration — an external system consumed through a well-known API via an official or established SDK does *not* disqualify (its wire contract ships in compact form: endpoints/shapes/error semantics in ≤1 page, and the verified-fake rule still applies); only an integration needing a bespoke or undocumented wire contract does; low stakes (no multi-user data, no payments). SPEC.md frontmatter records the choice **explicitly**: `profile: lite`, or `profile: full` plus `profile-reason: <the failing criterion>`. A `profile: full` with no `profile-reason` means the qualification never ran — `brana-gate docs` flags it (pre-v1.9 cycles with no `profile:` key at all are grandfathered as full). Downstream phases read the stamp.
 
-**Kept — non-negotiable in every profile:** SPEC.md with kernel journey + scope challenge; falsifiable acceptance criteria; verify script + evidence files; same-composition rule; scope-cut and ambiguity hard stops; git rules; at least one mid demo gate plus the release gate; crystallization tasks; the task gate (`brana-gate tasks`, run without `--plan`); the v1 exit bar; threat model still applies if its trigger does (auth/user data/external input disqualifies "low stakes" anyway — re-check the qualification instead).
+**Scaling inside lite (no third tier):** ≤ ~5 estimated tasks → the mid demo gate folds into the release gate — one gate total, full anatomy plus crystallization; and for a tool with no interactive UI, mini UX.md reduces to the operator-surface notes plus the kernel flow.
+
+**Kept — non-negotiable in every profile:** SPEC.md with kernel journey + scope challenge; falsifiable acceptance criteria; verify script + evidence files; same-composition rule; scope-cut and ambiguity hard stops; git rules; at least one mid demo gate plus the release gate (≤5-task lite scaling: the release gate alone); crystallization tasks; the task gate (`brana-gate tasks`, run without `--plan`); the v1 exit bar; threat model still applies if its trigger does (auth/user data/external input disqualifies "low stakes" anyway — re-check the qualification instead).
 
 **Folded or cut:**
 
@@ -113,9 +115,9 @@ The full pipeline is sized for apps worth eight documents; a small tool isn't, a
 - **FILE_STRUCTURE.md — cut.** Task 0 scaffolds from ARCHITECTURE.md directly.
 - **CONVENTIONS.md — kept but ≤1 page,** Test strategy + verify command included.
 
-**Escalation (hard rule):** mid-flight discovery of a second subsystem, an external system, or a schema/module-boundary change beyond the lite ARCHITECTURE.md → stop, tell the user, and upgrade: write the missing docs for the delta (Route C shape), re-run the consistency gate, then continue. A lite profile that has outgrown itself and keeps going is the same self-certification seam the gates exist to close. Phase 7 is unchanged — living docs exist in both profiles, so the change loop and its routes work identically.
+**Escalation (hard rule):** mid-flight discovery of a second subsystem, a novel external integration, or a schema/module-boundary change beyond the lite ARCHITECTURE.md → stop, tell the user, and upgrade: write the missing docs for the delta (Route C shape), re-run the consistency gate, then continue. A lite profile that has outgrown itself and keeps going is the same self-certification seam the gates exist to close. Phase 7 is unchanged — living docs exist in both profiles, so the change loop and its routes work identically.
 
-**Route C delta qualification:** a Route C change cycle runs the same four-criteria check against the *delta*, not the whole app: the delta touches one subsystem; ≤ ~15 estimated tasks; the delta introduces no *new* external system (an existing integration already documented in ARCHITECTURE.md does not disqualify — its wire contract and fake already exist); the delta's own stakes are low. All four hold → the cycle's SPEC.md gets `profile: lite` (Phase 2/3/4 lite deltas apply to the cycle docs; living root docs are patched as always). The original v1's profile is irrelevant — a full-profile app can and should take lite change cycles when the delta qualifies.
+**Route C delta qualification:** a Route C change cycle runs the same four-criteria check against the *delta*, not the whole app: the delta touches one subsystem; ≤ ~15 estimated tasks; the delta introduces no *novel* external integration (an existing integration already documented in ARCHITECTURE.md does not disqualify — its wire contract and fake already exist; a new well-known-API integration qualifies under the same compact-wire-contract form as v1 lite); the delta's own stakes are low. All four hold → the cycle's SPEC.md gets `profile: lite` (Phase 2/3/4 lite deltas apply to the cycle docs; living root docs are patched as always). The original v1's profile is irrelevant — a full-profile app can and should take lite change cycles when the delta qualifies.
 
 ## Delivery Contract
 
@@ -128,6 +130,15 @@ A user's speed constraint ("fast delivery", "no demo gates", "just ship it so I 
 **Waiver adds no scope (hard rule):** a waiver names its substitute from machinery the cycle already has — the verify script, the test suite, the crystallized journey tests. If the proposed substitute requires *building new tooling*, that tooling is a feature: it goes through the v1 provenance check (Phase 1) as process-derived scope, priced in tasks, and enters v1 only by the user's explicit call. "We waived the demo gate, therefore we must build a dry-run CLI" is scope amplification wearing a waiver's clothes — the user may well want the CLI, but they order it; the waiver never does.
 
 **Enforcement:** TASKS.md frontmatter may only *echo* SPEC.md's `delivery:` line verbatim — it never introduces waiver keys of its own. `brana-gate tasks --spec SPEC.md` checks both directions: invalid contract tokens in SPEC.md, and any ad-hoc waiver/exception key in TASKS.md frontmatter. Downstream phases read the contract from SPEC.md, the stamped source of truth.
+
+## Dependency Plan (build vs buy)
+
+Left to itself, the workflow builds everything from zero — every capability becomes hand-rolled tasks, and code volume (hence token burn) scales with what *could* have been an import. Buy is the default; hand-rolling is the exception that names its reason.
+
+- **The plan (ARCHITECTURE.md section, required):** for every capability in the design, either the established package that serves it — `capability → package @ exact version → what it replaces` — or a one-line hand-roll justification (no credible package, trivial (< ~30 lines), or core domain logic — the thing the product *is*). Versions are the **latest stable/LTS at writing time, verified against the package registry, never recalled from memory** (agent mode: check the registry; copy-paste mode: the user confirms versions).
+- **User approval (hard rule):** the proposed package list is presented to the user before ARCHITECTURE.md is finalized — each entry with one line of what it does and why this one (agent mode: AskUserQuestion for contested picks). No package enters the plan without the user's approval, and no package enters the code that isn't in the plan — an unlisted import at implementation time is the same hard stop as a contract gap.
+- **Sprawl guard (the mirror failure):** a package must serve a *named* capability; padding the plan with utilities "we might need" is a review finding. Trivial helpers stay hand-rolled — no left-pad dependencies. Selection bar per pick: actively maintained, license compatible with the project, transitive tree proportionate to the need; a non-obvious pick gets a Decision-log line.
+- **Enforcement:** Task 0 installs the plan's packages at their pinned versions (the verify script's dependency audit already covers vulns). Phase 5: a needed capability absent from the plan → hard stop, propose buy/build, the user decides. 6a category 9: hand-rolled code duplicating a plan package, or an import the plan doesn't name.
 
 ## External Design Inputs (optional)
 
@@ -159,7 +170,7 @@ Agents cannot open a reference app; "make it like X" from text yields a fuzzy tr
 **Inputs:** Your idea.
 **Output:** `SPEC.md` (kernel-first, ranked)
 
-**Scope decomposition first:** an idea spanning multiple independent subsystems ("a platform with chat, billing, and analytics") is decomposed into sub-products before any detail questions — each gets its own `specs/NNN-name/` cycle; spec the first one now. Don't spend questions refining a project that needs splitting.
+**Milestone map first (big ideas):** an idea spanning multiple independent subsystems ("a platform with chat, billing, and analytics") or estimated beyond ~15–20 tasks is decomposed into **milestones** before any detail questions. Each milestone is its own `specs/NNN-name/` cycle, ≤ ~15 tasks, and its final task is a working, release-gated version of the app at that stage — never a horizontal layer that only pays off later. M1 is always the kernel milestone: the smallest working version that delivers the core promise; spec it now. Later milestones get **2–3 lines each** (name, goal, rough scope) in `specs/ROADMAP.md` — coarse by design: detail is authored when that milestone's own cycle starts (Route C shape, delta qualification applies, so later milestones often run lite). The map is re-checked at each milestone's end — completed milestone marked, the next one's lines confirmed or amended. A single-cycle idea needs no ROADMAP.md. Don't spend questions refining a project that needs splitting.
 
 Write the rough spec yourself — cheapest possible start. Then run one gap-check:
 
@@ -218,7 +229,7 @@ Fold the result back into SPEC.md: **Kernel** (with the kernel journey verbatim)
 
 **Design direction (required, 3–5 lines):** product personality as 3 adjectives, 2–3 reference apps whose look is the target, platform density, accessibility floor (WCAG AA). Feeds UX.md and DESIGN.md. If you have a pre-built design system or a reference pack, name them here instead — see External Design Inputs.
 
-**Profile choice (last step, user confirms):** check the Route S qualification (single subsystem, ≤ ~15 estimated tasks, no external systems, low stakes — see Route S — Lite v1 Profile; Route C cycles use the delta qualification there). All four hold → propose `profile: lite`; any fails → `profile: full` (the default). Record it in the frontmatter. A user speed signal makes this proposal mandatory-before-drafting and adds a delivery contract — see Delivery Contract; both land in the frontmatter, chosen here, never invented at Phase 4.
+**Profile choice (last step, user confirms):** check the Route S qualification (single subsystem, ≤ ~15 estimated tasks, no novel external integration — a well-known API via an established SDK qualifies, low stakes — see Route S — Lite v1 Profile; Route C cycles use the delta qualification there). All four hold → propose `profile: lite`; any fails → `profile: full` **plus `profile-reason: <the failing criterion>`** — an unjustified `profile: full` is a `brana-gate docs` finding, because it means the qualification never ran. Record it in the frontmatter. A user speed signal makes this proposal mandatory-before-drafting and adds a delivery contract — see Delivery Contract; both land in the frontmatter, chosen here, never invented at Phase 4.
 
 Keep SPEC.md under 500 words plus the kernel section (lite: ~700 words including the acceptance-criteria section that replaces PRD.md). Write it with frontmatter `status: draft` (plus `profile: lite` and a `delivery:` line when chosen).
 
@@ -291,11 +302,22 @@ handling strategy, configuration strategy, and an empty **Decision log**
 section at the end of the file — append-only, one line per future
 decision as `YYYY-MM-DD — decision — why`; Phase 7 doc sync and Route C
 patches append to it, never delete an earlier entry's why.
+When specs/ROADMAP.md exists, add a FORWARD CONSTRAINTS list: one line
+per future milestone naming what this design must not preclude — and
+nothing more; future milestones are never designed here.
 Rules: COMMIT to one concrete stack and one design per decision — no
 "e.g. X or Y", no alternatives left open. Name the e2e/journey-test
 harness as part of the stack commitment — CONVENTIONS.md's Test
 strategy (Phase 3) and every gate's crystallization task (Phase 4)
-build on this name. Every UX.md flow must be
+build on this name. Include a DEPENDENCY PLAN section — buy is the
+default: for every capability an established package serves, name
+`capability → package @ exact latest-stable/LTS version → what it
+replaces` (verify versions against the registry, never from memory);
+a hand-rolled capability names its reason (no credible package,
+trivial < ~30 lines, or core domain logic). A package must serve a
+named capability — no speculative utilities; trivial helpers stay
+hand-rolled. This list requires the user's explicit approval before
+the doc is final. Every UX.md flow must be
 traceable through the contract: for each kernel-journey step, name the
 API call or event that serves it; if a step has no serving contract
 (e.g. "reopen app → data restored" needs a list/read endpoint), add it.
@@ -340,7 +362,11 @@ requirement — name the requirement or flag it,
 (6) per major decision: the simplest credible alternative and why the
 chosen design beats it — no credible answer is itself a finding,
 (7) threat-model gaps (when the section exists): a trust boundary
-crossed without validation; an authZ check missing for a named flow.
+crossed without validation; an authZ check missing for a named flow,
+(8) build-vs-buy: a designed module duplicating an established,
+maintained package (name the package), and any dependency-plan entry
+failing the selection bar — unmaintained, license conflict, or a
+transitive tree out of proportion to the need.
 Each finding: section, severity, one-line consequence. No rewrites, no
 style opinions, no praise.
 [paste ARCHITECTURE.md + PRD.md + UX.md]
@@ -406,6 +432,8 @@ produce four complete markdown files:
    pages: every line here is a line of context each future task pays
    for. **Lint-over-prose rule:** a convention a machine can check
    becomes a lint rule at Task 0; prose is only for what lint can't see.
+   **Package-before-custom rule:** implementing a capability the
+   dependency plan assigns to a package is a review finding.
 3. DESIGN.md — the design system contract, styling the screens UX.md
    already defined. Include:
    a. Direction: 3 adjectives, reference apps, one deliberate visual
@@ -564,6 +592,15 @@ Rules:
   is a cost, not a virtue: emit the FEWEST tasks that respect the cap.
   Two consecutive tasks in a linear dependency whose primary file is
   the same merge into one unless the merged task would exceed the cap.
+- Ceremony scales with risk: a BOUNDARY task (its CONSUMES/PRODUCES
+  cross a module boundary or touch a wire contract; Task 0; gate and
+  crystallization tasks) carries the full interfaces block + context
+  pack. An INTERIOR task (single module, no cross-module contract)
+  carries only: objective, files, deps, layer-tagged criteria — no
+  interfaces block, and its context pack is just its file list. A
+  PRODUCES consumed only inside the same module needs no `[contract]`
+  criterion. A boundary task missing its block is a blocking finding;
+  an interior task carrying full ceremony is a token-waste warning.
 - No catch-all task: a final "fill remaining gaps" task depending on
   (nearly) every other task is a blocking finding — every acceptance
   criterion belongs to the task that owns the behavior. Gate and
@@ -573,6 +610,8 @@ Output TASKS.md as a numbered list. Do not write any code.
 ```
 
 **Task schema (agent mode):** each task is a heading plus one fenced ```toml block — `id`, `type` (scaffold/feature/gate/crystallization/fix/proof/spike), `chunk`, `deps`, `files`, `consumes`/`produces` (exact quotes), `skeleton`, `fake_of`, `[[criteria]]` (text + layer, `gate` on e2e), and for gate tasks a `[gate]` table (`n`, `release`, `launch`, `seed`, `unglamorous`, `[[gate.journey]]` step + serving task id); full schema in `tools/brana-gate --help`. The format exists so the task gate's structural half runs as a program, not as a model's recall; prose around the blocks stays free-form.
+
+**Downgrade valve (before the task gate):** the real task count now exists — Phase 1's was an estimate. `profile: full` and the split comes out ≤ ~15 tasks, single subsystem, no novel external integration → stop and offer the user retro-lite: the docs already written stay (sunk, still true), but downstream ceremony shrinks to the lite shape — gate cadence per the lite scaling rule, interior-task slimming applies, and SPEC.md's stamp is amended (`profile: lite`, with a Decision-log line). `brana-gate tasks --spec` flags the condition deterministically as a `retro-lite candidate` warning; the user's call is recorded either way. The mirror check (lite that outgrew ~15 tasks) is already the Route S escalation hard rule.
 
 Write TASKS.md with frontmatter `status: draft` — the task gate below flips it. Context packs are predictions made before code exists — treat them as hints. At implementation time paste what actually exists. Interfaces blocks are firmer than packs: they quote the contract, and contract changes route through the docs, not through a task improvising. Isolation is for token budgets, not for truth: the demo gates exist precisely because bugs live in the seams between well-tested tasks.
 
@@ -622,7 +661,7 @@ The machine pass is mandatory and blocking; in agent mode the agent applies fixe
 **Inputs per task:** the task + `CONVENTIONS.md` + only the files it touches (copy-paste mode; agent mode reads freely, writes only task-listed files). UI tasks additionally get `DESIGN.md` and their UX.md screen section; backend tasks get neither.
 **Outputs:** source + tests per task, demonstrated.
 
-Refuse a TASKS.md not stamped `status: ready` — the task gate hasn't cleared; point back to Phase 4. **Step 0, before Task 0:** check the current branch (Git Rule 1) — on main/master, create the cycle branch (named after the spec dir) before any code; direct-to-main only when the human explicitly says so. Task 0 is always the scaffold: file tree from FILE_STRUCTURE.md, configs, data migrations (if any), no feature logic; its smoke test is the app booting via a documented run command, recorded in CONVENTIONS.md. Then the walking skeleton — the kernel journey passes in the real app before any feature deepening begins.
+Refuse a TASKS.md not stamped `status: ready` — the task gate hasn't cleared; point back to Phase 4. **Step 0, before Task 0:** check the current branch (Git Rule 1) — on main/master, create the cycle branch (named after the spec dir) before any code; direct-to-main only when the human explicitly says so. Task 0 is always the scaffold: file tree from FILE_STRUCTURE.md, configs, data migrations (if any), ARCHITECTURE.md's dependency-plan packages installed at their pinned versions, no feature logic; its smoke test is the app booting via a documented run command, recorded in CONVENTIONS.md. Then the walking skeleton — the kernel journey passes in the real app before any feature deepening begins.
 
 **Migration tasks:** a task that adds or alters a schema migration must apply-rollback-reapply against fixture data — up, then down, then up again — with an assertion that the fixture data present before the up survives the round trip (not just that each step exits zero). Rollback in this workflow always means running the down migration, never `git revert` (Git Rule 2) — a reverted commit leaves the schema changed underneath a codebase that no longer expects it.
 
@@ -652,6 +691,10 @@ Rules:
   structure), choose the simplest interpretation and note it in a
   comment. If resolving it would CHANGE OR DROP USER-VISIBLE BEHAVIOR
   the spec implies, STOP and output the question instead of code.
+- Dependency rule: needing a capability ARCHITECTURE.md's dependency
+  plan doesn't cover is the same STOP — propose the package (or the
+  hand-roll) and ask; never silently add a dependency, and never
+  hand-roll what the plan assigns to a package.
 ```
 
 That last rule exists because a blanket "choose the simplest interpretation — do not ask" turns silent feature cuts into code comments instead of alarms.
@@ -702,7 +745,9 @@ and fake integrity: a runtime or gate path that composes bespoke
 wiring instead of the production entry point with injected seams, or a
 fake of an external system that diverges from its wire contract
 (accepts what the contract rejects, or lacks the shared contract
-suite). Each finding:
+suite), (9) dependency-plan violations: hand-rolled code duplicating
+a package ARCHITECTURE.md's dependency plan names, or an import of a
+package the plan doesn't name. Each finding:
 file:line, severity, one-line fix. Objective checks only — no style
 opinions, no praise, no rewrites.
 [paste diff + contract sections + acceptance criteria]
@@ -784,6 +829,9 @@ No verify script / journey suite yet (pre-v1.1 app, or all gates were skipped) �
 
 ```
 specs/
+  ROADMAP.md       (only when a milestone map exists: 2–3 lines per
+                   future milestone; completed ones marked at each
+                   milestone's end)
   001-core/        SPEC.md PRD.md PLAN.md TASKS.md FILE_STRUCTURE.md
                    evidence/ reviews/ screenshots/   (v1, Route C scale)
   002-reminders/   SPEC.md PLAN.md TASKS.md FILE_STRUCTURE.md
@@ -830,7 +878,7 @@ non-obvious decision was made, also draft one Decision log line:
 line.
 ```
 
-Apply corrections to the source docs directly — the agent applies them itself in agent mode; you apply them in copy-paste mode. After applying, run `brana-gate claims ARCHITECTURE.md UX.md CONVENTIONS.md DESIGN.md` (agent mode, from the repo root; skip absent docs) — every path a living doc cites must exist in the working tree, and a clean exit is part of the sync, not optional: a doc citing a file the feature renamed is exactly the poisoned-impact-analysis failure this section exists to prevent. Never record divergence as a "deviations" appendix or a gotchas list; amend the statement that became false. Append the drafted line to ARCHITECTURE.md's Decision log — append-only, a patch never deletes an earlier entry's why. FILE_STRUCTURE.md is out of scope here — it's per-cycle, archived with its `specs/NNN-name/` dir, never corrected in place. Cheap, mechanical, non-optional.
+Apply corrections to the source docs directly — the agent applies them itself in agent mode; you apply them in copy-paste mode. After applying, run `brana-gate claims ARCHITECTURE.md UX.md CONVENTIONS.md DESIGN.md` (agent mode, from the repo root; skip absent docs) — every path a living doc cites must exist in the working tree, and a clean exit is part of the sync, not optional: a doc citing a file the feature renamed is exactly the poisoned-impact-analysis failure this section exists to prevent. Never record divergence as a "deviations" appendix or a gotchas list; amend the statement that became false. When `specs/ROADMAP.md` exists and this merge completed a milestone, mark it there and confirm or amend the next milestone's lines — coarse stays coarse; detail waits for that milestone's own cycle. Append the drafted line to ARCHITECTURE.md's Decision log — append-only, a patch never deletes an earlier entry's why. FILE_STRUCTURE.md is out of scope here — it's per-cycle, archived with its `specs/NNN-name/` dir, never corrected in place. Cheap, mechanical, non-optional.
 
 ### Scaling note: context selection
 

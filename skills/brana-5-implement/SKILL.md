@@ -31,13 +31,14 @@ Argument is the task id (e.g. `brana-5-implement 3`). No id → take the first i
    - Write the implementation plus unit tests covering the acceptance criteria.
    - No placeholders, no TODO comments, no truncation. No refactoring unrelated code, no future tasks.
    - **Ambiguity rule:** internal ambiguity (naming, private structure) → choose the simplest interpretation, note it in a comment. Resolving it would CHANGE OR DROP USER-VISIBLE BEHAVIOR the spec implies → STOP and ask the user instead of coding. A blanket "don't ask" turns silent feature cuts into code comments instead of alarms.
+   - **Dependency rule (same STOP):** needing a capability ARCHITECTURE.md's dependency plan doesn't cover → propose the package (or the hand-roll) and ask; never silently add a dependency, and never hand-roll what the plan assigns to a package.
    - **Scope cuts are hard stops.** Discovering mid-flight that a spec'd, user-visible behavior won't be built → state the cut and end the turn. No default-proceed; documenting it in a gotchas file is laundering, not a decision.
 3. Run the **verify script** (Verification Machinery — not just the task's tests or the suite alone). Red → fix before committing.
 4. Run the acceptance behavior itself — exercise it in the running app (or via a test that actually drives it). UI task: launch-and-look + screenshot only if the user asked or CONVENTIONS.md requires it; otherwise skip visual verification — the demo gate covers it. Green tests alone never mark Done — that is the classic failure.
 5. **Migration task:** run up, then down, then up again against fixture data, with an assertion that the pre-up fixture data survives the round trip (not just that each step exits zero). Rollback always means the down migration, never `git revert` (Git Rule 2) — a reverted commit leaves the schema changed underneath a codebase that no longer expects it.
 6. Commit (per CONVENTIONS.md commit style) and capture the **evidence file** at `specs/NNN-name/evidence/task-N.txt`: the exercised command (verify script, test, or journey step) plus the last ~30 lines of its output, captured live — not reconstructable from the diff afterward. Mark the task done in TASKS.md with the commit SHA plus the evidence file's path — grammar `` - **Done:** `SHA` — evidence `specs/NNN-name/evidence/task-N.txt` `` — which `brana-gate tasks` machine-checks on every re-run (SHA present, evidence file exists non-empty, deps resolved first); a done-mark without it doesn't pass the demo gate or the v1 exit bar.
 
-Task 0 is always the scaffold: file tree from FILE_STRUCTURE.md, configs, data migrations, no feature logic; its smoke test is the app booting via a documented run command, recorded in CONVENTIONS.md. Task 0 also creates the **verify script** and sets up the linter/formatter/typecheck it runs per CONVENTIONS.md (machine-checkable conventions become lint rules, not review findings); UI stacks: verify also wires an automated a11y check (axe or equivalent) at Task 0; every stack: a dependency audit (npm audit / pip-audit / stack equivalent) and a secret scan, both failing the script; in agent mode, when the repo has a remote, Task 0 wires CI to run the verify script on push. Then the walking skeleton — the kernel journey passes in the real app before any feature deepening begins.
+Task 0 is always the scaffold: file tree from FILE_STRUCTURE.md, configs, data migrations, ARCHITECTURE.md's dependency-plan packages installed at their pinned versions, no feature logic; its smoke test is the app booting via a documented run command, recorded in CONVENTIONS.md. Task 0 also creates the **verify script** and sets up the linter/formatter/typecheck it runs per CONVENTIONS.md (machine-checkable conventions become lint rules, not review findings); UI stacks: verify also wires an automated a11y check (axe or equivalent) at Task 0; every stack: a dependency audit (npm audit / pip-audit / stack equivalent) and a secret scan, both failing the script; in agent mode, when the repo has a remote, Task 0 wires CI to run the verify script on push. Then the walking skeleton — the kernel journey passes in the real app before any feature deepening begins.
 
 Stuck after two failed attempts within the batch session → stop and tell the user to escalate to Opus-tier with: task spec, current code, failing output, summary of attempts. The escalation may conclude the plan itself is wrong — then the fix is a PLAN.md edit, not more code attempts.
 
@@ -71,6 +72,10 @@ Rules:
   structure), choose the simplest interpretation and note it in a
   comment. If resolving it would CHANGE OR DROP USER-VISIBLE BEHAVIOR
   the spec implies, STOP and output the question instead of code.
+- Dependency rule: needing a capability ARCHITECTURE.md's dependency
+  plan doesn't cover is the same STOP — propose the package (or the
+  hand-roll) and ask; never silently add a dependency, never hand-roll
+  what the plan assigns to a package.
 ```
 
 Escalation prompt (Opus-tier, only when stuck twice):
