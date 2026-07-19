@@ -1,4 +1,4 @@
-# Brana — App Development Workflow (v1.9)
+# Brana — App Development Workflow (v1.10)
 
 Consolidated from 5 agent proposals, revised after a v1 post-mortem. Optimized for token efficiency + output quality. Works for any app idea. Folds in tested patterns from two public workflows ([superpowers](https://github.com/obra/superpowers), [compound-engineering](https://github.com/EveryInc/compound-engineering)): path-based delegation, task interface blocks, live verification evidence, reviewer independence, and doc status stamps. Pre-release lineage (internal v2.0–v2.2) is in CHANGELOG.md.
 
@@ -49,11 +49,11 @@ The failure mode this workflow guards against: every task green, every doc consi
 ## Verification Machinery
 
 - **Verify script:** one documented command running build + lint + typecheck + full test suite (+ the journey suite once it exists). UI stacks: verify also runs an automated a11y check (axe or equivalent). Every stack: a dependency audit (npm audit / pip-audit / stack equivalent) and a secret scan, both failing the script. All wired at Task 0, recorded in CONVENTIONS.md. Every task completion runs it; demo-gate preflight runs it.
-- **Journey suite:** the automated e2e tests produced by crystallization tasks — each demo gate's walked journey, encoded after its first witnessed pass (Reality Rule 8). Part of verify once it exists.
+- **Journey suite:** the automated e2e tests produced by each gate's crystallization step — the walked journey, encoded after its first witnessed pass (Reality Rule 8). Part of verify once it exists.
 - **Evidence file:** `specs/NNN-name/evidence/task-N.txt` — the exercised command plus the last ~30 lines of its output, captured live at task completion. The TASKS.md done-mark references its path.
 - **Production composition:** the app's real entry point with its production wiring. Disposable/fixture modes inject config, seams, and fakes _inside_ that composition — never a parallel gate-only assembly. A gate's launch command is the production entry point with disposable inputs; a bespoke gate runtime is a blocking finding (it lets every gate pass while the production path stays unbuilt).
 - **Wire contract** (conditional — only when the kernel journey or a v1 flow depends on an external system that will be faked): a versioned, exact request/response contract for that integration — shapes, auth, error semantics — specified in ARCHITECTURE.md. Every fake of that system is a **verified fake**: one shared contract suite runs against both the fake and the real adapter, and the fake must reject what the contract rejects. The real-adapter side is offline-assertable (request-shape assertions, recorded fixtures); live provider calls happen only in a bounded canary routed through the production composition.
-- **Gate linter:** `tools/brana-gate` (single-file Python 3.11+, stdlib only) — the deterministic half of both machine gates. `brana-gate tasks TASKS.md --plan PLAN.md --arch ARCHITECTURE.md` runs every cross-referencing task-gate check (chunk coverage, dep cycles, skeleton ordering, layer tags, `[e2e@gate-N]`↔journey membership, PRODUCES→`[contract]`, gate preflight fields, crystallization adjacency, release gate, CONSUMES exact-match, wire-contract obligations); `brana-gate docs` scans for unresolved placeholders and **computes** WCAG contrast from DESIGN.md's tables — a contrast ratio is never an LLM's to compute. When TASKS.md carries done-marks (Phase 5 re-runs, stale-plan re-gates, the exit bar), `brana-gate tasks` also checks **done-mark integrity**: every Done mark quotes a commit SHA and an evidence-file path, the evidence file exists and is non-empty, and no task is Done before its deps are resolved — an evidence-less done-mark is a machine finding, not something a reviewer has to remember to look for. `brana-gate claims FILE... [--root DIR]` grounds a doc against the working tree: every backticked repo-relative path it cites must exist (run post-implementation only — planning docs legitimately cite future files); branch names, routes, and signatures are skipped. Where the tool is present its clean exit is the mandatory blocking half of the gate; the LLM pass shrinks to the judgment checklist (contradictions, open decisions, semantic serving). Copy-paste mode keeps the full LLM prompts as fallback. This applies Reality Rule 8 to the workflow itself: gate checks that are mechanical run as code, not as a cheap model's recall.
+- **Gate linter:** `tools/brana-gate` (single-file Python 3.11+, stdlib only) — the deterministic half of both machine gates. `brana-gate tasks TASKS.md --plan PLAN.md --arch ARCHITECTURE.md` runs every cross-referencing task-gate check (chunk coverage, dep cycles, skeleton ordering, layer tags, `[e2e@gate-N]`↔journey membership, PRODUCES→`[contract]`, gate preflight fields, crystallization criteria, release gate, CONSUMES exact-match, wire-contract obligations); `brana-gate docs` scans for unresolved placeholders and **computes** WCAG contrast from DESIGN.md's tables — a contrast ratio is never an LLM's to compute. When TASKS.md carries done-marks (Phase 5 re-runs, stale-plan re-gates, the exit bar), `brana-gate tasks` also checks **done-mark integrity**: every Done mark quotes a commit SHA and an evidence-file path, the evidence file exists and is non-empty, and no task is Done before its deps are resolved — an evidence-less done-mark is a machine finding, not something a reviewer has to remember to look for. `brana-gate claims FILE... [--root DIR]` grounds a doc against the working tree: every backticked repo-relative path it cites must exist (run post-implementation only — planning docs legitimately cite future files); branch names, routes, and signatures are skipped. Where the tool is present its clean exit is the mandatory blocking half of the gate; the LLM pass shrinks to the judgment checklist (contradictions, open decisions, semantic serving). Copy-paste mode keeps the full LLM prompts as fallback. This applies Reality Rule 8 to the workflow itself: gate checks that are mechanical run as code, not as a cheap model's recall.
 - **Release gate:** the v1 exit bar written as PLAN.md's final gate entry, with full demo-gate anatomy — journey (the kernel journey in a release build, unglamorous steps included), observations (including every PRD NFR budget measured via its named measurement), runnability preconditions, and a serving chunk per step _through the production composition_. It gets a preflight and `GATE BLOCKED` semantics like any gate; discovering at the release gate that a kernel-journey step has no production-composition path is the failure this entry exists to move to Phase 3.
 
 ## Model Bindings
@@ -99,25 +99,25 @@ Copy-paste is canon; this section translates it when the workflow runs inside ag
 
 The full pipeline is sized for apps worth eight documents; a small tool isn't, and an unsanctioned skip breaks chain-shaped guarantees silently (each gate assumes the last). Route S is the sanctioned off-ramp: fewer artifacts, same load-bearing links.
 
-**Qualify (all four, decided at Phase 1 end, user confirms):** single subsystem; ≤ ~15 estimated tasks; no **novel** external integration — an external system consumed through a well-known API via an official or established SDK does *not* disqualify (its wire contract ships in compact form: endpoints/shapes/error semantics in ≤1 page, and the verified-fake rule still applies); only an integration needing a bespoke or undocumented wire contract does; low stakes (no multi-user data, no payments). SPEC.md frontmatter records the choice **explicitly**: `profile: lite`, or `profile: full` plus `profile-reason: <the failing criterion>`. A `profile: full` with no `profile-reason` means the qualification never ran — `brana-gate docs` flags it (pre-v1.9 cycles with no `profile:` key at all are grandfathered as full). Downstream phases read the stamp.
+**Qualify (all four, decided at Phase 1 end, user confirms):** single subsystem; ≤ ~15 estimated feature tasks (structural gate/proof tasks excluded); no **novel** external integration — an external system consumed through a well-known API via an official or established SDK does *not* disqualify (its wire contract ships in compact form: endpoints/shapes/error semantics in ≤1 page, and the verified-fake rule still applies); only an integration needing a bespoke or undocumented wire contract does; low stakes (no multi-user data, no payments). SPEC.md frontmatter records the choice **explicitly**: `profile: lite`, or `profile: full` plus `profile-reason: <the failing criterion>`. A `profile: full` with no `profile-reason` means the qualification never ran — `brana-gate docs` flags it (pre-v1.9 cycles with no `profile:` key at all are grandfathered as full). Downstream phases read the stamp.
 
-**Scaling inside lite (no third tier):** ≤ ~5 estimated tasks → the mid demo gate folds into the release gate — one gate total, full anatomy plus crystallization; and for a tool with no interactive UI, mini UX.md reduces to the operator-surface notes plus the kernel flow.
+**Scaling inside lite (no third tier):** ≤ ~5 estimated feature tasks → the mid demo gate folds into the release gate — one gate total, full anatomy plus crystallization step; and for a tool with no interactive UI, mini UX.md reduces to the operator-surface notes plus the kernel flow.
 
-**Kept — non-negotiable in every profile:** SPEC.md with kernel journey + scope challenge; falsifiable acceptance criteria; verify script + evidence files; same-composition rule; scope-cut and ambiguity hard stops; git rules; at least one mid demo gate plus the release gate (≤5-task lite scaling: the release gate alone); crystallization tasks; the task gate (`brana-gate tasks`, run without `--plan`); the v1 exit bar; threat model still applies if its trigger does (auth/user data/external input disqualifies "low stakes" anyway — re-check the qualification instead).
+**Kept — non-negotiable in every profile:** SPEC.md with kernel journey + scope challenge; falsifiable acceptance criteria; verify script + evidence files; same-composition rule; scope-cut and ambiguity hard stops; git rules; at least one mid demo gate plus the release gate (≤5-task lite scaling: the release gate alone); crystallization steps; the task gate (`brana-gate tasks`, run without `--plan`); the v1 exit bar; threat model still applies if its trigger does (auth/user data/external input disqualifies "low stakes" anyway — re-check the qualification instead).
 
 **Folded or cut:**
 
 - **PRD.md — cut.** Acceptance criteria (falsifiable, NFR budgets+measurements if any are stated) move into a SPEC.md section. SPEC stays under ~700 words total.
 - **UX.md — mini.** Screen list with ids, the kernel flow step-by-step, one line per screen on empty/error states. Still the living root doc; still read by you.
 - **ARCHITECTURE.md — lite.** Stack commitment, data model, API/contract surface, kernel-journey traceability, Decision log. No module ceremony. Still the living root doc. Architecture review becomes advisory — offered once, skippable; skipping is recorded in SPEC.md as an accepted risk line.
-- **PLAN.md — cut.** Chunking happens directly in TASKS.md; DEMO GATE and RELEASE GATE entries are authored there with full gate anatomy (journey, preflight block, unglamorous step, crystallization task). Consistency gate shrinks to `brana-gate docs` over the remaining docs + a short LLM pass (contradictions, unserved kernel-journey steps, open decisions); it stamps SPEC.md `gate-passed`.
+- **PLAN.md — cut.** Chunking happens directly in TASKS.md; DEMO GATE and RELEASE GATE entries are authored there with full gate anatomy (journey, preflight block, unglamorous step, crystallization step). Consistency gate shrinks to `brana-gate docs` over the remaining docs + a short LLM pass (contradictions, unserved kernel-journey steps, open decisions); it stamps SPEC.md `gate-passed`.
 - **DESIGN.md — optional.** UI-heavy → keep it. Otherwise CONVENTIONS.md carries ≤5 style rules (spacing scale, one accent, focus visible, WCAG AA) and DESIGN.md is skipped.
 - **FILE_STRUCTURE.md — cut.** Task 0 scaffolds from ARCHITECTURE.md directly.
 - **CONVENTIONS.md — kept but ≤1 page,** Test strategy + verify command included.
 
 **Escalation (hard rule):** mid-flight discovery of a second subsystem, a novel external integration, or a schema/module-boundary change beyond the lite ARCHITECTURE.md → stop, tell the user, and upgrade: write the missing docs for the delta (Route C shape), re-run the consistency gate, then continue. A lite profile that has outgrown itself and keeps going is the same self-certification seam the gates exist to close. Phase 7 is unchanged — living docs exist in both profiles, so the change loop and its routes work identically.
 
-**Route C delta qualification:** a Route C change cycle runs the same four-criteria check against the *delta*, not the whole app: the delta touches one subsystem; ≤ ~15 estimated tasks; the delta introduces no *novel* external integration (an existing integration already documented in ARCHITECTURE.md does not disqualify — its wire contract and fake already exist; a new well-known-API integration qualifies under the same compact-wire-contract form as v1 lite); the delta's own stakes are low. All four hold → the cycle's SPEC.md gets `profile: lite` (Phase 2/3/4 lite deltas apply to the cycle docs; living root docs are patched as always). The original v1's profile is irrelevant — a full-profile app can and should take lite change cycles when the delta qualifies.
+**Route C delta qualification:** a Route C change cycle runs the same four-criteria check against the *delta*, not the whole app: the delta touches one subsystem; ≤ ~15 estimated feature tasks; the delta introduces no *novel* external integration (an existing integration already documented in ARCHITECTURE.md does not disqualify — its wire contract and fake already exist; a new well-known-API integration qualifies under the same compact-wire-contract form as v1 lite); the delta's own stakes are low. All four hold → the cycle's SPEC.md gets `profile: lite` (Phase 2/3/4 lite deltas apply to the cycle docs; living root docs are patched as always). The original v1's profile is irrelevant — a full-profile app can and should take lite change cycles when the delta qualifies.
 
 ## Delivery Contract
 
@@ -125,7 +125,7 @@ A user's speed constraint ("fast delivery", "no demo gates", "just ship it so I 
 
 **Speed signal rule (hard):** when the user signals speed at cycle entry, the agent must — before drafting SPEC.md — (1) run the profile qualification (Route S, or its Route C delta form) and propose `lite` if it holds, and (2) propose an explicit delivery contract naming exactly what is waived and what verifies instead. Waivers bolted onto a finished full-profile doc set are the anti-pattern this section exists to kill: the route is chosen at entry, when the ceremony hasn't been paid yet.
 
-**Vocabulary (closed):** SPEC.md frontmatter, one line — `delivery: demo_gates=waived walkthrough=waived canary=required` — keys `demo_gates`, `walkthrough`, `canary`; values `required` (default when absent) | `waived`. Nothing else is a waivable unit: the task gate, verify script, evidence files, crystallization tasks, and the release-gate task itself are load-bearing in every contract (a waived `walkthrough` means the release gate's journey is verified by its crystallized e2e suite instead of a human walk; the gate task still exists and still blocks).
+**Vocabulary (closed):** SPEC.md frontmatter, one line — `delivery: demo_gates=waived walkthrough=waived canary=required` — keys `demo_gates`, `walkthrough`, `canary`; values `required` (default when absent) | `waived`. Nothing else is a waivable unit: the task gate, verify script, evidence files, crystallization steps, and the release-gate task itself are load-bearing in every contract (a waived `walkthrough` means the release gate's journey is verified by its crystallized e2e suite instead of a human walk; the gate task still exists and still blocks).
 
 **Waiver adds no scope (hard rule):** a waiver names its substitute from machinery the cycle already has — the verify script, the test suite, the crystallized journey tests. If the proposed substitute requires *building new tooling*, that tooling is a feature: it goes through the v1 provenance check (Phase 1) as process-derived scope, priced in tasks, and enters v1 only by the user's explicit call. "We waived the demo gate, therefore we must build a dry-run CLI" is scope amplification wearing a waiver's clothes — the user may well want the CLI, but they order it; the waiver never does.
 
@@ -170,7 +170,7 @@ Agents cannot open a reference app; "make it like X" from text yields a fuzzy tr
 **Inputs:** Your idea.
 **Output:** `SPEC.md` (kernel-first, ranked)
 
-**Milestone map first (big ideas):** an idea spanning multiple independent subsystems ("a platform with chat, billing, and analytics") or estimated beyond ~15–20 tasks is decomposed into **milestones** before any detail questions. Each milestone is its own `specs/NNN-name/` cycle, ≤ ~15 tasks, and its final task is a working, release-gated version of the app at that stage — never a horizontal layer that only pays off later. M1 is always the kernel milestone: the smallest working version that delivers the core promise; spec it now. Later milestones get **2–3 lines each** (name, goal, rough scope) in `specs/ROADMAP.md` — coarse by design: detail is authored when that milestone's own cycle starts (Route C shape, delta qualification applies, so later milestones often run lite). The map is re-checked at each milestone's end — completed milestone marked, the next one's lines confirmed or amended. A single-cycle idea needs no ROADMAP.md. Don't spend questions refining a project that needs splitting.
+**Milestone map first (big ideas):** an idea spanning multiple independent subsystems ("a platform with chat, billing, and analytics") or estimated beyond ~15–20 **feature tasks** is decomposed into **milestones** before any detail questions. Each milestone is its own `specs/NNN-name/` cycle, ≤ ~15 feature tasks, and its final task is a working, release-gated version of the app at that stage — never a horizontal layer that only pays off later. **Count feature work only:** the workflow itself adds structural tasks a Phase 1 estimate must not count — demo gates (with built-in crystallization), the release gate, proof tasks: ~3–6 on a full profile — so a ~15-feature milestone legitimately lands ~20 total in TASKS.md; that is ceremony, not overshoot. M1 is always the kernel milestone: the smallest working version that delivers the core promise; spec it now. Later milestones get **2–3 lines each** (name, goal, rough scope) in `specs/ROADMAP.md` — coarse by design: detail is authored when that milestone's own cycle starts (Route C shape, delta qualification applies, so later milestones often run lite). The map is re-checked at each milestone's end — completed milestone marked, the next one's lines confirmed or amended. A single-cycle idea needs no ROADMAP.md. Don't spend questions refining a project that needs splitting.
 
 Write the rough spec yourself — cheapest possible start. Then run one gap-check:
 
@@ -229,7 +229,7 @@ Fold the result back into SPEC.md: **Kernel** (with the kernel journey verbatim)
 
 **Design direction (required, 3–5 lines):** product personality as 3 adjectives, 2–3 reference apps whose look is the target, platform density, accessibility floor (WCAG AA). Feeds UX.md and DESIGN.md. If you have a pre-built design system or a reference pack, name them here instead — see External Design Inputs.
 
-**Profile choice (last step, user confirms):** check the Route S qualification (single subsystem, ≤ ~15 estimated tasks, no novel external integration — a well-known API via an established SDK qualifies, low stakes — see Route S — Lite v1 Profile; Route C cycles use the delta qualification there). All four hold → propose `profile: lite`; any fails → `profile: full` **plus `profile-reason: <the failing criterion>`** — an unjustified `profile: full` is a `brana-gate docs` finding, because it means the qualification never ran. Record it in the frontmatter. A user speed signal makes this proposal mandatory-before-drafting and adds a delivery contract — see Delivery Contract; both land in the frontmatter, chosen here, never invented at Phase 4.
+**Profile choice (last step, user confirms):** check the Route S qualification (single subsystem, ≤ ~15 estimated feature tasks, no novel external integration — a well-known API via an established SDK qualifies, low stakes — see Route S — Lite v1 Profile; Route C cycles use the delta qualification there). All four hold → propose `profile: lite`; any fails → `profile: full` **plus `profile-reason: <the failing criterion>`** — an unjustified `profile: full` is a `brana-gate docs` finding, because it means the qualification never ran. Record it in the frontmatter. A user speed signal makes this proposal mandatory-before-drafting and adds a delivery contract — see Delivery Contract; both land in the frontmatter, chosen here, never invented at Phase 4.
 
 Keep SPEC.md under 500 words plus the kernel section (lite: ~700 words including the acceptance-criteria section that replaces PRD.md). Write it with frontmatter `status: draft` (plus `profile: lite` and a `delivery:` line when chosen).
 
@@ -308,7 +308,7 @@ nothing more; future milestones are never designed here.
 Rules: COMMIT to one concrete stack and one design per decision — no
 "e.g. X or Y", no alternatives left open. Name the e2e/journey-test
 harness as part of the stack commitment — CONVENTIONS.md's Test
-strategy (Phase 3) and every gate's crystallization task (Phase 4)
+strategy (Phase 3) and every gate's crystallization step (Phase 4)
 build on this name. Include a DEPENDENCY PLAN section — buy is the
 default: for every capability an established package serves, name
 `capability → package @ exact latest-stable/LTS version → what it
@@ -401,7 +401,8 @@ produce four complete markdown files:
    release. Then the FIRST MILESTONE is
    the WALKING SKELETON: the thinnest end-to-end slice that makes the
    kernel journey pass in the real app (ugly is fine, fake is not).
-   Later chunks deepen it. Every 2–3 chunks, insert a DEMO GATE —
+   Later chunks deepen it. Insert mid DEMO GATEs at roughly one per
+   8–10 feature tasks' worth of chunks (~3–4 chunks), minimum one —
    cadence is the target, runnability the constraint: a gate sits only
    where the app launches and its journey is walkable end-to-end in the
    running app. Chunks between gates are vertical slices (each gate
@@ -566,18 +567,25 @@ Rules:
   error/edge-case list, rotating across gates: restart → offline →
   invalid input → restart → ... — a gate never ships checking only the
   happy path.
-- Every DEMO GATE task is immediately followed by a **crystallization
-  task**: it encodes the gate's scripted journey (including its
-  unglamorous step) as an automated e2e test on the harness named in
-  CONVENTIONS.md's Test strategy; the new test joins the journey suite.
-  No feature task may start before its preceding gate's crystallization
-  task is done. A `GATE SKIPPED` gate does NOT defer the encoding —
-  writing the e2e needs only the scripted journey, not a walkthrough:
-  the crystallization task runs immediately and its test is marked
+- Every DEMO GATE task **contains its crystallization step** — no
+  separate task: an `[e2e@gate-N]` criterion (its own N) requiring the
+  gate's scripted journey (including its unglamorous step) encoded as
+  an automated e2e test on the harness named in CONVENTIONS.md's Test
+  strategy; the new test joins the journey suite. The encoding happens
+  in the gate session itself, right after the walkthrough, while the
+  journey is loaded context — a separate crystallization task re-loads
+  that context for nothing. The gate task is not Done until the
+  walkthrough result is recorded AND the journey test is green; no
+  feature task may start before the preceding gate task is Done. A
+  `GATE SKIPPED` gate does NOT defer the encoding — writing the e2e
+  needs only the scripted journey, not a walkthrough: the
+  crystallization step runs immediately and its test is marked
   `UNWITNESSED` (same visible-debt mark as the gate) until the journey
   is eventually walked, at latest the v1 exit bar. Feature work
   proceeds once the unwitnessed test is green — a skip costs human
-  attention debt, never automation debt.
+  attention debt, never automation debt. (Legacy layout — a separate
+  `crystallization`-type task immediately after its gate — remains
+  valid for existing TASKS.md files; never author it for new ones.)
 - Verified-fake rule (only when ARCHITECTURE.md has wire contracts):
   a task producing a fake of an external system gets a `[contract]`
   criterion running ONE shared suite against both the fake and the
@@ -593,9 +601,8 @@ Rules:
   Two consecutive tasks in a linear dependency whose primary file is
   the same merge into one unless the merged task would exceed the cap.
 - Ceremony scales with risk: a BOUNDARY task (its CONSUMES/PRODUCES
-  cross a module boundary or touch a wire contract; Task 0; gate and
-  crystallization tasks) carries the full interfaces block + context
-  pack. An INTERIOR task (single module, no cross-module contract)
+  cross a module boundary or touch a wire contract; Task 0; gate
+  tasks) carries the full interfaces block + context pack. An INTERIOR task (single module, no cross-module contract)
   carries only: objective, files, deps, layer-tagged criteria — no
   interfaces block, and its context pack is just its file list. A
   PRODUCES consumed only inside the same module needs no `[contract]`
@@ -603,15 +610,15 @@ Rules:
   an interior task carrying full ceremony is a token-waste warning.
 - No catch-all task: a final "fill remaining gaps" task depending on
   (nearly) every other task is a blocking finding — every acceptance
-  criterion belongs to the task that owns the behavior. Gate and
-  crystallization tasks are the only sanctioned wide-dependency tasks.
+  criterion belongs to the task that owns the behavior. Gate tasks
+  are the only sanctioned wide-dependency tasks.
 Output TASKS.md as a numbered list. Do not write any code.
 [paste PLAN.md + UX.md flow section + PRD.md error/edge-case list]
 ```
 
-**Task schema (agent mode):** each task is a heading plus one fenced ```toml block — `id`, `type` (scaffold/feature/gate/crystallization/fix/proof/spike), `chunk`, `deps`, `files`, `consumes`/`produces` (exact quotes), `skeleton`, `fake_of`, `[[criteria]]` (text + layer, `gate` on e2e), and for gate tasks a `[gate]` table (`n`, `release`, `launch`, `seed`, `unglamorous`, `[[gate.journey]]` step + serving task id); full schema in `tools/brana-gate --help`. The format exists so the task gate's structural half runs as a program, not as a model's recall; prose around the blocks stays free-form.
+**Task schema (agent mode):** each task is a heading plus one fenced ```toml block — `id`, `type` (scaffold/feature/gate/crystallization/fix/proof/spike), `chunk`, `deps`, `files`, `consumes`/`produces` (exact quotes), `skeleton`, `fake_of`, `[[criteria]]` (text + layer, `gate` on e2e), and for gate tasks a `[gate]` table (`n`, `release`, `launch`, `seed`, `unglamorous`, `[[gate.journey]]` step + serving task id) plus the crystallization-step criterion (`layer = "e2e"`, `gate` = its own `n`; `crystallization` stays in the type enum only for legacy files); full schema in `tools/brana-gate --help`. The format exists so the task gate's structural half runs as a program, not as a model's recall; prose around the blocks stays free-form.
 
-**Downgrade valve (before the task gate):** the real task count now exists — Phase 1's was an estimate. `profile: full` and the split comes out ≤ ~15 tasks, single subsystem, no novel external integration → stop and offer the user retro-lite: the docs already written stay (sunk, still true), but downstream ceremony shrinks to the lite shape — gate cadence per the lite scaling rule, interior-task slimming applies, and SPEC.md's stamp is amended (`profile: lite`, with a Decision-log line). `brana-gate tasks --spec` flags the condition deterministically as a `retro-lite candidate` warning; the user's call is recorded either way. The mirror check (lite that outgrew ~15 tasks) is already the Route S escalation hard rule.
+**Downgrade valve (before the task gate):** the real task count now exists — Phase 1's was an estimate. Count **feature tasks only** (gate/crystallization/proof tasks are workflow overhead, not scope — `brana-gate` counts the same way). `profile: full` and the split comes out ≤ ~15 feature tasks, single subsystem, no novel external integration → stop and offer the user retro-lite: the docs already written stay (sunk, still true), but downstream ceremony shrinks to the lite shape — gate cadence per the lite scaling rule, interior-task slimming applies, and SPEC.md's stamp is amended (`profile: lite`, with a Decision-log line). `brana-gate tasks --spec` flags the condition deterministically as a `retro-lite candidate` warning; the user's call is recorded either way. The mirror check (lite that outgrew ~15 feature tasks) is already the Route S escalation hard rule.
 
 Write TASKS.md with frontmatter `status: draft` — the task gate below flips it. Context packs are predictions made before code exists — treat them as hints. At implementation time paste what actually exists. Interfaces blocks are firmer than packs: they quote the contract, and contract changes route through the docs, not through a task improvising. Isolation is for token budgets, not for truth: the demo gates exist precisely because bugs live in the seams between well-tested tasks.
 
@@ -637,9 +644,10 @@ contract sections: [paste]. Findings in TASKS.md only — list:
   `[e2e@gate-N]` criterion absent from gate N's journey; every task
   with a PRODUCES block missing its `[contract]` criterion;
 - every gate task missing a preflight field (launch command; seed/
-  fixture command when the journey needs data; dependency ids) or not
-  immediately followed by its crystallization task; every gate journey
-  missing its unglamorous step;
+  fixture command when the journey needs data; dependency ids) or
+  missing its crystallization step (an [e2e@gate-N] criterion encoding
+  its journey; a legacy adjacent crystallization task also passes);
+  every gate journey missing its unglamorous step;
 - a missing RELEASE GATE task; and — when ARCHITECTURE.md has wire
   contracts — a production-composition proof absent from the release
   gate's dependencies, plus every fake-producing task missing its
@@ -791,7 +799,7 @@ Here are screenshots of the app and the UX.md + DESIGN.md contracts:
 that would most improve clarity and hierarchy. Findings only.
 ```
 
-**v1 exit bar:** the exit bar is the **release gate** task (Verification Machinery) and runs like any gate — the agent preflights it (verify script, release build, launch via the production entry point, journey entry reachable; failure is `GATE BLOCKED`, fix tasks first). The preflight also re-runs `brana-gate tasks` — done-mark integrity fires here: an evidence-less or out-of-dependency-order Done mark is a machine finding, not a reviewer's recall. The bar: the kernel journey passes end-to-end in a release build through the production composition, witnessed by you, including the unglamorous steps (restart, offline, error paths named in the PRD), _and_ the kernel journey's crystallization-task e2e test is green in the release build, _and_ — when fakes stood in for an external system — the production-composition proof task and the verified-fake contract suites are Done/green, _and_ every PRD NFR budget is measured via its named measurement in the release build — at or under budget, or explicitly accepted over with the number recorded. Every `GATE SKIPPED` entry in TASKS.md is listed here with its `UNWITNESSED` journey test, and each is either walked now or explicitly accepted (the automation exists — the missing human witness is the recorded, accepted debt); an unresolved `GATE BLOCKED` fails the bar outright — a gate that never became runnable is a defect, not debt. Every crystallization task across every gate must be Done — a gate walked but never crystallized is an untested journey by the next change. "All tasks Done" is not the bar; this is.
+**v1 exit bar:** the exit bar is the **release gate** task (Verification Machinery) and runs like any gate — the agent preflights it (verify script, release build, launch via the production entry point, journey entry reachable; failure is `GATE BLOCKED`, fix tasks first). The preflight also re-runs `brana-gate tasks` — done-mark integrity fires here: an evidence-less or out-of-dependency-order Done mark is a machine finding, not a reviewer's recall. The bar: the kernel journey passes end-to-end in a release build through the production composition, witnessed by you, including the unglamorous steps (restart, offline, error paths named in the PRD), _and_ the kernel journey's crystallized e2e test is green in the release build, _and_ — when fakes stood in for an external system — the production-composition proof task and the verified-fake contract suites are Done/green, _and_ every PRD NFR budget is measured via its named measurement in the release build — at or under budget, or explicitly accepted over with the number recorded. Every `GATE SKIPPED` entry in TASKS.md is listed here with its `UNWITNESSED` journey test, and each is either walked now or explicitly accepted (the automation exists — the missing human witness is the recorded, accepted debt); an unresolved `GATE BLOCKED` fails the bar outright — a gate that never became runnable is a defect, not debt. Every gate's crystallization step (legacy: crystallization task) must be done — a gate walked but never crystallized is an untested journey by the next change. "All tasks Done" is not the bar; this is.
 
 **Spawn route (pre-v1):** when fixing a `GATE BLOCKED` — any gate, including the release gate — reveals a missing subsystem or a new/changed contract (more than a few fix tasks, or a new ARCHITECTURE.md section), do not wedge it into the current TASKS.md: spawn a scoped child cycle in a new `specs/NNN-name/` dir (Phase 1→6 on the delta, Route C shape, ARCHITECTURE.md patched not regenerated). The parent gate stays `GATE BLOCKED` referencing the child spec; the stale-interface-block rule (Phase 7) and the stale-plan rule (Phase 5) run on the parent's not-done tasks and patched PLAN.md sections; the parent preflight re-runs only after the child cycle completes.
 

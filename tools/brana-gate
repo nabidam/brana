@@ -14,8 +14,10 @@ Subcommands:
       any other waiver/exception key is a finding (waivers are declared in
       SPEC.md at cycle entry, never invented at Phase 4).
       With --spec, also runs the downgrade valve: `profile: full` with a
-      final split of ≤15 tasks prints a non-blocking `retro-lite candidate`
-      warning (WORKFLOW.md, Phase 4 downgrade valve).
+      final split of ≤15 feature tasks (gate/crystallization/proof tasks
+      excluded — they are workflow overhead, not scope) prints a
+      non-blocking `retro-lite candidate` warning (WORKFLOW.md, Phase 4
+      downgrade valve).
       When any task carries a done-mark, done-mark integrity is also checked
       (Phase 5 re-runs, stale-plan re-gates, the v1 exit bar): a done-mark
       line must quote a commit SHA and an evidence-file path, the evidence
@@ -71,6 +73,11 @@ Gate tasks (type = "gate") additionally:
     [[gate.journey]]
     step = "create a note; it appears in the list"
     task = 2                    # the task id serving this step
+
+A non-release gate task also carries its crystallization step as a
+criterion: layer = "e2e", gate = its own n — the walked journey encoded
+as an automated e2e test in the same gate session. A legacy layout
+(separate crystallization-type task immediately after the gate) passes too.
 
 PLAN.md chunks are headings matching /^#{1,4}\s*Chunk\s+(\d+)/i.
 DESIGN.md contrast: token table rows `| name | #RRGGBB |...`; any table row
@@ -134,16 +141,18 @@ def parse_delivery(raw: str, loc_name: str) -> dict[str, str] | None:
     return contract
 
 
-def check_profile(spec_path: Path | None, task_count: int) -> None:
+def check_profile(spec_path: Path | None, feature_count: int) -> None:
     """Downgrade valve: a full-profile cycle whose real split fits lite is flagged
-    as a retro-lite candidate (warning, non-blocking — the user makes the call)."""
-    if spec_path is None or task_count == 0:
+    as a retro-lite candidate (warning, non-blocking — the user makes the call).
+    Counts feature work only — gates, crystallization and proof tasks are
+    workflow overhead, not scope."""
+    if spec_path is None or feature_count == 0:
         return
     fm = parse_frontmatter(spec_path.read_text(encoding="utf-8"))
     profile = fm.get("profile", "").split("#")[0].strip()
-    if profile == "full" and task_count <= 15:
+    if profile == "full" and feature_count <= 15:
         warn(spec_path.name, "profile",
-             f"profile: full but only {task_count} task(s) — retro-lite candidate; "
+             f"profile: full but only {feature_count} feature task(s) — retro-lite candidate; "
              "offer the user the lite downgrade (WORKFLOW.md, Phase 4 downgrade valve)")
 
 
@@ -330,7 +339,10 @@ def check_tasks(tasks_path: Path, plan_path: Path | None, arch_path: Path | None
                 g = c.get("gate")
                 if g not in gates:
                     find(loc(t), "e2e-gate", f"e2e criterion names gate {g}, which has no gate task")
-                elif t.get("type") != "crystallization":  # a crystallization criterion IS the journey
+                elif not (
+                    t.get("type") == "crystallization"
+                    or (t.get("type") == "gate" and isinstance(t.get("gate"), dict) and t["gate"].get("n") == g)
+                ):  # a crystallization criterion IS the journey (on the gate task or a legacy crystallization task)
 
                     steps = [norm(j.get("step", "")).lower() for j in gates[g]["gate"].get("journey", [])]
                     if norm(c.get("text", "")).lower() not in steps and not any(
@@ -374,13 +386,15 @@ def check_tasks(tasks_path: Path, plan_path: Path | None, arch_path: Path | None
                 find(loc(t), "gate-deps", f"serving task {sid} missing from the gate's deps")
         if g.get("release"):
             release_gates.append(t)
-        # crystallization adjacency: next task in file order
+        # crystallization: the gate task carries its own journey-encoding e2e
+        # criterion (merged form); a legacy adjacent crystallization task passes too
         idx = order.get(t.get("id"))
         nxt = tasks[idx + 1] if idx is not None and idx + 1 < len(tasks) else None
-        if not g.get("release") and (
-            nxt is None or nxt.get("type") != "crystallization" or nxt.get("gate") != g.get("n")
-        ):
-            find(loc(t), "crystallization", f"gate {g.get('n')} not immediately followed by its crystallization task")
+        crystallized = any(
+            c.get("layer") == "e2e" and c.get("gate") == g.get("n") for c in t.get("criteria", [])
+        ) or (nxt is not None and nxt.get("type") == "crystallization" and nxt.get("gate") == g.get("n"))
+        if not g.get("release") and not crystallized:
+            find(loc(t), "crystallization", f"gate {g.get('n')} has no crystallization step — add an e2e criterion (gate = {g.get('n')}) encoding its journey")
 
     if not release_gates:
         find(tasks_path.name, "release-gate", "no RELEASE GATE task (a gate with release = true)")
@@ -596,7 +610,7 @@ def main(argv: list[str]) -> int:
                     pos.append(Path(a))
             parsed = check_tasks(pos[0], plan, arch)
             check_delivery(pos[0], spec)
-            check_profile(spec, len(parsed))
+            check_profile(spec, sum(1 for t in parsed if t.get("type") not in {"gate", "crystallization", "proof"}))
             check_done_marks(pos[0], pos[0].read_text(encoding="utf-8"), parsed)
         elif cmd == "docs":
             if not args:
