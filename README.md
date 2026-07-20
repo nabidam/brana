@@ -44,12 +44,20 @@ Full canon: [WORKFLOW.md](WORKFLOW.md). Skill-by-skill guide: [skills/USAGE.md](
 - **Cheap by design.** Expensive model plans, cheap model codes; fresh session per phase; diff-only reviews. Concrete model bindings included.
 - **Deterministic gates.** The structural half of both machine gates runs as a program — `tools/brana-gate` (stdlib-only Python) checks task graphs, gate walkability, contract quotes, and computed WCAG contrast; LLM passes cover only judgment. Review findings are confirmed with reproductions before they become fix tasks.
 - **Design reviewed, not just consistent.** An independent architecture review (failure handling, data-model flaws, races, scale, over-engineering, threat-model gaps) blocks Phase 3 — wrong-but-consistent designs no longer sail through. Unknowable decisions become time-boxed spike chunks instead of guesses; every NFR carries a budget + measurement, checked at the release gate.
-- **Sized to the project.** Small tool? `profile: lite` (Route S) keeps the load-bearing links — kernel journey, verify script, evidence, demo + release gates, hard stops — and cuts the ceremony: PRD folds into SPEC, PLAN/FILE_STRUCTURE dropped, gates authored directly in TASKS.md. Change cycles qualify against the *delta*. Outgrowing lite is a hard stop + upgrade, never a silent stretch.
-- **Scope discipline, not just execution discipline.** Every v1 bullet carries provenance — tooling the *process* wants (dry-run CLIs, output modules) is priced and needs your explicit call; "just a flag" stays a flag (minimal-form rule). Speed requests become a first-class **delivery contract** in SPEC.md frontmatter (closed vocabulary, gate-validated) chosen at cycle entry — never ad-hoc waivers invented at Phase 4. The splitter emits the fewest tasks that respect the size cap, and catch-all gap-sweep tasks are a deterministic gate finding.
+- **Sized to the project.** Small tool? `profile: lite` (Route S) keeps the load-bearing links — kernel journey, verify script, evidence, demo + release gates, hard stops — and cuts the ceremony: PRD folds into SPEC, PLAN/FILE*STRUCTURE dropped, gates authored directly in TASKS.md. Change cycles qualify against the \_delta*. Outgrowing lite is a hard stop + upgrade, never a silent stretch.
+- **Scope discipline, not just execution discipline.** Every v1 bullet carries provenance — tooling the _process_ wants (dry-run CLIs, output modules) is priced and needs your explicit call; "just a flag" stays a flag (minimal-form rule). Speed requests become a first-class **delivery contract** in SPEC.md frontmatter (closed vocabulary, gate-validated) chosen at cycle entry — never ad-hoc waivers invented at Phase 4. The splitter emits the fewest tasks that respect the size cap, and catch-all gap-sweep tasks are a deterministic gate finding.
 
 See [COMPARISON.md](COMPARISON.md) for an honest side-by-side with [Superpowers](https://github.com/obra/superpowers) and [Compound Engineering](https://github.com/EveryInc/compound-engineering) — including what Brana adopted from each and where they're stronger.
 
 ## Installation
+
+### Universal
+
+Thanks to [https://skill.sh](skills.sh) you can just run the following command, and walk through its wizard to install skills:
+
+```bash
+npx skills add https://github.com/nabidam/brana
+```
 
 ### Zero tooling (any chat UI — ChatGPT, Gemini, Claude.ai, …)
 
