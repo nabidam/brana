@@ -53,7 +53,7 @@ See [COMPARISON.md](COMPARISON.md) for an honest side-by-side with [Superpowers]
 
 ### Universal
 
-Thanks to [https://skill.sh](skills.sh) you can just run the following command, and walk through its wizard to install skills:
+Thanks to [skills.sh](https://skills.sh) you can just run the following command, and walk through its wizard to install skills:
 
 ```bash
 npx skills add https://github.com/nabidam/brana
