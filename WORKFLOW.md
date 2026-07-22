@@ -12,12 +12,12 @@ The failure mode this workflow guards against: every task green, every doc consi
 
 1. **The deliverable is the running app, not the documents.** A phase whose output is only markdown is scaffolding; it earns nothing on its own. Any conflict between "the doc says done" and "the app doesn't do it" resolves in favor of the app's reality.
 2. **Done = demonstrated.** A task is Done when its behavior has been exercised in the running app (or via a test that actually drives it), not when the code it wrote passes the tests it wrote for itself. Per-task visual verification (launch-and-look + screenshot) is **opt-in**: the agent does it only when the human asks for it on that task or in CONVENTIONS.md; otherwise UI tasks pass on tests + acceptance behavior, and visual quality is caught by the human at the next demo gate (rule 3).
-3. **Demo gate every 2–3 tasks.** You (human) launch the build and walk one scripted user journey from UX.md. Findings become tasks before new features proceed. This is Phase 6b. Before the stop, the agent preflights the gate — builds, launches, confirms the journey is reachable; a failed preflight is `GATE BLOCKED` (fix tasks first, walk later), never an invitation to walk a broken app. Soft stop: at a gate the agent halts, prints the journey script plus the launch command, and reminds you; you may reply "continue" to skip — the skip is logged as `GATE SKIPPED` against the gate task in TASKS.md and every skipped gate is surfaced at the v1 exit bar. Skipping is visible debt, never silence.
+3. **Demo gates scale with milestone size.** Plan roughly one mid gate per 8–10 feature tasks' worth of chunks (~3–4 chunks), minimum one; runnability decides exact placement. (Lite cycles with ≤ ~5 feature tasks fold the mid gate into the release gate.) At each gate you (human) launch the build and walk one scripted user journey from UX.md. Findings become tasks before new features proceed. This is Phase 6b. Before the stop, the agent preflights the gate — builds, launches, confirms the journey is reachable; a failed preflight is `GATE BLOCKED` (fix tasks first, walk later), never an invitation to walk a broken app. Soft stop: at a gate the agent halts, prints the journey script plus the launch command, and reminds you; you may reply "continue" to skip — the skip is logged as `GATE SKIPPED` against the gate task in TASKS.md and every skipped gate is surfaced at the v1 exit bar. Skipping is visible debt, never silence.
 4. **Scope cuts escalate, never archive.** If an implementer or planner discovers mid-flight that a spec'd, user-visible behavior won't be built (e.g. "user data doesn't survive a restart"), that is a stop-the-line event requiring your explicit decision. Documenting a cut in a gotchas file is not a decision — it's laundering. This is the one hard stop in the workflow: gates soften (rule 3), scope cuts never do — verification is delegable, product decisions are not. The agent states the cut and ends its turn; there is no "continue" default.
 5. **One source of truth per fact.** A value (color, name, payload shape) lives in exactly one place; every other doc references it, never restates it. Contradictions between docs fail the _documents_ and block the next phase.
 6. **Unread intent docs are the residual risk you accept.** A generated doc nobody has read is not a contract. The machine pass of the Consistency Gate catches the mechanical failure class (placeholders, contradictions, open decisions, unserved flow steps) and is mandatory; human reading is advisory — but SPEC.md and UX.md encode _intent_, which no machine check can verify: wrong-but-consistent docs pass every machine pass. Read those two at minimum; ~20 minutes each is the cheapest QA in the whole workflow.
 7. **Depth beats breadth.** v1 is the smallest feature set that delivers the product's core promise, built well. Everything else is v1.1. The scope challenge in Phase 1 enforces this.
-8. **A passed human check compiles into a machine check.** The first time a human verifies something by hand — walking a journey, checking a seam, spotting a convention violation — the pass is encoded: walked journeys become e2e tests, PRODUCES blocks become contract tests, recurring review findings become lint rules or CONVENTIONS.md lines. Human judgment is reserved for what machines can't check (intent, taste); spending it twice on the same check is the workflow failing.
+8. **A passed human check compiles into a machine check.** The first time a human verifies something by hand — walking a journey, checking a seam, spotting a convention violation — the pass is encoded: walked journeys gain e2e coverage, PRODUCES blocks become contract tests, recurring review findings become lint rules or CONVENTIONS.md lines. Before adding a check, inspect existing coverage: rerun it when complete, extend it only for uncovered behavior, and create a new test only when no existing test can cleanly carry the coverage. Human judgment is reserved for what machines can't check (intent, taste); spending it twice on the same check is the workflow failing.
 
 ## Git Rules
 
@@ -49,7 +49,7 @@ The failure mode this workflow guards against: every task green, every doc consi
 ## Verification Machinery
 
 - **Verify script:** one documented command running build + lint + typecheck + full test suite (+ the journey suite once it exists). UI stacks: verify also runs an automated a11y check (axe or equivalent). Every stack: a dependency audit (npm audit / pip-audit / stack equivalent) and a secret scan, both failing the script. All wired at Task 0, recorded in CONVENTIONS.md. Every task completion runs it; demo-gate preflight runs it.
-- **Journey suite:** the automated e2e tests produced by each gate's crystallization step — the walked journey, encoded after its first witnessed pass (Reality Rule 8). Part of verify once it exists.
+- **Journey suite:** cumulative automated e2e coverage maintained by gate crystallization. Each gate proves every scripted step is covered: reuse and rerun existing tests when coverage is complete, extend them for uncovered behavior, create a new test only when needed. Test paths serving the gate are recorded in its evidence. Part of verify once it exists.
 - **Evidence file:** `specs/NNN-name/evidence/task-N.txt` — the exercised command plus the last ~30 lines of its output, captured live at task completion. The TASKS.md done-mark references its path.
 - **Production composition:** the app's real entry point with its production wiring. Disposable/fixture modes inject config, seams, and fakes _inside_ that composition — never a parallel gate-only assembly. A gate's launch command is the production entry point with disposable inputs; a bespoke gate runtime is a blocking finding (it lets every gate pass while the production path stays unbuilt).
 - **Wire contract** (conditional — only when the kernel journey or a v1 flow depends on an external system that will be faked): a versioned, exact request/response contract for that integration — shapes, auth, error semantics — specified in ARCHITECTURE.md. Every fake of that system is a **verified fake**: one shared contract suite runs against both the fake and the real adapter, and the fake must reject what the contract rejects. The real-adapter side is offline-assertable (request-shape assertions, recorded fixtures); live provider calls happen only in a bounded canary routed through the production composition.
@@ -135,10 +135,10 @@ A user's speed constraint ("fast delivery", "no demo gates", "just ship it so I 
 
 Left to itself, the workflow builds everything from zero — every capability becomes hand-rolled tasks, and code volume (hence token burn) scales with what *could* have been an import. Buy is the default; hand-rolling is the exception that names its reason.
 
-- **The plan (ARCHITECTURE.md section, required):** for every capability in the design, either the established package that serves it — `capability → package @ exact version → what it replaces` — or a one-line hand-roll justification (no credible package, trivial (< ~30 lines), or core domain logic — the thing the product *is*). Versions are the **latest stable/LTS at writing time, verified against the package registry, never recalled from memory** (agent mode: check the registry; copy-paste mode: the user confirms versions).
+- **The plan (ARCHITECTURE.md section, required):** for every capability in the design, either the established package that serves it — `capability → package @ selected exact version → what it replaces (compatibility basis)` — or a one-line hand-roll justification (no credible package, trivial (< ~30 lines), or core domain logic — the thing the product *is*). Select one **mutually compatible set**, not each package's newest release independently. Evidence priority: the repo's working lockfile/current set (change cycles); the framework's official scaffold/BOM and support or peer-dependency matrix; then a clean package-manager resolution. Registry checks confirm that a selected version exists and is maintained; they do not make latest mandatory. Prefer a maintained stable/LTS release within the proven compatible range. Never recall versions from memory.
 - **User approval (hard rule):** the proposed package list is presented to the user before ARCHITECTURE.md is finalized — each entry with one line of what it does and why this one (agent mode: AskUserQuestion for contested picks). No package enters the plan without the user's approval, and no package enters the code that isn't in the plan — an unlisted import at implementation time is the same hard stop as a contract gap.
 - **Sprawl guard (the mirror failure):** a package must serve a *named* capability; padding the plan with utilities "we might need" is a review finding. Trivial helpers stay hand-rolled — no left-pad dependencies. Selection bar per pick: actively maintained, license compatible with the project, transitive tree proportionate to the need; a non-obvious pick gets a Decision-log line.
-- **Enforcement:** Task 0 installs the plan's packages at their pinned versions (the verify script's dependency audit already covers vulns). Phase 5: a needed capability absent from the plan → hard stop, propose buy/build, the user decides. 6a category 9: hand-rolled code duplicating a plan package, or an import the plan doesn't name.
+- **Enforcement:** Task 0 installs the approved set with the ecosystem's frozen/locked mode and commits the lockfile or equivalent resolution artifact (the verify script's dependency audit already covers vulns). No lockfile yet → resolve once from the approved exact direct versions, then freeze it. A resolver/peer conflict or required version change stops Task 0: patch the dependency plan and re-approve it instead of trying ad-hoc upgrades/downgrades. Phase 5: a needed capability absent from the plan → hard stop, propose buy/build, the user decides. 6a category 9 also flags resolved direct versions that diverge from the plan.
 
 ## External Design Inputs (optional)
 
@@ -308,11 +308,17 @@ nothing more; future milestones are never designed here.
 Rules: COMMIT to one concrete stack and one design per decision — no
 "e.g. X or Y", no alternatives left open. Name the e2e/journey-test
 harness as part of the stack commitment — CONVENTIONS.md's Test
-strategy (Phase 3) and every gate's crystallization step (Phase 4)
+strategy (Phase 3) and every gate's coverage crystallization step (Phase 4)
 build on this name. Include a DEPENDENCY PLAN section — buy is the
 default: for every capability an established package serves, name
-`capability → package @ exact latest-stable/LTS version → what it
-replaces` (verify versions against the registry, never from memory);
+`capability → package @ selected exact version → what it replaces
+(compatibility basis)`. Select one mutually compatible set: prefer the
+repo's working lockfile/current set, then the framework's official
+scaffold/BOM and support or peer-dependency matrix, then a clean
+package-manager resolution. A registry check confirms existence and
+maintenance; it does not make latest mandatory. Prefer maintained
+stable/LTS releases within the proven compatible range, never versions
+recalled from memory or independently maximized package by package;
 a hand-rolled capability names its reason (no credible package,
 trivial < ~30 lines, or core domain logic). A package must serve a
 named capability — no speculative utilities; trivial helpers stay
@@ -365,8 +371,9 @@ chosen design beats it — no credible answer is itself a finding,
 crossed without validation; an authZ check missing for a named flow,
 (8) build-vs-buy: a designed module duplicating an established,
 maintained package (name the package), and any dependency-plan entry
-failing the selection bar — unmaintained, license conflict, or a
-transitive tree out of proportion to the need.
+failing the selection bar — unmaintained, license conflict, a
+transitive tree out of proportion to the need, or no evidence that its
+selected version is compatible with the rest of the set.
 Each finding: section, severity, one-line consequence. No rewrites, no
 style opinions, no praise.
 [paste ARCHITECTURE.md + PRD.md + UX.md]
@@ -567,23 +574,22 @@ Rules:
   error/edge-case list, rotating across gates: restart → offline →
   invalid input → restart → ... — a gate never ships checking only the
   happy path.
-- Every DEMO GATE task **contains its crystallization step** — no
-  separate task: an `[e2e@gate-N]` criterion (its own N) requiring the
-  gate's scripted journey (including its unglamorous step) encoded as
-  an automated e2e test on the harness named in CONVENTIONS.md's Test
-  strategy; the new test joins the journey suite. The encoding happens
-  in the gate session itself, right after the walkthrough, while the
-  journey is loaded context — a separate crystallization task re-loads
-  that context for nothing. The gate task is not Done until the
-  walkthrough result is recorded AND the journey test is green; no
-  feature task may start before the preceding gate task is Done. A
-  `GATE SKIPPED` gate does NOT defer the encoding — writing the e2e
-  needs only the scripted journey, not a walkthrough: the
-  crystallization step runs immediately and its test is marked
-  `UNWITNESSED` (same visible-debt mark as the gate) until the journey
-  is eventually walked, at latest the v1 exit bar. Feature work
-  proceeds once the unwitnessed test is green — a skip costs human
-  attention debt, never automation debt. (Legacy layout — a separate
+- Every DEMO GATE task **contains its crystallization coverage step** —
+  no separate task: an `[e2e@gate-N]` criterion (its own N) requiring
+  every scripted journey step, including the unglamorous step, covered
+  and green on CONVENTIONS.md's e2e harness. Inspect the journey suite
+  first: full coverage means rerun and record the serving test paths;
+  partial coverage means extend an existing test only for uncovered
+  behavior; no suitable test means create one. A gate never requires a
+  duplicate test merely because it has a new N. Do this in the gate
+  session while the journey is loaded. The gate task is not Done until
+  the walkthrough result is recorded AND its cumulative journey
+  coverage is green; no feature task may start before the preceding
+  gate task is Done. A `GATE SKIPPED` gate does NOT defer this coverage
+  check: run it immediately from the scripted journey; the walkthrough,
+  not the test, remains `UNWITNESSED` until eventually walked, at latest
+  the v1 exit bar. Feature work proceeds once coverage is green — a skip
+  costs human attention debt, never automation debt. (Legacy layout — a separate
   `crystallization`-type task immediately after its gate — remains
   valid for existing TASKS.md files; never author it for new ones.)
 - Verified-fake rule (only when ARCHITECTURE.md has wire contracts):
@@ -645,8 +651,9 @@ contract sections: [paste]. Findings in TASKS.md only — list:
   with a PRODUCES block missing its `[contract]` criterion;
 - every gate task missing a preflight field (launch command; seed/
   fixture command when the journey needs data; dependency ids) or
-  missing its crystallization step (an [e2e@gate-N] criterion encoding
-  its journey; a legacy adjacent crystallization task also passes);
+  missing its crystallization coverage step (an `[e2e@gate-N]`
+  criterion proving its journey is covered by the suite; a legacy
+  adjacent crystallization task also passes);
   every gate journey missing its unglamorous step;
 - a missing RELEASE GATE task; and — when ARCHITECTURE.md has wire
   contracts — a production-composition proof absent from the release
@@ -669,7 +676,7 @@ The machine pass is mandatory and blocking; in agent mode the agent applies fixe
 **Inputs per task:** the task + `CONVENTIONS.md` + only the files it touches (copy-paste mode; agent mode reads freely, writes only task-listed files). UI tasks additionally get `DESIGN.md` and their UX.md screen section; backend tasks get neither.
 **Outputs:** source + tests per task, demonstrated.
 
-Refuse a TASKS.md not stamped `status: ready` — the task gate hasn't cleared; point back to Phase 4. **Step 0, before Task 0:** check the current branch (Git Rule 1) — on main/master, create the cycle branch (named after the spec dir) before any code; direct-to-main only when the human explicitly says so. Task 0 is always the scaffold: file tree from FILE_STRUCTURE.md, configs, data migrations (if any), ARCHITECTURE.md's dependency-plan packages installed at their pinned versions, no feature logic; its smoke test is the app booting via a documented run command, recorded in CONVENTIONS.md. Then the walking skeleton — the kernel journey passes in the real app before any feature deepening begins.
+Refuse a TASKS.md not stamped `status: ready` — the task gate hasn't cleared; point back to Phase 4. **Step 0, before Task 0:** check the current branch (Git Rule 1) — on main/master, create the cycle branch (named after the spec dir) before any code; direct-to-main only when the human explicitly says so. Task 0 is always the scaffold: file tree from FILE_STRUCTURE.md, configs, data migrations (if any), and ARCHITECTURE.md's approved dependency set installed in frozen/locked mode, with the lockfile or equivalent committed; no feature logic. If resolution reports a version/peer conflict or requires changing an approved version, stop and patch and re-approve the dependency plan — never chase the error with ad-hoc latest installs. Its smoke test is the app booting via a documented run command, recorded in CONVENTIONS.md. Then the walking skeleton — the kernel journey passes in the real app before any feature deepening begins.
 
 **Migration tasks:** a task that adds or alters a schema migration must apply-rollback-reapply against fixture data — up, then down, then up again — with an assertion that the fixture data present before the up survives the round trip (not just that each step exits zero). Rollback in this workflow always means running the down migration, never `git revert` (Git Rule 2) — a reverted commit leaves the schema changed underneath a codebase that no longer expects it.
 
@@ -701,8 +708,10 @@ Rules:
   the spec implies, STOP and output the question instead of code.
 - Dependency rule: needing a capability ARCHITECTURE.md's dependency
   plan doesn't cover is the same STOP — propose the package (or the
-  hand-roll) and ask; never silently add a dependency, and never
-  hand-roll what the plan assigns to a package.
+  hand-roll) and ask; a resolver conflict or required change to an
+  approved version is also a STOP for a plan patch and re-approval.
+  Never silently add a dependency, change planned versions, or hand-roll
+  what the plan assigns to a package.
 ```
 
 That last rule exists because a blanket "choose the simplest interpretation — do not ask" turns silent feature cuts into code comments instead of alarms.
@@ -753,9 +762,10 @@ and fake integrity: a runtime or gate path that composes bespoke
 wiring instead of the production entry point with injected seams, or a
 fake of an external system that diverges from its wire contract
 (accepts what the contract rejects, or lacks the shared contract
-suite), (9) dependency-plan violations: hand-rolled code duplicating
-a package ARCHITECTURE.md's dependency plan names, or an import of a
-package the plan doesn't name. Each finding:
+ suite), (9) dependency-plan violations: hand-rolled code duplicating
+ a package ARCHITECTURE.md's dependency plan names, an import of a
+ package the plan doesn't name, or a resolved direct-dependency version
+ that differs from the approved plan. Each finding:
 file:line, severity, one-line fix. Objective checks only — no style
 opinions, no praise, no rewrites.
 [paste diff + contract sections + acceptance criteria]
@@ -778,7 +788,7 @@ must still pass. Output only the changed files.
 
 ### 6b — Product review (the demo gate)
 
-**Model:** you, plus the running app. Zero tokens for the walkthrough itself. Cadence: every demo-gate task (every 2–3 tasks), and always before a feature branch merges.
+**Model:** you, plus the running app. Zero tokens for the walkthrough itself. Cadence: every planned demo-gate task — roughly one per 8–10 feature tasks' worth of chunks (~3–4 chunks), minimum one and placed only where runnable — plus the release gate before merge. 6a's 2–3-task review cadence is separate.
 
 Preflight first (agent): before the soft stop, the agent runs the **verify script**, builds, launches via the gate task's preflight block (launch command + seed data), and confirms the journey's entry point is reachable. Preflight fails → `GATE BLOCKED` on the task (a defect, not a choice — distinct from `GATE SKIPPED`), breakage becomes fix tasks at the head of the queue, preflight re-runs after they land; you are only invited to walk an app that provably runs.
 
@@ -799,7 +809,7 @@ Here are screenshots of the app and the UX.md + DESIGN.md contracts:
 that would most improve clarity and hierarchy. Findings only.
 ```
 
-**v1 exit bar:** the exit bar is the **release gate** task (Verification Machinery) and runs like any gate — the agent preflights it (verify script, release build, launch via the production entry point, journey entry reachable; failure is `GATE BLOCKED`, fix tasks first). The preflight also re-runs `brana-gate tasks` — done-mark integrity fires here: an evidence-less or out-of-dependency-order Done mark is a machine finding, not a reviewer's recall. The bar: the kernel journey passes end-to-end in a release build through the production composition, witnessed by you, including the unglamorous steps (restart, offline, error paths named in the PRD), _and_ the kernel journey's crystallized e2e test is green in the release build, _and_ — when fakes stood in for an external system — the production-composition proof task and the verified-fake contract suites are Done/green, _and_ every PRD NFR budget is measured via its named measurement in the release build — at or under budget, or explicitly accepted over with the number recorded. Every `GATE SKIPPED` entry in TASKS.md is listed here with its `UNWITNESSED` journey test, and each is either walked now or explicitly accepted (the automation exists — the missing human witness is the recorded, accepted debt); an unresolved `GATE BLOCKED` fails the bar outright — a gate that never became runnable is a defect, not debt. Every gate's crystallization step (legacy: crystallization task) must be done — a gate walked but never crystallized is an untested journey by the next change. "All tasks Done" is not the bar; this is.
+**v1 exit bar:** the exit bar is the **release gate** task (Verification Machinery) and runs like any gate — the agent preflights it (verify script, release build, launch via the production entry point, journey entry reachable; failure is `GATE BLOCKED`, fix tasks first). The preflight also re-runs `brana-gate tasks` — done-mark integrity fires here: an evidence-less or out-of-dependency-order Done mark is a machine finding, not a reviewer's recall. The bar: the kernel journey passes end-to-end in a release build through the production composition, witnessed by you, including the unglamorous steps (restart, offline, error paths named in the PRD), _and_ cumulative journey-suite coverage for every kernel step is green in the release build, _and_ — when fakes stood in for an external system — the production-composition proof task and the verified-fake contract suites are Done/green, _and_ every PRD NFR budget is measured via its named measurement in the release build — at or under budget, or explicitly accepted over with the number recorded. Every `GATE SKIPPED` entry in TASKS.md is listed here with its `UNWITNESSED` walkthrough, and each is either walked now or explicitly accepted (automation coverage exists — the missing human witness is the recorded, accepted debt); an unresolved `GATE BLOCKED` fails the bar outright — a gate that never became runnable is a defect, not debt. Every gate's crystallization coverage step (legacy: crystallization task) must be done — reuse, extension, or creation is acceptable, but duplicate tests are not required. "All tasks Done" is not the bar; this is.
 
 **Spawn route (pre-v1):** when fixing a `GATE BLOCKED` — any gate, including the release gate — reveals a missing subsystem or a new/changed contract (more than a few fix tasks, or a new ARCHITECTURE.md section), do not wedge it into the current TASKS.md: spawn a scoped child cycle in a new `specs/NNN-name/` dir (Phase 1→6 on the delta, Route C shape, ARCHITECTURE.md patched not regenerated). The parent gate stays `GATE BLOCKED` referencing the child spec; the stale-interface-block rule (Phase 7) and the stale-plan rule (Phase 5) run on the parent's not-done tasks and patched PLAN.md sections; the parent preflight re-runs only after the child cycle completes.
 

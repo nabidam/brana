@@ -1,11 +1,11 @@
 ---
 name: brana-6-review
-description: "Use after every 2-3 implemented tasks or before merging a feature branch, when the user asks for code review, bug check, security check, a demo gate, product review, walkthrough, the v1 exit bar, or whether the code matches the architecture contract, or says phase 6."
+description: "Use for code review after an implementation batch, at a planned demo-gate task, or before merging a feature branch; also when the user asks for code review, bug check, security check, product review, walkthrough, the v1 exit bar, architecture compliance, or says phase 6."
 ---
 
 # Phase 6 — Review: Code (6a) + Product (6b)
 
-Code review alone lets everything a compiler can't see — bad flows, bad layouts, integration bugs — ship unexamined. 6b is the half most workflows are missing. Cadence for both: every 2–3 tasks, and always before a feature branch merges.
+Code review alone lets everything a compiler can't see — bad flows, bad layouts, integration bugs — ship unexamined. 6a reviews diffs after each 2–3-task implementation batch. 6b runs only at planned demo-gate tasks — roughly one per 8–10 feature tasks' worth of chunks (~3–4 chunks), minimum one and placed where runnable — plus the release gate before merge.
 
 ## Modes
 
@@ -32,7 +32,7 @@ Reviewer must be a **different model than the implementer** — default Opus 4.8
    6. UI-only: design contract violations (raw values where DESIGN.md tokens exist, missing component/view states, contrast/focus failures) and **UX contract violations** (screen structure or flow steps diverging from UX.md). With a pre-built design system: bypassed the system (hand-rolled what it provides).
    7. test adequacy: an acceptance criterion with no test at its declared layer, a test that asserts nothing meaningful (runs without checking the outcome), or a test that mocks away the exact behavior the criterion requires.
    8. composition and fake integrity: a runtime or gate path that composes bespoke wiring instead of the production entry point with injected seams, or a fake of an external system that diverges from its wire contract (accepts what the contract rejects, or lacks the shared contract suite).
-   9. dependency-plan violations: hand-rolled code duplicating a package ARCHITECTURE.md's dependency plan names, or an import of a package the plan doesn't name.
+   9. dependency-plan violations: hand-rolled code duplicating a package ARCHITECTURE.md's dependency plan names, an import of a package the plan doesn't name, or a resolved direct-dependency version that differs from the approved plan.
 
    Each finding: file:line, severity (high/med/low), one-line fix. Objective checks only — no style opinions, no praise, no rewrites.
 4. **Confirmation pass — findings are unverified claims.** Before any finding becomes a fix task (fixer-tier model): a bug, logic error, or race condition gets a reproduction — a failing test or concrete repro steps; a contract, convention, or design violation gets both sides quoted (code line + contract line). A finding that fails confirmation escalates to the user with the failed-confirmation note — never silently dropped, never blindly fixed; a reviewer false positive turned into a fix task is churn plus regression risk. The reproduction test lands with the fix and joins the suite.
@@ -44,7 +44,7 @@ Reviewer must be a **different model than the implementer** — default Opus 4.8
 
 The human plus the running app; zero tokens for the walkthrough itself. **Preflight first (agent):** run the **verify script**, build, launch via the gate task's preflight block (launch command + seed data), confirm the journey's entry point is reachable. Preflight fails → log `GATE BLOCKED` on the task (a defect, not a choice — distinct from `GATE SKIPPED`), route the breakage as fix tasks at the head of the queue, re-run the preflight after they land; the human is only invited to walk an app that provably runs. **Soft stop:** halt the turn, print the gate task's journey script plus its launch command, and wait for the walkthrough result (screenshots optional but recommended — cheap context for fixes). "Continue" skips — log `GATE SKIPPED` on the task in TASKS.md; every skipped gate is surfaced at the v1 exit bar.
 
-After a passed gate, the gate task's **crystallization step** (Phase 4) completes in the same session — the walked journey encoded as an e2e test; the gate task is not Done, and no feature task may start, until that test is green. A `GATE SKIPPED` gate does NOT defer the encoding — the crystallization step runs immediately off the scripted journey and its test is marked `UNWITNESSED` (same visible-debt mark as the gate) until the journey is eventually walked, at latest the v1 exit bar; feature work proceeds once the unwitnessed test is green — a skip costs human attention debt, never automation debt.
+After a passed gate, complete its **crystallization coverage step** in the same session. Compare the scripted journey with the existing journey suite: full coverage → rerun and record serving test paths; partial coverage → extend an existing test only for uncovered behavior; no suitable test → create one. Never duplicate a test merely because this is a new gate. The gate task is not Done, and no feature task may start, until cumulative journey coverage is green. A `GATE SKIPPED` gate runs the same coverage check immediately from the script; the walkthrough remains `UNWITNESSED` until eventually walked, at latest the v1 exit bar. A skip costs human attention debt, never automation debt.
 
 The user's walkthrough:
 
@@ -63,7 +63,7 @@ Here are screenshots of the app and the UX.md + DESIGN.md contracts:
 that would most improve clarity and hierarchy. Findings only.
 ```
 
-**v1 exit bar:** the exit bar is the **release-gate task** and runs like any gate — preflight it (verify script, release build, launch via the production entry point, journey entry reachable; failure is `GATE BLOCKED`, fix tasks first). The preflight also re-runs `brana-gate tasks` (resolve via bundled `scripts/brana_gate.py` beside this SKILL.md, else PATH) — done-mark integrity fires here: every Done mark must quote its commit SHA and an existing non-empty evidence file, deps resolved in order; an evidence-less done-mark is a machine finding, never a reviewer's recall. The bar: the kernel journey passes end-to-end in a release build through the production composition, witnessed by the user, including the unglamorous steps (restart, offline, error paths named in the PRD), _and_ the kernel journey's crystallized e2e test is green in the release build, _and_ — when fakes stood in for an external system — the production-composition proof task and the verified-fake contract suites are Done/green, _and_ every PRD NFR budget is measured via its named measurement in the release build — at or under budget, or explicitly accepted over with the number recorded. Every `GATE SKIPPED` entry in TASKS.md is listed here with its `UNWITNESSED` journey test, and each is either walked now or explicitly accepted (the automation exists — the missing human witness is the recorded, accepted debt); an unresolved `GATE BLOCKED` fails the bar outright — a gate that never became runnable is a defect, not debt. Every gate's crystallization step (legacy: crystallization task) must be done — a gate walked but never crystallized is an untested journey by the next change. "All tasks Done" is not the bar; this is.
+**v1 exit bar:** the exit bar is the **release-gate task** and runs like any gate — preflight it (verify script, release build, launch via the production entry point, journey entry reachable; failure is `GATE BLOCKED`, fix tasks first). The preflight also re-runs `brana-gate tasks` (resolve via bundled `scripts/brana_gate.py` beside this SKILL.md, else PATH) — done-mark integrity fires here: every Done mark must quote its commit SHA and an existing non-empty evidence file, deps resolved in order; an evidence-less done-mark is a machine finding, never a reviewer's recall. The bar: the kernel journey passes end-to-end in a release build through the production composition, witnessed by the user, including the unglamorous steps (restart, offline, error paths named in the PRD), _and_ cumulative journey-suite coverage for every kernel step is green in the release build, _and_ — when fakes stood in for an external system — the production-composition proof task and the verified-fake contract suites are Done/green, _and_ every PRD NFR budget is measured via its named measurement in the release build — at or under budget, or explicitly accepted over with the number recorded. Every `GATE SKIPPED` entry in TASKS.md is listed here with its `UNWITNESSED` walkthrough, and each is either walked now or explicitly accepted (automation coverage exists — the missing human witness is the recorded, accepted debt); an unresolved `GATE BLOCKED` fails the bar outright — a gate that never became runnable is a defect, not debt. Every gate's crystallization coverage step (legacy: crystallization task) must be done — reuse, extension, or creation is acceptable, but duplicate tests are not required. "All tasks Done" is not the bar; this is.
 
 **Spawn route (pre-v1):** when fixing a `GATE BLOCKED` — any gate, including the release gate — reveals a missing subsystem or a new/changed contract (more than a few fix tasks, or a new ARCHITECTURE.md section), spawn a scoped child cycle in a new `specs/NNN-name/` dir (Phase 1→6 on the delta, Route C shape, ARCHITECTURE.md patched not regenerated). The parent gate stays `GATE BLOCKED` referencing the child spec; the stale-interface-block and stale-plan rules run on the parent's not-done tasks and patched PLAN.md sections; the parent preflight re-runs only after the child cycle completes.
 
@@ -89,9 +89,10 @@ and fake integrity: a runtime or gate path that composes bespoke
 wiring instead of the production entry point with injected seams, or a
 fake of an external system that diverges from its wire contract
 (accepts what the contract rejects, or lacks the shared contract
-suite), (9) dependency-plan violations: hand-rolled code duplicating
-a package ARCHITECTURE.md's dependency plan names, or an import of a
-package the plan doesn't name. Each finding:
+ suite), (9) dependency-plan violations: hand-rolled code duplicating
+ a package ARCHITECTURE.md's dependency plan names, an import of a
+ package the plan doesn't name, or a resolved direct-dependency version
+ that differs from the approved plan. Each finding:
 file:line, severity, one-line fix. Objective checks only — no style
 opinions, no praise, no rewrites.
 [embed diff + relevant ARCHITECTURE.md sections + CONVENTIONS.md

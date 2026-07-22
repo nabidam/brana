@@ -29,7 +29,7 @@ Read the current cycle's PLAN.md (latest `specs/NNN-name/`), root ARCHITECTURE.m
 Rules:
 
 - Preserve PLAN.md's **DEMO GATE** entries as explicit tasks: journey to walk, observations required, a **preflight block** (exact build/launch command — a disposable/fixture path, fail-closed against non-disposable targets, when the journey would otherwise touch production state; seed/fixture command if the journey needs data; and the task ids whose output the journey walks — the gate depends on all of them), the human's walkthrough result as the completion artifact (screenshots optional). A journey step with no implementing task before the gate is a blocking finding — reorder or add the wiring task; never emit a gate that isn't walkable at its position. Every gate launch command is the production entry point with disposable inputs (same-composition rule) — a bespoke gate-only composition is the same blocking finding. PLAN.md's **RELEASE GATE** becomes a gate task too, same anatomy: its journey is the kernel journey in a release build, each step traced to a task exercised through the production composition, the production-composition proof task among its dependencies. A skipped gate is marked `GATE SKIPPED` on the task, never deleted. Append one unglamorous step to every gate journey, drawn from PRD.md's error/edge-case list, rotating across gates: restart → offline → invalid input → restart → ... — a gate never ships checking only the happy path.
-- Every DEMO GATE task **contains its crystallization step** — no separate task: an `[e2e@gate-N]` criterion (its own N) requiring the gate's scripted journey (including its unglamorous step) encoded as an automated e2e test on the harness named in CONVENTIONS.md's Test strategy; the new test joins the journey suite. The encoding happens in the gate session itself, right after the walkthrough, while the journey is loaded context — a separate crystallization task re-loads that context for nothing. The gate task is not Done until the walkthrough result is recorded AND the journey test is green; no feature task may start before the preceding gate task is Done. A `GATE SKIPPED` gate does NOT defer the encoding — writing the e2e needs only the scripted journey, not a walkthrough: the crystallization step runs immediately and its test is marked `UNWITNESSED` (same visible-debt mark as the gate) until the journey is eventually walked, at latest the v1 exit bar. Feature work proceeds once the unwitnessed test is green — a skip costs human attention debt, never automation debt. (Legacy layout — a separate `crystallization`-type task immediately after its gate — remains valid for existing TASKS.md files; never author it for new ones.)
+- Every DEMO GATE task **contains its crystallization coverage step** — no separate task: an `[e2e@gate-N]` criterion (its own N) requiring every scripted journey step, including the unglamorous step, covered and green on CONVENTIONS.md's e2e harness. Inspect the journey suite first: full coverage means rerun and record the serving test paths; partial coverage means extend an existing test only for uncovered behavior; no suitable test means create one. A gate never requires a duplicate test merely because it has a new N. Do this in the gate session while the journey is loaded. The gate task is not Done until the walkthrough result is recorded AND its cumulative journey coverage is green; no feature task may start before the preceding gate task is Done. A `GATE SKIPPED` gate does NOT defer this coverage check: run it immediately from the scripted journey; the walkthrough, not the test, remains `UNWITNESSED` until eventually walked, at latest the v1 exit bar. Feature work proceeds once coverage is green — a skip costs human attention debt, never automation debt. (Legacy layout — a separate `crystallization`-type task immediately after its gate — remains valid for existing TASKS.md files; never author it for new ones.)
 - **Verified-fake rule** (only when ARCHITECTURE.md has wire contracts): a task producing a fake of an external system gets a `[contract]` criterion running ONE shared suite against both the fake and the real adapter, asserting the wire contract — the fake must reject what the contract rejects. The real-adapter side is offline (request-shape assertions, recorded fixtures); live provider calls happen only in a bounded canary task routed through the production composition.
 - The walking-skeleton milestone tasks come first and may not be reordered after feature tasks.
 - Tasks tiny — ~50–300 lines of new code, one prompt each — but the count is a cost, not a virtue: emit the FEWEST tasks that respect the cap. **Merge bias:** two consecutive tasks in a linear dependency whose primary file is the same merge into one unless the merged task would exceed the cap. Task ids numbered fresh per cycle dir. Task 0 of a new app is always the scaffold (file tree from FILE_STRUCTURE.md, configs, data migrations, no feature logic); its smoke test is the app booting via a documented run command, recorded in CONVENTIONS.md.
@@ -56,7 +56,7 @@ Without this gate TASKS.md is self-certified — the splitter stamps its own out
 - every gate-task journey step with no implementing task earlier in the order, and every such serving task missing from the gate's dependency ids;
 - every CONSUMES quote with no earlier task whose PRODUCES matches it and no ARCHITECTURE.md section stating it;
 - every acceptance criterion missing its layer tag; every `[e2e@gate-N]` criterion absent from gate N's journey; every task with a PRODUCES block missing its `[contract]` criterion;
-- every gate task missing a preflight field (launch command; seed/fixture command when the journey needs data; dependency ids) or missing its crystallization step (an `[e2e@gate-N]` criterion encoding its journey; a legacy adjacent crystallization task also passes); every gate journey missing its unglamorous step;
+- every gate task missing a preflight field (launch command; seed/fixture command when the journey needs data; dependency ids) or missing its crystallization coverage step (an `[e2e@gate-N]` criterion proving its journey is covered by the suite; a legacy adjacent crystallization task also passes); every gate journey missing its unglamorous step;
 - a missing RELEASE GATE task; and — when ARCHITECTURE.md has wire contracts — a production-composition proof absent from the release gate's dependencies, plus every fake-producing task missing its shared-suite `[contract]` criterion;
 - every catch-all task: a non-gate, non-crystallization task depending on (nearly) every other task and producing nothing;
 - every waiver/exception key in TASKS.md frontmatter that is not a verbatim echo of SPEC.md's `delivery:` contract line.
@@ -114,19 +114,17 @@ Rules:
   error/edge-case list, rotating across gates: restart → offline →
   invalid input → restart → ... — a gate never ships checking only the
   happy path.
-- Every DEMO GATE task CONTAINS its crystallization step — no
-  separate task: an e2e criterion (gate = its own N) requiring the
-  gate's scripted journey (including its unglamorous step) encoded as
-  an automated e2e test on the harness named in CONVENTIONS.md's Test
-  strategy; the new test joins the journey suite. The gate task is
-  not Done until the walkthrough result is recorded AND the journey
-  test is green; no feature task may start before the preceding gate
-  task is Done. A GATE SKIPPED gate does NOT defer the encoding —
-  the e2e needs only the scripted journey, not a walkthrough: the
-  crystallization step runs immediately and its test is marked
-  UNWITNESSED (same visible-debt mark as the gate) until the journey
-  is eventually walked, at latest the v1 exit bar. Feature work
-  proceeds once the unwitnessed test is green.
+- Every DEMO GATE task CONTAINS its crystallization coverage step — no
+  separate task: an e2e criterion (gate = its own N) requiring every
+  scripted journey step, including the unglamorous step, covered and
+  green on CONVENTIONS.md's e2e harness. Inspect the suite first: full
+  coverage means rerun and record serving test paths; partial coverage
+  means extend an existing test only for uncovered behavior; no suitable
+  test means create one. New gate N never requires a duplicate test.
+  Gate task is not Done until walkthrough result is recorded AND
+  cumulative journey coverage is green. A GATE SKIPPED gate runs this
+  coverage check immediately; walkthrough remains UNWITNESSED until
+  eventually walked, at latest the v1 exit bar.
 - Verified-fake rule (only when ARCHITECTURE.md has wire contracts):
   a task producing a fake of an external system gets a [contract]
   criterion running ONE shared suite against both the fake and the
@@ -176,8 +174,9 @@ contract sections: [embed]. Findings in TASKS.md only — list:
   with a PRODUCES block missing its [contract] criterion;
 - every gate task missing a preflight field (launch command; seed/
   fixture command when the journey needs data; dependency ids) or
-  missing its crystallization step (an [e2e@gate-N] criterion encoding
-  its journey; a legacy adjacent crystallization task also passes);
+  missing its crystallization coverage step (an [e2e@gate-N] criterion
+  proving its journey is covered by the suite; a legacy adjacent
+  crystallization task also passes);
   every gate journey missing its unglamorous step;
 - a missing RELEASE GATE task; and — when ARCHITECTURE.md has wire
   contracts — a production-composition proof absent from the release

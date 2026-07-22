@@ -35,8 +35,8 @@ No visual styling, no colors, no code. If SPEC names a reference pack, adapt its
 **Step 3 — ARCHITECTURE.md** (from PRD.md + UX.md). Act as a principal software architect. Include: system overview, module responsibilities and boundaries, data model / DB schema (DDL with indices and constraints), API contract (endpoints, request/response shapes, status codes, errors, auth), component hierarchy mapped to UX.md screen ids, dependency graph, error handling strategy, configuration strategy. Rules:
 
 - COMMIT to one concrete stack and one design per decision — no "e.g. X or Y", no alternatives left open.
-- **Dependency plan (required section; buy is the default):** for every capability an established package serves, one line — `capability → package @ exact version → what it replaces` — with versions the **latest stable/LTS at writing time, verified against the package registry, never recalled from memory**. A hand-rolled capability names its reason: no credible package, trivial (< ~30 lines), or core domain logic (the thing the product *is*). Sprawl guard: a package must serve a *named* capability — no speculative utilities, no left-pad dependencies; selection bar per pick: actively maintained, license compatible, transitive tree proportionate to the need (non-obvious picks get a Decision-log line). **User approval (hard rule):** present the package list — one line each on what it does and why this one (AskUserQuestion for contested picks) — before finalizing ARCHITECTURE.md. No package enters the plan unapproved; no package enters the code that isn't in the plan (Phase 5 hard stop). Task 0 installs at pinned versions; 6a flags violations both directions.
-- **Name the test harness per layer, including the e2e/journey harness** — the walking skeleton needs it and CONVENTIONS.md's Test strategy (Phase 3) and every gate's crystallization step (Phase 4) build on this name.
+- **Dependency plan (required section; buy is the default):** for every capability an established package serves, one line — `capability → package @ selected exact version → what it replaces (compatibility basis)`. Select one **mutually compatible set**, not each package's newest release independently. Evidence priority: the repo's working lockfile/current set (change cycles); the framework's official scaffold/BOM and support or peer-dependency matrix; then a clean package-manager resolution. Registry checks confirm existence and maintenance, not a requirement to use latest. Prefer maintained stable/LTS versions within the proven compatible range; never recall versions from memory. A hand-rolled capability names its reason: no credible package, trivial (< ~30 lines), or core domain logic (the thing the product *is*). Sprawl guard: a package must serve a *named* capability — no speculative utilities, no left-pad dependencies; selection bar per pick: actively maintained, license compatible, transitive tree proportionate to the need (non-obvious picks get a Decision-log line). **User approval (hard rule):** present the package list — one line each on what it does and why this one (AskUserQuestion for contested picks) — before finalizing ARCHITECTURE.md. No package enters the plan unapproved; no package enters the code that isn't in the plan (Phase 5 hard stop). Task 0 installs the approved set in frozen/locked mode; resolver conflicts require a plan patch and re-approval, never ad-hoc version churn. 6a flags violations both directions.
+- **Name the test harness per layer, including the e2e/journey harness** — the walking skeleton needs it and CONVENTIONS.md's Test strategy (Phase 3) and every gate's coverage crystallization step (Phase 4) build on this name.
 - **Traceability (load-bearing):** every UX.md flow must be traceable through the contract — for each kernel-journey step, name the API call or event that serves it; a step with no serving contract (e.g. "reopen app → data restored" needs a list/read endpoint) means add the contract. Implementers build only what the contract names.
 - **Wire contracts (conditional):** when the kernel journey or a v1 flow depends on an external system (a paid API, third-party service — anything that will be faked in tests), that integration gets a versioned **wire contract** section: exact request/response shapes, auth, error semantics — precise enough that a fake can be validated against it. Traceability extends to those steps: each names its wire contract. No external system → omit. Without this, the fake's convenience shape becomes the de-facto contract and the first real request is built at release time.
 - **Threat model (conditional):** when the app has auth, stores user data, or accepts external input, include a **threat model** section: trust boundaries (who can send what to which surface), authN/authZ model per surface, input-validation strategy at each boundary, secrets handling (where keys live, what is never logged). No such surface → omit. 6a's security category reviews against this section, not against vibes.
@@ -48,7 +48,7 @@ Include an empty **Decision log** section at the end of the file — append-only
 
 No implementation code. Write to repo root — living doc, patched forever after.
 
-**Step 4 — Architecture review (blocks Phase 3).** The consistency gate checks that docs agree; nothing else checks the design is any good — wrong-but-consistent architecture passes every machine pass. One independent review, findings-only, 6a independence rules: the reviewer gets ARCHITECTURE.md + PRD.md + UX.md, never the author's rationale; fresh session, different model than the author where possible (cross-vendor via prompt mode preferred; a same-vendor fresh session is weaker independence, still better than none). Categories: (1) module/flow with no failure handling, (2) data-model flaws (missing constraint/index/key for a named flow), (3) concurrency/ordering hazards, (4) first thing that breaks at 10× data when a requirement implies growth, (5) over-engineering — a module serving no PRD requirement, (6) per major decision, the simplest credible alternative and why the chosen design beats it (no credible answer is a finding), (7) threat-model gaps when the section exists, (8) build-vs-buy — a designed module duplicating an established, maintained package (name the package), and any dependency-plan entry failing the selection bar. **The user arbitrates the findings** — accepting one is a product decision, not a mechanical fix; patch ARCHITECTURE.md before Phase 3 starts.
+**Step 4 — Architecture review (blocks Phase 3).** The consistency gate checks that docs agree; nothing else checks the design is any good — wrong-but-consistent architecture passes every machine pass. One independent review, findings-only, 6a independence rules: the reviewer gets ARCHITECTURE.md + PRD.md + UX.md, never the author's rationale; fresh session, different model than the author where possible (cross-vendor via prompt mode preferred; a same-vendor fresh session is weaker independence, still better than none). Categories: (1) module/flow with no failure handling, (2) data-model flaws (missing constraint/index/key for a named flow), (3) concurrency/ordering hazards, (4) first thing that breaks at 10× data when a requirement implies growth, (5) over-engineering — a module serving no PRD requirement, (6) per major decision, the simplest credible alternative and why the chosen design beats it (no credible answer is a finding), (7) threat-model gaps when the section exists, (8) build-vs-buy — a designed module duplicating an established, maintained package (name the package), and any dependency-plan entry failing the selection bar, including no evidence that its selected version is compatible with the rest of the set. **The user arbitrates the findings** — accepting one is a product decision, not a mechanical fix; patch ARCHITECTURE.md before Phase 3 starts.
 
 Do not proceed to planning — that is Phase 3, a fresh session.
 
@@ -109,11 +109,17 @@ patches append to it, never delete an earlier entry's why.
 Rules: COMMIT to one concrete stack and one design per decision — no
 "e.g. X or Y", no alternatives left open. Name the e2e/journey-test
 harness as part of the stack commitment — CONVENTIONS.md's Test
-strategy (Phase 3) and every gate's crystallization step (Phase 4)
+strategy (Phase 3) and every gate's coverage crystallization step (Phase 4)
 build on this name. Include a DEPENDENCY PLAN section — buy is the
 default: for every capability an established package serves, one line
-`capability → package @ exact latest-stable/LTS version → what it
-replaces` (I will verify versions against the registry); hand-rolled
+`capability → package @ selected exact version → what it replaces
+(compatibility basis)`. Select one mutually compatible set: prefer the
+repo's working lockfile/current set, then the framework's official
+scaffold/BOM and support or peer-dependency matrix, then a clean
+package-manager resolution. Registry checks confirm existence and
+maintenance; they do not make latest mandatory. Prefer maintained
+stable/LTS releases within the proven compatible range; never recall
+versions from memory or maximize each package independently. Hand-rolled
 capabilities name their reason (no credible package, trivial < ~30
 lines, or core domain logic). No speculative utilities; trivial
 helpers stay hand-rolled. I approve this list before the doc is
@@ -161,8 +167,9 @@ chosen design beats it — no credible answer is itself a finding,
 crossed without validation; an authZ check missing for a named flow,
 (8) build-vs-buy: a designed module duplicating an established,
 maintained package (name the package), and any dependency-plan entry
-failing the selection bar — unmaintained, license conflict, or a
-transitive tree out of proportion to the need.
+failing the selection bar — unmaintained, license conflict, a
+transitive tree out of proportion to the need, or no evidence that its
+selected version is compatible with the rest of the set.
 Each finding: section, severity, one-line consequence. No rewrites, no
 style opinions, no praise.
 [embed ARCHITECTURE.md + PRD.md + UX.md]

@@ -6,7 +6,7 @@
 [![Version](https://img.shields.io/badge/version-1.10.0-blue.svg)](CHANGELOG.md)
 [![Works with](https://img.shields.io/badge/works%20with-Claude%20Code%20·%20Cursor%20·%20Codex%20·%20any%20chat%20UI-8A2BE2.svg)](#installation)
 
-The failure mode Brana guards against: **every task green, every doc consistent-looking, app unusable.** Most agent workflows stop at code review — nothing ever launches the app, walks a user journey, or judges a screen. Brana's countermeasure is a set of contract documents plus a human demo gate every 2–3 tasks: you launch the build and walk a scripted journey before feature work continues.
+The failure mode Brana guards against: **every task green, every doc consistent-looking, app unusable.** Most agent workflows stop at code review — nothing ever launches the app, walks a user journey, or judges a screen. Brana's countermeasure is a set of contract documents plus human demo gates scaled to milestone size: roughly one per 8–10 feature tasks' worth of chunks, minimum one, placed only where the app is runnable.
 
 ## The seven phases
 
@@ -37,7 +37,7 @@ Full canon: [WORKFLOW.md](WORKFLOW.md). Skill-by-skill guide: [skills/USAGE.md](
 ## What makes Brana different
 
 - **The deliverable is the running app, not the documents.** Done = demonstrated in the real app, with live verification evidence recorded per task.
-- **6b demo gate.** Every 2–3 tasks _you_ launch the build and walk one scripted journey from UX.md. Findings become tasks before new features proceed. Skips are logged as visible debt, never silent.
+- **6b demo gate.** At each planned runnable gate, _you_ launch the build and walk one scripted journey from UX.md. Existing e2e coverage is reused, extended only for uncovered behavior, or created only when needed. Findings become tasks before new features proceed; skips are visible debt, never silence.
 - **UX.md** — the artifact most workflows skip. Screen inventory, navigation map, per-screen wireframes with empty/loading/error states. Without it, every task improvises its own interface.
 - **Scope cuts are hard stops.** An agent that discovers a spec'd behavior won't be built must stop and ask — documenting the cut in a gotchas file is laundering, not a decision.
 - **Copy-paste is canon.** Every prompt works by a human moving text between chat UIs — zero tooling required. Agent harnesses (Claude Code etc.) are an adaptation layer on top, not a dependency.

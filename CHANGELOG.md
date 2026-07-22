@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.11.0 — 2026-07-22
+
+- **Compatibility-first dependency selection:** removed the requirement to choose every package's latest stable/LTS release. Dependency plans now select one mutually compatible exact set using an existing lockfile/current set, official scaffold/BOM and support/peer matrices, or a clean resolver result. Task 0 freezes that approved resolution and stops for plan re-approval on conflicts instead of burning attempts on ad-hoc upgrades/downgrades; 6a flags resolved direct-version drift.
+- **Coverage-first demo gates + one cadence:** crystallization now proves cumulative journey-suite coverage instead of creating one e2e test per gate — reuse complete coverage, extend only uncovered behavior, create only when needed. Human walkthroughs remain mandatory unless waived; skipped gates still require green automation and carry only `UNWITNESSED` human debt. All current docs now use Phase 3's canonical cadence: roughly one mid gate per 8–10 feature tasks' worth of chunks (~3–4 chunks), minimum one and placed where runnable; 6a's independent 2–3-task review cadence remains.
+
 ## 1.10.0 — 2026-07-20
 
 Token-diet release, from the first v1.9 field cycle (losein M1): the milestone map capped M1 at ~15 tasks, the split landed at 29 — 18 feature + 11 workflow-mandated tasks (3 demo gates, 3 crystallization tasks, release gate, scaffold, proofs). Nothing malfunctioned; the cap and the split counted different things, and gate ceremony was priced per-gate-plus-task. Three cheap upstream fixes; the considered Phase 4 oversize valve was rejected as the costly path (re-split at Phase 4 invalidates sunk docs and usually has no legal cut point that keeps the kernel journey served).

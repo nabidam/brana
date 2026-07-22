@@ -74,10 +74,11 @@ Gate tasks (type = "gate") additionally:
     step = "create a note; it appears in the list"
     task = 2                    # the task id serving this step
 
-A non-release gate task also carries its crystallization step as a
-criterion: layer = "e2e", gate = its own n — the walked journey encoded
-as an automated e2e test in the same gate session. A legacy layout
-(separate crystallization-type task immediately after the gate) passes too.
+A non-release gate task also carries its crystallization coverage step as
+a criterion: layer = "e2e", gate = its own n — every journey step covered
+by the cumulative suite. Reused, extended, or new tests all satisfy it; a
+new gate does not require a duplicate test. A legacy layout (separate
+crystallization-type task immediately after the gate) passes too.
 
 PLAN.md chunks are headings matching /^#{1,4}\s*Chunk\s+(\d+)/i.
 DESIGN.md contrast: token table rows `| name | #RRGGBB |...`; any table row
@@ -386,15 +387,15 @@ def check_tasks(tasks_path: Path, plan_path: Path | None, arch_path: Path | None
                 find(loc(t), "gate-deps", f"serving task {sid} missing from the gate's deps")
         if g.get("release"):
             release_gates.append(t)
-        # crystallization: the gate task carries its own journey-encoding e2e
-        # criterion (merged form); a legacy adjacent crystallization task passes too
+        # Crystallization: gate task carries its own journey-coverage e2e
+        # criterion (merged form); a legacy adjacent crystallization task passes too.
         idx = order.get(t.get("id"))
         nxt = tasks[idx + 1] if idx is not None and idx + 1 < len(tasks) else None
         crystallized = any(
             c.get("layer") == "e2e" and c.get("gate") == g.get("n") for c in t.get("criteria", [])
         ) or (nxt is not None and nxt.get("type") == "crystallization" and nxt.get("gate") == g.get("n"))
         if not g.get("release") and not crystallized:
-            find(loc(t), "crystallization", f"gate {g.get('n')} has no crystallization step — add an e2e criterion (gate = {g.get('n')}) encoding its journey")
+            find(loc(t), "crystallization", f"gate {g.get('n')} has no crystallization coverage step — add an e2e criterion (gate = {g.get('n')}) proving its journey is covered")
 
     if not release_gates:
         find(tasks_path.name, "release-gate", "no RELEASE GATE task (a gate with release = true)")
