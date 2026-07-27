@@ -3,7 +3,7 @@
 **A 7-phase app-development workflow for AI coding agents that gates on the running app, not green tests.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.11.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.12.0-blue.svg)](CHANGELOG.md)
 [![Works with](https://img.shields.io/badge/works%20with-Claude%20Code%20·%20Cursor%20·%20Codex%20·%20any%20chat%20UI-8A2BE2.svg)](#installation)
 
 The failure mode Brana guards against: **every task green, every doc consistent-looking, app unusable.** Most agent workflows stop at code review — nothing ever launches the app, walks a user journey, or judges a screen. Brana's countermeasure is a set of contract documents plus human demo gates scaled to milestone size: roughly one per 8–10 feature tasks' worth of chunks, minimum one, placed only where the app is runnable.

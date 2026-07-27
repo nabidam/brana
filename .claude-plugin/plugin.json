@@ -1,7 +1,7 @@
 {
   "name": "brana",
   "description": "Brana: a 7-phase app-development workflow that gates on the running app, not green tests — spec, UX/PRD/architecture, plan, tasks, implement, review with human demo gates, and a post-v1 change loop",
-  "version": "1.11.0",
+  "version": "1.12.0",
   "author": {
     "name": "nabidam",
     "email": "nabidam.dev@gmail.com"

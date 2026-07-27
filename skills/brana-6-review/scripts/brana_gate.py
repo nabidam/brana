@@ -14,20 +14,30 @@ Subcommands:
       any other waiver/exception key is a finding (waivers are declared in
       SPEC.md at cycle entry, never invented at Phase 4).
       With --spec, also runs the downgrade valve: `profile: full` with a
-      final split of ≤15 feature tasks (gate/crystallization/proof tasks
-      excluded — they are workflow overhead, not scope) prints a
-      non-blocking `retro-lite candidate` warning (WORKFLOW.md, Phase 4
-      downgrade valve).
+      final split of ≤15 feature tasks (gate/crystallization/proof/scaffold/
+      spike tasks excluded — they are workflow overhead or process
+      artifacts, not scope) prints a non-blocking `retro-lite candidate`
+      warning (WORKFLOW.md, Phase 4 downgrade valve).
+      Cadence warning (non-blocking): more than ~5 feature tasks with no
+      mid demo gate — the fold-into-release-gate valve only covers ≤ ~5.
       When any task carries a done-mark, done-mark integrity is also checked
       (Phase 5 re-runs, stale-plan re-gates, the v1 exit bar): a done-mark
       line must quote a commit SHA and an evidence-file path, the evidence
       file must exist and be non-empty, and no task may be done before its
-      deps are resolved (Done, or a gate WALKED/SKIPPED). Done-mark grammar
+      deps are resolved (Done, or a gate WALKED/SKIPPED). A merged-form
+      gate (one carrying its own [e2e@gate-N] coverage criterion) must
+      additionally quote at least one backticked coverage test path that
+      exists on disk in its completion mark — WALKED and SKIPPED alike,
+      and SKIPPED also requires the evidence path (the coverage run is
+      mandatory on skip; only the human walkthrough is deferred). Legacy
+      gates (separate adjacent crystallization task) are exempt — their
+      coverage evidence is that task's own Done mark. Done-mark grammar
       (markdown lines after the task's TOML block, before the next task):
 
           - **Done:** `70116c3` — evidence `specs/001-core/evidence/task-0.txt`. <notes>
           - **GATE 1 WALKED — PASS** (date, human) — evidence `specs/.../task-4.txt`.
-          - **GATE 1 SKIPPED** ...            # no evidence required
+            coverage `tests/test_journey.py`   # merged-form gates only
+          - **GATE 1 SKIPPED** — evidence `specs/.../task-4.txt`. coverage `tests/...`
 
   docs FILE [FILE...]
       Consistency-gate scriptable checks (Phase 3): unresolved placeholders,
@@ -142,11 +152,18 @@ def parse_delivery(raw: str, loc_name: str) -> dict[str, str] | None:
     return contract
 
 
+OVERHEAD_TYPES = {"gate", "crystallization", "proof", "scaffold", "spike"}
+# Workflow overhead / process artifacts, excluded from every feature-task
+# count (caps, downgrade valve, cadence): gates and crystallization are
+# ceremony, proofs verify composition, Task 0's scaffold exists in every
+# cycle, spikes answer questions. Fix tasks count — they are real scope
+# a finding surfaced.
+
+
 def check_profile(spec_path: Path | None, feature_count: int) -> None:
     """Downgrade valve: a full-profile cycle whose real split fits lite is flagged
     as a retro-lite candidate (warning, non-blocking — the user makes the call).
-    Counts feature work only — gates, crystallization and proof tasks are
-    workflow overhead, not scope."""
+    Counts feature work only (see OVERHEAD_TYPES)."""
     if spec_path is None or feature_count == 0:
         return
     fm = parse_frontmatter(spec_path.read_text(encoding="utf-8"))
@@ -155,6 +172,23 @@ def check_profile(spec_path: Path | None, feature_count: int) -> None:
         warn(spec_path.name, "profile",
              f"profile: full but only {feature_count} feature task(s) — retro-lite candidate; "
              "offer the user the lite downgrade (WORKFLOW.md, Phase 4 downgrade valve)")
+
+
+def check_cadence(tasks_path: Path, tasks: list[dict], feature_count: int) -> None:
+    """Mid-gate presence (warning, non-blocking): the fold-into-release-gate
+    valve covers only ≤ ~5 feature tasks; beyond that, zero mid demo gates
+    means the cadence rule (~1 per 8–10 feature tasks, minimum one) was
+    dropped, not scaled."""
+    if feature_count <= 5:
+        return
+    mid = sum(
+        1 for t in tasks
+        if t.get("type") == "gate" and isinstance(t.get("gate"), dict) and not t["gate"].get("release")
+    )
+    if mid == 0:
+        warn(tasks_path.name, "cadence",
+             f"{feature_count} feature tasks but no mid demo gate — cadence is ~1 per "
+             "8–10 feature tasks (minimum one; only ≤ ~5 may fold into the release gate)")
 
 
 def check_delivery(tasks_path: Path, spec_path: Path | None) -> None:
@@ -216,13 +250,40 @@ def evidence_exists(token: str, tasks_path: Path) -> bool | None:
     return False if hit else None
 
 
+def coverage_path_exists(line: str, tasks_path: Path) -> bool | None:
+    """True = some backticked token (SHA and evidence path aside) resolves to
+    an existing file — the mark's coverage test path; False = candidates were
+    path-shaped but none exist; None = no candidate token on the line."""
+    saw_candidate = False
+    for m in BACKTICK_TOKEN.finditer(line):
+        tok = m.group(1).strip()
+        if SHA_TOKEN.fullmatch(f"`{tok}`") or "evidence/" in tok or "/" not in tok:
+            continue
+        saw_candidate = True
+        base = tok.split("::")[0]  # strip pytest-style node ids
+        candidates = [Path(base), tasks_path.parent / base]
+        if len(tasks_path.resolve().parents) >= 3:
+            candidates.append(tasks_path.resolve().parents[2] / base)
+        if any(c.is_file() for c in candidates):
+            return True
+    return False if saw_candidate else None
+
+
 def check_done_marks(tasks_path: Path, text: str, tasks: list[dict]) -> None:
     """Done-mark integrity — runs only when at least one mark is present, so
     a fresh Phase 4 TASKS.md (no marks yet) pays nothing."""
     loc = lambda t: f"{tasks_path.name}:{t.get('_line', '?')} task {t.get('id', '?')}"
     resolved: dict[int, bool] = {}   # id -> deps may build on it (Done / WALKED / SKIPPED)
     done: dict[int, bool] = {}       # id -> has a Done mark
-    marks: list[tuple[dict, str, bool]] = []  # (task, mark line, is_done_line)
+    marks: list[tuple[dict, str, str]] = []  # (task, mark line, kind: done|walked|skipped)
+
+    merged_gate_ids = set()  # gates carrying their own coverage criterion (merged form)
+    for t in tasks:
+        g = t.get("gate")
+        if t.get("type") == "gate" and isinstance(g, dict) and any(
+            c.get("layer") == "e2e" and c.get("gate") == g.get("n") for c in t.get("criteria", [])
+        ):
+            merged_gate_ids.add(t.get("id"))
 
     for i, t in enumerate(tasks):
         region_end = tasks[i + 1]["_start"] if i + 1 < len(tasks) else len(text)
@@ -234,25 +295,36 @@ def check_done_marks(tasks_path: Path, text: str, tasks: list[dict]) -> None:
             done[tid] = d is not None
             resolved[tid] = d is not None or g is not None
         if d:
-            marks.append((t, d.group(0), True))
+            marks.append((t, d.group(0), "done"))
         if g:
             skipped = "SKIPPED" in g.group(1).upper()
-            if not skipped:
-                marks.append((t, g.group(0), False))
+            marks.append((t, g.group(0), "skipped" if skipped else "walked"))
 
     if not marks:
         return
 
-    for t, line, is_done in marks:
-        if is_done and not SHA_TOKEN.search(line):
+    for t, line, kind in marks:
+        merged = t.get("id") in merged_gate_ids
+        if kind == "skipped" and not merged:
+            continue  # legacy skip: coverage lives in the adjacent crystallization task's Done mark
+        if kind == "done" and not SHA_TOKEN.search(line):
             find(loc(t), "done-mark", "Done mark has no backticked commit SHA")
         ev = EVIDENCE_TOKEN.search(line)
+        label = {"done": "Done", "walked": "GATE WALKED", "skipped": "GATE SKIPPED"}[kind]
         if not ev:
-            find(loc(t), "evidence", ("Done" if is_done else "GATE WALKED") + " mark has no backticked evidence-file path")
+            find(loc(t), "evidence", f"{label} mark has no backticked evidence-file path"
+                 + (" — a skip defers the walkthrough, never the coverage run" if kind == "skipped" else ""))
         else:
             state = evidence_exists(ev.group(1), tasks_path)
             if state is False:
                 find(loc(t), "evidence", f'evidence file "{ev.group(1)}" is missing or empty')
+        if merged and kind in ("walked", "skipped"):
+            cov = coverage_path_exists(line, tasks_path)
+            if cov is None:
+                find(loc(t), "coverage", f"{label} mark on a merged-form gate quotes no coverage test path — "
+                     "cite the backticked test file(s) serving the journey (reused, extended, or new)")
+            elif cov is False:
+                find(loc(t), "coverage", f"{label} mark cites a coverage test path that does not exist on disk")
 
     for t in tasks:
         tid = t.get("id")
@@ -611,7 +683,9 @@ def main(argv: list[str]) -> int:
                     pos.append(Path(a))
             parsed = check_tasks(pos[0], plan, arch)
             check_delivery(pos[0], spec)
-            check_profile(spec, sum(1 for t in parsed if t.get("type") not in {"gate", "crystallization", "proof"}))
+            feature_count = sum(1 for t in parsed if t.get("type") not in OVERHEAD_TYPES)
+            check_profile(spec, feature_count)
+            check_cadence(pos[0], parsed, feature_count)
             check_done_marks(pos[0], pos[0].read_text(encoding="utf-8"), parsed)
         elif cmd == "docs":
             if not args:

@@ -1,6 +1,6 @@
 # Brana Skills
 
-One skill per phase of `WORKFLOW.md` (Brana v1.11). Run each phase in a **fresh session**; Phase 5 runs one session per 2–3-task batch, cleared at each demo gate.
+One skill per phase of `WORKFLOW.md` (Brana v1.12). Run each phase in a **fresh session**; Phase 5 runs one session per 2–3-task batch, cleared at each demo gate.
 
 | Skill | Phase | Reads | Writes |
 |---|---|---|---|

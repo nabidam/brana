@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.12.0 — 2026-07-27
+
+Closes the seam v1.11's coverage-first crystallization reopened: "journey covered by existing tests" was a model assertion no script verified — the exact self-certification class v1.8 existed to close — and the skip path (the one path with no human witness) was the only path with no machine check at all. Plus three smaller integrity fixes from the same review.
+
+- **Coverage is a citation, never an assertion (`brana-gate` done-mark integrity):** a merged-form gate's completion mark — `WALKED — PASS` **and** `SKIPPED` alike — must quote its coverage test path(s) (`` coverage `tests/...` ``), and each cited path must exist on disk (pytest-style `::node` suffixes accepted); a `SKIPPED` mark now also requires its evidence path — the coverage run is mandatory on skip, only the walkthrough is deferred. Legacy gates (separate adjacent crystallization task) are exempt: that task's own Done mark is the coverage evidence, already checked. Doc side: the rotated unglamorous step means gate N's journey differs from gate N−1's by design, so a "full coverage" claim must name the test serving *this* gate's rotated step.
+- **Cadence warning (non-blocking):** more than ~5 feature tasks with zero mid demo gates warns — the fold-into-release-gate valve only covers ≤ ~5; previously a 20-feature TASKS.md with only a release gate passed `brana-gate tasks` clean.
+- **Feature-task counting aligned:** every feature-task count (downgrade valve, caps, new cadence check) now excludes scaffold and spike tasks alongside gate/crystallization/proof — Task 0 exists in every cycle and spikes answer process questions; fix tasks still count (real scope a finding surfaced). Same off-by-category class v1.10 fixed, one layer down; prose and script now name the same set (`OVERHEAD_TYPES`).
+- **Dependency re-approval leaves a trace:** a Task 0 resolver conflict that patches the dependency plan now records an ARCHITECTURE.md Decision-log line (what changed, why the resolver forced it), so 6a's version-drift check always compares against a plan whose amendments are visible.
+- Verified: dally 001-core (legacy layout) passes clean — no regression; fixtures confirm merged-form WALKED/SKIPPED marks without coverage citations block, with citations pass, nonexistent cited paths block, and 7 feature tasks with no mid gate warns.
+- Doc set: WORKFLOW.md (gate-linter bullet, milestone map, Phase 4 crystallization + downgrade valve, Phase 5 Task 0 + completion grammar), brana-1/4/5/6 skills, brana-gate + bundles, USAGE.md, READMEs, manifests.
+
 ## 1.11.0 — 2026-07-22
 
 - **Compatibility-first dependency selection:** removed the requirement to choose every package's latest stable/LTS release. Dependency plans now select one mutually compatible exact set using an existing lockfile/current set, official scaffold/BOM and support/peer matrices, or a clean resolver result. Task 0 freezes that approved resolution and stops for plan re-approval on conflicts instead of burning attempts on ad-hoc upgrades/downgrades; 6a flags resolved direct-version drift.
