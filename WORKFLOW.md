@@ -1,4 +1,4 @@
-# Brana — App Development Workflow (v1.10)
+# Brana — App Development Workflow (v1.11)
 
 Consolidated from 5 agent proposals, revised after a v1 post-mortem. Optimized for token efficiency + output quality. Works for any app idea. Folds in tested patterns from two public workflows ([superpowers](https://github.com/obra/superpowers), [compound-engineering](https://github.com/EveryInc/compound-engineering)): path-based delegation, task interface blocks, live verification evidence, reviewer independence, and doc status stamps. Pre-release lineage (internal v2.0–v2.2) is in CHANGELOG.md.
 

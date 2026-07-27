@@ -1,6 +1,6 @@
 # Brana Skills — Usage Guide
 
-Seven skills implementing Brana, the 6-phase app-dev workflow + Phase 7 change loop (WORKFLOW.md v1.10). Each skill has **run** mode (executes in Claude Code, Agent Adaptation Layer applies) and **prompt** mode (emits paste-ready blocks for external chat UIs — copy-paste is the workflow's canon medium).
+Seven skills implementing Brana, the 6-phase app-dev workflow + Phase 7 change loop (WORKFLOW.md v1.11). Each skill has **run** mode (executes in Claude Code, Agent Adaptation Layer applies) and **prompt** mode (emits paste-ready blocks for external chat UIs — copy-paste is the workflow's canon medium).
 
 The workflow's guard: every task green, every doc consistent-looking, app unusable. Countermeasures baked into the skills — the deliverable is the running app; Done = demonstrated (with live verification evidence); demo gates scale to milestone size (roughly one per 8–10 feature tasks' worth of chunks, minimum one, placed where runnable); scope cuts are hard stops; consistency gate before tasks; task gate before implementation; per-cycle docs carry `status:` stamps (`draft` → `gate-passed`; TASKS.md `draft` → `ready` via the task gate) that downstream phases refuse to consume unstamped.
 
