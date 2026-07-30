@@ -1,5 +1,57 @@
 # Changelog
 
+## 2.0.0 — 2026-07-30
+
+Ground-up token-efficiency redesign. Two independent audits of v1.12
+(`docs/2026-07-30-brana-workflow-audit.md`, `ANALYSIS-brana-vs-superpowers.md`)
+converged on the same root causes: nine planning artifacts re-expressing the
+same facts (~3–4× the planning words of comparable workflows, ~12–15× the
+document traffic), 45% instruction duplication between WORKFLOW.md and the
+skills, a monotonic safety ratchet across twelve versions, front-loaded
+assurance, gate/crystallization machinery dominating execution cost, and
+mandated session flushes defeating prompt caching. Before/after verification:
+`docs/2026-07-30-v2-review.md`; pre-fix numbers: `docs/2026-07-30-v2-baseline-metrics.md`.
+
+- **One canonical plan.** `specs/NNN-name/PLAN.md` replaces SPEC + UX + PRD +
+  ARCHITECTURE(per-cycle) + PLAN + TASKS + FILE_STRUCTURE. Eight top-loaded
+  sections, stable R-/U-/KJ-IDs, contracts stated once. Living root docs are
+  conditional and compact (CONVENTIONS ≤1 page; ARCHITECTURE only for mature
+  multi-cycle systems, history in `docs/adr/`; DESIGN only with the UI module).
+- **Risk modules replace full/lite.** Money, external system, migration,
+  UI-heavy, auth/user data, operator surface, deployment — each activates its
+  own planning section, verification, and review depth. No binary profile, no
+  retro-lite valve, no delivery-contract vocabulary.
+- **Gates rebuilt around cost.** Walking skeleton first (U1), one kernel e2e
+  written once when the skeleton lands, and one mandatory human walkthrough
+  that closes the spec. Scheduled mid gates, per-gate crystallization,
+  coverage citations, evidence files, GATE BLOCKED/SKIPPED/UNWITNESSED
+  bookkeeping, and status stamps are removed; mid gates are pull-based
+  ("show me" + async slice screenshots).
+- **Consistency gate and task gate deleted.** Replaced by an inline plan
+  self-review (coverage, placeholders, cross-unit consistency) plus
+  `brana-gate docs`; independent architecture review triggers only from the
+  money/external/migration/auth modules.
+- **Cache-friendly execution.** One persistent controller session per cycle;
+  subagents get path-based packets and never read the whole plan; no
+  per-phase or per-batch fresh-session mandates. Progress lives in
+  `.brana/ledger.md`, never in the plan and never as bookkeeping commits.
+- **Skills collapsed 7 → 3 thin routers** (`brana-plan`, `brana-build`,
+  `brana-ship`) that sequence WORKFLOW.md instead of restating it; the five
+  bundled `brana_gate.py` copies are removed (single copy in `tools/`).
+- **Dependency approval tiered.** Routine policy-compliant packages resolve at
+  implementation and are reported; strategic picks (frameworks, paid services,
+  native deps, auth/money-adjacent) still need user approval before code.
+- **Governance.** Removal policy (a rule that hasn't fired in three cycles is
+  a removal candidate; every new rule states activation + removal conditions)
+  and a measurement rule (cost claims require recorded cycle metrics).
+  COMPARISON.md's unmeasured "cheapest" claims retracted.
+
+Kept, unchanged in spirit: kernel journey + scope challenge, minimal-form and
+provenance rules, scope-cut/ambiguity/dependency hard stops, verified fakes
+and wire contracts, production-composition rule, migration up-down-up
+rehearsal, reviewer independence + repro-before-fix, doc sync with
+`brana-gate claims`, buy-before-build.
+
 ## 1.12.0 — 2026-07-27
 
 Closes the seam v1.11's coverage-first crystallization reopened: "journey covered by existing tests" was a model assertion no script verified — the exact self-certification class v1.8 existed to close — and the skip path (the one path with no human witness) was the only path with no machine check at all. Plus three smaller integrity fixes from the same review.

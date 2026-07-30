@@ -1,71 +1,61 @@
 # Brana
 
-**A 7-phase app-development workflow for AI coding agents that gates on the running app, not green tests.**
+**A token-efficient app-development workflow for AI coding agents that gates on the running app, not green tests.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.12.0-blue.svg)](CHANGELOG.md)
-[![Works with](https://img.shields.io/badge/works%20with-Claude%20Code%20·%20Cursor%20·%20Codex%20·%20any%20chat%20UI-8A2BE2.svg)](#installation)
+[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](CHANGELOG.md)
+[![Works with](https://img.shields.io/badge/works%20with-Claude%20Code%20·%20Cursor%20·%20Codex%20·%20any%20agent-8A2BE2.svg)](#installation)
 
-The failure mode Brana guards against: **every task green, every doc consistent-looking, app unusable.** Most agent workflows stop at code review — nothing ever launches the app, walks a user journey, or judges a screen. Brana's countermeasure is a set of contract documents plus human demo gates scaled to milestone size: roughly one per 8–10 feature tasks' worth of chunks, minimum one, placed only where the app is runnable.
+The failure mode Brana guards against: **every task green, every doc consistent-looking, app unusable.** Most agent workflows stop at code review — nothing ever launches the app, walks a user journey, or judges a screen. Brana's countermeasure: a kernel journey anchoring one canonical plan, a walking skeleton first, and a human walkthrough of the release build before anything ships.
 
-## The seven phases
+v2.0 is a ground-up token-efficiency redesign. Two independent audits of v1
+(`docs/2026-07-30-brana-workflow-audit.md`, `ANALYSIS-brana-vs-superpowers.md`)
+found v1's nine-artifact document graph and gate stack cost 12–15× the document
+traffic of comparable workflows. v2 keeps every control that found real bugs
+and deletes the apparatus that only policed drift between v1's own documents.
+
+## The flow
 
 ```mermaid
 flowchart LR
-    P1["1 · SPEC<br/>scope challenge"] --> P2["2 · UX + PRD + ARCH"]
-    P2 --> P3["3 · PLAN + gates<br/>consistency gate"]
-    P3 --> P4["4 · TASKS"]
-    P4 --> P5["5 · IMPLEMENT<br/>2–3-task batches"]
-    P5 <--> P6["6 · REVIEW<br/>6a code · 6b demo gate"]
-    P6 --> V1((v1 exit bar))
-    V1 --> P7["7 · CHANGE LOOP<br/>routes A/B/C/R"]
-    P7 --> P7
+    D["Discover<br/>scope challenge"] --> P["Plan<br/>one PLAN.md + risk modules"]
+    P --> E["Execute<br/>skeleton first, subagent per unit"]
+    E <--> R["Review<br/>risk-scoped"]
+    R --> S["Release<br/>human walkthrough closes spec"]
+    S --> C["Change<br/>fix or new cycle"]
+    C --> C
 ```
 
-| Phase                      | Skill               | Produces                                                                         |
-| -------------------------- | ------------------- | -------------------------------------------------------------------------------- |
-| 1 — Spec                   | `brana-1-spec`      | `SPEC.md` (kernel/v1/backlog + kernel journey)                                   |
-| 2 — Product & architecture | `brana-2-prd-arch`  | `UX.md`, `PRD.md`, `ARCHITECTURE.md`                                             |
-| 3 — Plan                   | `brana-3-plan`      | `PLAN.md`, `CONVENTIONS.md`, `DESIGN.md`, `FILE_STRUCTURE.md` + consistency gate |
-| 4 — Tasks                  | `brana-4-tasks`     | `TASKS.md` with context packs + demo-gate tasks                                  |
-| 5 — Implement              | `brana-5-implement` | code + tests + commit, _demonstrated_                                            |
-| 6 — Review                 | `brana-6-review`    | 6a code review (diffs) + 6b product walkthrough                                  |
-| 7 — Change loop            | `brana-7-change`    | post-v1 changes routed A/B/C/R + doc sync                                        |
+| Skill | Covers | Produces |
+|---|---|---|
+| `brana-plan` | Discover + Plan | `specs/NNN-name/PLAN.md` — the single canonical artifact |
+| `brana-build` | Execute + Review | code + tests per unit, demonstrated; `.brana/ledger.md` |
+| `brana-ship` | Release + Change | walkthrough close-out, change routing, doc sync |
 
-Full canon: [WORKFLOW.md](WORKFLOW.md). Skill-by-skill guide: [skills/USAGE.md](skills/USAGE.md).
+Full canon: [WORKFLOW.md](WORKFLOW.md). Golden path: [skills/USAGE.md](skills/USAGE.md).
 
 ## What makes Brana different
 
-- **The deliverable is the running app, not the documents.** Done = demonstrated in the real app, with live verification evidence recorded per task.
-- **6b demo gate.** At each planned runnable gate, _you_ launch the build and walk one scripted journey from UX.md. Existing e2e coverage is reused, extended only for uncovered behavior, or created only when needed. Findings become tasks before new features proceed; skips are visible debt, never silence.
-- **UX.md** — the artifact most workflows skip. Screen inventory, navigation map, per-screen wireframes with empty/loading/error states. Without it, every task improvises its own interface.
-- **Scope cuts are hard stops.** An agent that discovers a spec'd behavior won't be built must stop and ask — documenting the cut in a gotchas file is laundering, not a decision.
-- **Copy-paste is canon.** Every prompt works by a human moving text between chat UIs — zero tooling required. Agent harnesses (Claude Code etc.) are an adaptation layer on top, not a dependency.
-- **Cheap by design.** Expensive model plans, cheap model codes; fresh session per phase; diff-only reviews. Concrete model bindings included.
-- **Deterministic gates.** The structural half of both machine gates runs as a program — `tools/brana-gate` (stdlib-only Python) checks task graphs, gate walkability, contract quotes, and computed WCAG contrast; LLM passes cover only judgment. Review findings are confirmed with reproductions before they become fix tasks.
-- **Design reviewed, not just consistent.** An independent architecture review (failure handling, data-model flaws, races, scale, over-engineering, threat-model gaps) blocks Phase 3 — wrong-but-consistent designs no longer sail through. Unknowable decisions become time-boxed spike chunks instead of guesses; every NFR carries a budget + measurement, checked at the release gate.
-- **Sized to the project.** Small tool? `profile: lite` (Route S) keeps the load-bearing links — kernel journey, verify script, evidence, demo + release gates, hard stops — and cuts the ceremony: PRD folds into SPEC, PLAN/FILE*STRUCTURE dropped, gates authored directly in TASKS.md. Change cycles qualify against the \_delta*. Outgrowing lite is a hard stop + upgrade, never a silent stretch.
-- **Scope discipline, not just execution discipline.** Every v1 bullet carries provenance — tooling the _process_ wants (dry-run CLIs, output modules) is priced and needs your explicit call; "just a flag" stays a flag (minimal-form rule). Speed requests become a first-class **delivery contract** in SPEC.md frontmatter (closed vocabulary, gate-validated) chosen at cycle entry — never ad-hoc waivers invented at Phase 4. The splitter emits the fewest tasks that respect the size cap, and catch-all gap-sweep tasks are a deterministic gate finding.
+- **The deliverable is the running app.** Done = demonstrated in the real app or by a test that actually drives the behavior.
+- **One canonical plan.** Goal, kernel journey, requirements with stable IDs, risk sections, units, verification contract, walkthrough script — one document, enriched in place. No SPEC/UX/PRD/TASKS constellation to keep synchronized.
+- **Risk modules instead of profiles.** Money, external systems, migrations, UI, auth, operator surfaces, deployment — each activates its own planning section and review depth. A project pays only for the risks it has.
+- **Walking skeleton + one kernel e2e.** The kernel journey passes end-to-end in the real app before feature deepening; one e2e test written once guards it on every unit.
+- **The walkthrough closes the spec.** One mandatory human gate: you walk the kernel journey plus edge behaviors on a preflighted release build. Mid gates are pull-based — say "show me" any time, zero ceremony.
+- **Scope cuts are hard stops.** An agent that discovers a spec'd behavior won't be built must stop and ask — documenting the cut in a side file is laundering, not a decision.
+- **Cache-friendly by design.** One persistent controller session per cycle; subagents get path-based packets, never pasted prose; no mandated session flushes.
+- **A removal policy.** Every rule states what activates it and what would justify deleting it. Cost claims require measured runs.
 
-See [COMPARISON.md](COMPARISON.md) for an honest side-by-side with [Superpowers](https://github.com/obra/superpowers) and [Compound Engineering](https://github.com/EveryInc/compound-engineering) — including what Brana adopted from each and where they're stronger.
+See [COMPARISON.md](COMPARISON.md) for the side-by-side with [Superpowers](https://github.com/obra/superpowers) and [Compound Engineering](https://github.com/EveryInc/compound-engineering).
 
 ## Installation
 
 ### Universal
 
-Thanks to [skills.sh](https://skills.sh) you can just run the following command, and walk through its wizard to install skills:
-
 ```bash
 npx skills add https://github.com/nabidam/brana
 ```
 
-### Zero tooling (any chat UI — ChatGPT, Gemini, Claude.ai, …)
-
-Nothing to install. Open [WORKFLOW.md](WORKFLOW.md), copy the prompt for the phase you're in, paste it into your chat UI, commit the output files to your repo. This is the workflow's native medium.
-
 ### Claude Code
-
-As a plugin (recommended):
 
 ```bash
 /plugin marketplace add nabidam/brana
@@ -79,48 +69,39 @@ git clone https://github.com/nabidam/brana
 cp -r brana/skills/brana-* ~/.claude/skills/
 ```
 
-Then in any project: `/brana-1-spec` to start, or just describe your app idea — the skills self-trigger.
+Then in any project: `/brana-plan` to start, or just describe your app idea — the skills self-trigger.
 
 ### Cursor, Codex, Copilot CLI, Gemini CLI, and other agent tools
 
-Brana's skills are plain markdown with YAML frontmatter — no hooks, no scripts, no dependencies. Copy the `skills/brana-*` folders into your tool's skills/instructions directory, or point your tool's instructions file (`AGENTS.md`, `.cursorrules`, `GEMINI.md`, …) at `WORKFLOW.md`:
+Skills are plain markdown with YAML frontmatter — no hooks, no dependencies. Copy the `skills/brana-*` folders into your tool's skills directory, or point your instructions file (`AGENTS.md`, `.cursorrules`, `GEMINI.md`, …) at the canon:
 
 ```markdown
-Follow the Brana workflow defined in WORKFLOW.md. Phase skills live in skills/.
+Follow the Brana workflow defined in WORKFLOW.md. Skills live in skills/.
 ```
-
-If your tool has no skill mechanism at all, use the zero-tooling path — every skill also has a `prompt` mode that emits paste-ready blocks.
 
 ## Quick start
 
 ```
-1. /brana-1-spec      → describe your idea; get SPEC.md with a kernel + scope challenge
-2. /brana-2-prd-arch  → UX.md + PRD.md + ARCHITECTURE.md   (read UX.md yourself!)
-3. /brana-3-plan      → PLAN.md + conventions + design system + consistency gate
-4. /brana-4-tasks     → TASKS.md
-5. /brana-5-implement → 2–3-task batches; halt at each demo gate
-6. /brana-6-review    → code review + product walkthrough
-   …repeat 5–6 to the v1 exit bar…
-7. /brana-7-change    → everything after v1
+1. /brana-plan    → interview + scope challenge + risk modules → PLAN.md
+                    (read PLAN.md §§1–3 yourself — ~15 min, the intent check)
+2. /brana-build   → walking skeleton → kernel e2e → subagent per unit
+                    → "show me" any time for a live demo
+3. /brana-ship    → you walk the release build; findings → fix units → merge
 ```
-
-Run each phase in a **fresh session**. Read `SPEC.md` and `UX.md` yourself (~20 min each) — they encode intent, which no machine check verifies. Walk the demo gates.
 
 ## Repository layout
 
 ```
 WORKFLOW.md        the canon — the complete workflow, self-contained
 COMPARISON.md      Brana vs Superpowers vs Compound Engineering
-skills/            one skill per phase (brana-1-spec … brana-7-change)
-  README.md        phase ↔ skill map
-  USAGE.md         detailed per-skill guide
-tools/brana-gate   deterministic half of the machine gates (Python 3.11+, stdlib only)
-docs/history/      pre-release drafts
+skills/            brana-plan · brana-build · brana-ship (+ README, USAGE)
+tools/brana-gate   deterministic checks (Python 3.11+, stdlib only)
+docs/              audits, v2 baseline + review, history
 ```
 
 ## Contributing
 
-Issues and PRs welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). The one house rule: every line must change agent behavior — if deleting it would not change the output, delete it.
+Issues and PRs welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). House rules: every line must change agent behavior, and every new rule must state its activation and removal conditions.
 
 ## License
 

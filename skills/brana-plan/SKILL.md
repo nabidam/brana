@@ -1,0 +1,36 @@
+---
+name: brana-plan
+description: "Use when the user has a new app idea, wants a spec, requirements, plan, architecture, UX flows, or task breakdown, says start the workflow, or mentions any Brana phase 1–4. Use before coding starts on a new project or a new feature cycle."
+---
+
+# Brana — Discover & Plan
+
+Canon: `WORKFLOW.md` (repo root or the Brana checkout) — read §Principles,
+§Artifacts, §Risk Modules, §Units, and Flow steps 1–2. This skill only
+sequences them; the rules live there.
+
+## Steps
+
+1. **Discover** (Flow §1): interview — ask what the user already has in mind
+   before offering ideas; challenge vague requirements (AskUserQuestion for
+   2–4-option decisions). Run the scope challenge: core promise, kernel
+   (3–5 features), kernel journey (KJ-numbered steps), everything else
+   backlog. Apply the minimal-form and provenance rules. Multi-subsystem or
+   >~15 units → milestone split first (`specs/ROADMAP.md`).
+2. **Propose risk modules** from the table in §Risk Modules — name each
+   trigger you see; the user confirms the set.
+3. **Write** `specs/NNN-name/PLAN.md` — the single canonical artifact, all 8
+   sections from §Artifacts. Contracts stated once (producing unit or module
+   section); interior units stay lean (outcome, deps, files, criteria).
+   U1 is the walking skeleton. Also write/patch `CONVENTIONS.md` (≤1 page)
+   if absent; `DESIGN.md` only when the UI-heavy module is active.
+4. **Self-review, same session** (Flow §2): coverage → placeholders →
+   consistency → `tools/brana-gate docs PLAN.md`. Fix inline.
+5. Money/external/migration/auth module active → dispatch one independent
+   architecture-review subagent (findings only, no author rationale). The
+   user arbitrates findings.
+6. Ask the user to read PLAN.md §§1–3 (intent check — no machine can do it),
+   then hand off to `brana-build`.
+
+Never write code here. Never create SPEC/UX/PRD/TASKS/FILE_STRUCTURE files —
+those are v1 artifacts; v2 has one plan.
