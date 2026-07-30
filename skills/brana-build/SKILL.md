@@ -5,8 +5,10 @@ description: "Use when the user says implement, build, do the next unit or task,
 
 # Brana — Execute & Review
 
-Canon: `WORKFLOW.md` — Flow §§3–4, §Units, §Dependencies, §Model & Session
-Economics. This skill sequences; rules live there.
+Canon: `WORKFLOW.md` — resolve: (1) Brana checkout root, (2)
+`../brana-plan/reference/WORKFLOW.md` beside this skill. Read Flow §§3–4,
+§Units, §Dependencies, §Model & Session Economics. This skill sequences;
+rules live there.
 
 ## Steps
 
@@ -21,9 +23,11 @@ Economics. This skill sequences; rules live there.
    out-of-plan dependency → stop and ask; never guess past. Routine deps:
    implementer picks and reports (§Dependencies).
 4. **Verify** per unit: the verify command green, acceptance behavior
-   exercised, commit, one ledger line (id, status, SHA, date — rides in the
-   same commit). Never mark done on green unit-tests alone; never write
-   status into PLAN.md.
+   exercised, then commit with the U-ID in the subject (e.g.
+   `feat: stream endpoint [U3]`) and one ledger line (id, status, date)
+   riding in that commit. `git log --grep "\[U3\]"` is the SHA authority —
+   the ledger never records SHAs. Never mark done on green unit-tests
+   alone; never write status into PLAN.md.
 5. **After U1 lands**: write the kernel e2e once, add to verify. No other
    e2e unless a module demands it or a walkthrough finding requires it.
 6. **Review** (Flow §4): risk-module diffs → immediate independent reviewer

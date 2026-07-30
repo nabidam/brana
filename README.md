@@ -69,6 +69,12 @@ git clone https://github.com/nabidam/brana
 cp -r brana/skills/brana-* ~/.claude/skills/
 ```
 
+Skill-only installs are self-contained: `brana-plan` bundles the canon
+(`reference/WORKFLOW.md`) and the gate script (`scripts/brana_gate.py`);
+the other two skills resolve both via `../brana-plan/`, so always install
+the three together. `tools/check-dist.sh` verifies the bundle matches the
+source.
+
 Then in any project: `/brana-plan` to start, or just describe your app idea — the skills self-trigger.
 
 ### Cursor, Codex, Copilot CLI, Gemini CLI, and other agent tools
@@ -92,11 +98,13 @@ Follow the Brana workflow defined in WORKFLOW.md. Skills live in skills/.
 ## Repository layout
 
 ```
-WORKFLOW.md        the canon — the complete workflow, self-contained
-COMPARISON.md      Brana vs Superpowers vs Compound Engineering
-skills/            brana-plan · brana-build · brana-ship (+ README, USAGE)
-tools/brana-gate   deterministic checks (Python 3.11+, stdlib only)
-docs/              audits, v2 baseline + review, history
+WORKFLOW.md          the canon — the complete workflow, self-contained
+COMPARISON.md        Brana vs Superpowers vs Compound Engineering
+skills/              brana-plan (bundles canon + gate) · brana-build · brana-ship
+tools/brana-gate     deterministic checks: docs, claims (Python 3.11+, stdlib only)
+tools/check-dist.sh  fails if the skill bundle drifts from the source
+examples/notes-v2/   v2 fixture cycle (PLAN.md + ledger); dally/ is archived v1
+docs/                audits, v2 baseline + review, history
 ```
 
 ## Contributing

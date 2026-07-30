@@ -52,6 +52,21 @@ and wire contracts, production-composition rule, migration up-down-up
 rehearsal, reviewer independence + repro-before-fix, doc sync with
 `brana-gate claims`, buy-before-build.
 
+**2026-07-31 — post-independent-review fixes** (see
+`docs/2026-07-30-brana-v2-independent-review.md`, all 8 findings accepted):
+skill-only installs made self-contained (`brana-plan` bundles canon + gate,
+`tools/check-dist.sh` guards drift; `sync-gate.sh` deleted); ledger protocol
+made executable (no SHA in the committed ledger — U-ID in the commit
+subject, `git log` authoritative); gate script rewritten without the
+orphaned v1 `tasks` subcommand and contrast invocation corrected
+(`docs PLAN.md DESIGN.md`); external-system and auth risk triggers
+re-scoped (runtime boundary / authN-authZ+sensitive data+hostile input);
+strategic-only dependency hard stop; measurement footer records active
+modules + fired rules (removal policy now auditable); PLAN.md soft
+~2,500-word budget; `examples/dally` archived as v1, `examples/notes-v2`
+fixture added; plugin descriptions updated. Code-in-plan recorded as an
+explicit unadopted trade-off pending measurement.
+
 ## 1.12.0 — 2026-07-27
 
 Closes the seam v1.11's coverage-first crystallization reopened: "journey covered by existing tests" was a model assertion no script verified — the exact self-certification class v1.8 existed to close — and the skip path (the one path with no human witness) was the only path with no machine check at all. Plus three smaller integrity fixes from the same review.

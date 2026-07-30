@@ -5,9 +5,12 @@ description: "Use when the user has a new app idea, wants a spec, requirements, 
 
 # Brana — Discover & Plan
 
-Canon: `WORKFLOW.md` (repo root or the Brana checkout) — read §Principles,
-§Artifacts, §Risk Modules, §Units, and Flow steps 1–2. This skill only
-sequences them; the rules live there.
+Canon: `WORKFLOW.md` — resolve in order: (1) the Brana checkout's repo root,
+(2) bundled beside this skill at `reference/WORKFLOW.md`. Gate script:
+(1) `tools/brana-gate` in the checkout, (2) bundled at
+`scripts/brana_gate.py` beside this skill. (Sibling skills reach both via
+`../brana-plan/`.) Read §Principles, §Artifacts, §Risk Modules, §Units, and
+Flow steps 1–2. This skill only sequences them; the rules live there.
 
 ## Steps
 
@@ -25,7 +28,9 @@ sequences them; the rules live there.
    U1 is the walking skeleton. Also write/patch `CONVENTIONS.md` (≤1 page)
    if absent; `DESIGN.md` only when the UI-heavy module is active.
 4. **Self-review, same session** (Flow §2): coverage → placeholders →
-   consistency → `tools/brana-gate docs PLAN.md`. Fix inline.
+   consistency → gate script: `docs PLAN.md`, adding `DESIGN.md` as an
+   argument whenever it exists (contrast only runs on DESIGN-named files it
+   is passed). Fix inline.
 5. Money/external/migration/auth module active → dispatch one independent
    architecture-review subagent (findings only, no author rationale). The
    user arbitrates findings.

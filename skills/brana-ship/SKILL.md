@@ -5,7 +5,10 @@ description: "Use when the cycle's units are done and the user wants to release,
 
 # Brana — Release & Change
 
-Canon: `WORKFLOW.md` — Flow §§5–6. This skill sequences; rules live there.
+Canon: `WORKFLOW.md` — resolve: (1) Brana checkout root, (2)
+`../brana-plan/reference/WORKFLOW.md` beside this skill. Gate script:
+(1) `tools/brana-gate`, (2) `../brana-plan/scripts/brana_gate.py`. Read
+Flow §§5–6. This skill sequences; rules live there.
 
 ## Release (closes the cycle)
 
@@ -38,6 +41,6 @@ behavior → stop, it isn't a refactor.
 ## Doc sync (after every merge)
 
 Amend every living-doc statement the diff made false (never a deviations
-appendix); run `tools/brana-gate claims` on living docs (cited paths must
-exist); one ADR line per non-obvious decision (`docs/adr/`). Cheap,
-mechanical, non-optional.
+appendix); run the gate script's `claims` subcommand on living docs (cited
+paths must exist); one ADR line per non-obvious decision (`docs/adr/`).
+Cheap, mechanical, non-optional.

@@ -12,8 +12,12 @@ sequence the flow and point at the canon; the rules live in WORKFLOW.md only.
 One persistent controller session per cycle; subagents per unit with
 path-based packets. No mandated session flushes, no per-phase fresh sessions.
 
-Deterministic checks: `tools/brana-gate` (`docs` for placeholder/contrast
-scans, `claims` for cited-path grounding) — one copy, in `tools/`.
+Deterministic checks: the gate script (`docs` for placeholder/contrast
+scans, `claims` for cited-path grounding). Source of truth is
+`tools/brana-gate`; `brana-plan` bundles a byte-identical copy
+(`scripts/brana_gate.py`) plus the canon (`reference/WORKFLOW.md`) so
+skill-only installs are self-contained — install all three skills together;
+`tools/check-dist.sh` guards the bundle against drift.
 
 v1's seven phase skills (`brana-1-spec` … `brana-7-change`) and the
 nine-artifact document set are retired; see CHANGELOG 2.0.0 and
