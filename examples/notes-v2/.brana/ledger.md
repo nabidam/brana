@@ -11,5 +11,6 @@ U2 | done | 2026-07-31
 
 ## Cycle metrics (filled at release)
 
-planning words: 430 · units: 2 · fix units: · agent invocations: ·
-billed tokens: · active modules: none · rules fired: none
+planning words: 453 (`wc -w specs/001-core/PLAN.md`) · units: 2 ·
+fix units: · agent invocations: · billed tokens: ·
+active modules: none · rules fired: none

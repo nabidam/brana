@@ -22,7 +22,7 @@ python3 -m py_compile tools/brana-gate skills/brana-plan/scripts/brana_gate.py
 python3 tools/brana-gate docs WORKFLOW.md skills/*/SKILL.md examples/notes-v2/specs/001-core/PLAN.md
 ```
 
-All three must exit 0. If you edited `WORKFLOW.md` or `tools/brana-gate`, re-copy the bundle (`cp WORKFLOW.md skills/brana-plan/reference/WORKFLOW.md`; `cp tools/brana-gate skills/brana-plan/scripts/brana_gate.py`) before running check-dist. CI runs the same three commands.
+All three must exit 0. If you edited `WORKFLOW.md` or `tools/brana-gate`, re-copy the bundle (`cp WORKFLOW.md skills/brana-plan/reference/WORKFLOW.md`; `cp tools/brana-gate skills/brana-plan/scripts/brana_gate.py`) before running check-dist. CI runs the same commands plus a negative contrast fixture (`tools/testdata/DESIGN-bad.md` must fail the gate).
 
 ## PRs
 

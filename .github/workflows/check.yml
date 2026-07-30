@@ -19,3 +19,9 @@ jobs:
         run: python3 -m py_compile tools/brana-gate skills/brana-plan/scripts/brana_gate.py
       - name: Docs pass the gate
         run: python3 tools/brana-gate docs WORKFLOW.md skills/brana-plan/SKILL.md skills/brana-build/SKILL.md skills/brana-ship/SKILL.md examples/notes-v2/specs/001-core/PLAN.md
+      - name: Contrast parser still rejects violations (negative fixture)
+        run: |
+          if python3 tools/brana-gate docs tools/testdata/DESIGN-bad.md; then
+            echo "regression: gate passed a known WCAG AA violation" >&2
+            exit 1
+          fi

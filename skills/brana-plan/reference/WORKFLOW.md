@@ -325,8 +325,9 @@ conflict on a strategic pick goes back to the user, not into ad-hoc upgrades.
 ## Measurement
 
 Cost claims require data. Per cycle, record in the ledger footer: planning
-words generated, units, fix units, agent invocations, (when available)
-billed tokens, **the risk modules that were active, and every hard stop or
+words generated (naming the counting command, e.g. `wc -w PLAN.md`, so
+cycles compare under one definition), units, fix units, agent invocations,
+(when available) billed tokens, **the risk modules that were active, and every hard stop or
 exceptional rule that actually fired** (one line each) — absence is derived
 for the named conditional controls, which is what makes the removal policy
 auditable. Compare across cycles before tightening or loosening any rule.
