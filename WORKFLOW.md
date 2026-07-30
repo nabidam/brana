@@ -169,7 +169,8 @@ gate and task gate entirely:
 
 1. Coverage: every requirement maps to a unit; every kernel-journey step has a
    serving unit; every acceptance example is falsifiable.
-2. Placeholders: no TBD/TODO/"handle appropriately"/open "X or Y".
+2. Placeholders: no `to-be-decided` markers, no "handle appropriately",
+   no open "X or Y" (the gate script scans for the literal tokens).
 3. Consistency: names, signatures, and shapes used by later units match where
    they were defined; every risk-module obligation has its section.
 4. Deterministic remainder: run `tools/brana-gate docs PLAN.md` — plus
