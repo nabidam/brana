@@ -1,6 +1,6 @@
 ---
 name: brana-ship
-description: "Use when the cycle's units are done and the user wants to release, walk through, or close the spec — or for any post-v1 change: new feature, bugfix, refactor, migration, redesign. Covers Brana phases 6b–7, release gate, walkthrough, doc sync, change routes."
+description: "Use for Brana v2 steps 5–6 (Release, Change): units done and the user wants to release, walk through, or close the spec — or any post-v1 change: new feature, bugfix, refactor, migration, redesign. Also answers legacy v1 names: phase 6b (demo gate/walkthrough), phase 7 (change loop), v1 exit bar — v1 aliases only, not v2 numbering."
 ---
 
 # Brana — Release & Change

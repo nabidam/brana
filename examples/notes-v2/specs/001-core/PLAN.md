@@ -30,8 +30,10 @@ Backlog: edit-in-place, full-text search, markdown rendering.
 ## 4. Active risk modules
 
 None. (No money, no external system, no migration against existing data, UI
-is minimal, no auth or personal data beyond local notes, no operator
-surface, single-process app.)
+is minimal, no operator surface, single-process app. No auth module: notes
+are local-only single-user content on the user's own disk, which the
+trigger explicitly scopes out — no multi-user access, no sync, nothing
+served beyond localhost.)
 
 ## 5. Stack & dependencies
 
@@ -49,11 +51,15 @@ Acceptance: R1, R2 exercised in the running app.
 Produces: `POST /notes`, `GET /notes`, `DELETE /notes/{id}` (JSON:
 `{id: int, text: str, created_at: str}`).
 
-### U2 — empty state and list ordering
+### U2 — empty state, ordering, and startup budget
 
-Outcome: fresh profile shows "No notes yet"; list is newest-first.
-Deps: U1. Files (hint): `static/index.html`, `app/store.py`.
-Acceptance: R3; KJ2's "appears at the top" assertion.
+Outcome: fresh profile shows "No notes yet"; list is newest-first; the R4
+measurement exists and passes.
+Deps: U1. Files (hint): `static/index.html`, `app/store.py`,
+`scripts/measure-start.sh`.
+Acceptance: R3; KJ2's "appears at the top" assertion; R4 — the script
+reports cold start under 1s (re-measured on the release build at the
+walkthrough).
 
 ## 7. Verification contract
 

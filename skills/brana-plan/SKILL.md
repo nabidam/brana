@@ -1,6 +1,6 @@
 ---
 name: brana-plan
-description: "Use when the user has a new app idea, wants a spec, requirements, plan, architecture, UX flows, or task breakdown, says start the workflow, or mentions any Brana phase 1–4. Use before coding starts on a new project or a new feature cycle."
+description: "Use for Brana v2 steps 1–2 (Discover, Plan): a new app idea, a spec, requirements, plan, architecture, UX flows, or task breakdown, or 'start the workflow'. Also answers legacy v1 phase names 1–4 (spec, UX/PRD/arch, plan, tasks) — v1 aliases only, not v2 numbering. Use before coding starts on a new project or feature cycle."
 ---
 
 # Brana — Discover & Plan

@@ -107,7 +107,7 @@ its section to PLAN.md and its checks to review — nothing else does.
 | **External system** | a runtime third-party boundary — API, provider, service, webhook — regardless of how it will be tested | wire contract in PLAN.md (exact shapes, auth, error semantics) + failure behavior; immediate review of integration diffs. **When a fake stands in for it** (the usual case): verified fake — one shared contract suite runs against fake and real adapter; real side offline-assertable; live calls canary-only |
 | **Migration** | schema change against existing data | up→down→up rehearsal against fixture data, data-survival assertion; rollback = down migration, never `git revert` |
 | **UI-heavy** | the product's value is its interface | UX flows per screen (regions, states: empty/loading/error/focus) in PLAN.md §4; DESIGN.md with semantic tokens and a contrast table in the shape `brana-gate docs` parses (token rows `\| name \| #RRGGBB \|`; checked rows under a header naming fg/bg or contrast); self-review runs `brana-gate docs PLAN.md DESIGN.md`; a11y check in verify |
-| **Auth / user data** | authentication or authorization, stored personal/sensitive data, or an identified hostile-input boundary (untrusted uploads, public write endpoints) — *not* ordinary input handling, which the base verification contract already covers | threat model section: trust boundaries, authZ per surface, validation at the hostile boundary, secrets handling; security review on auth diffs |
+| **Auth / user data** | authentication or authorization; personal/sensitive data accessible beyond the local user (multi-user, synced, or served over a network); or an identified hostile-input boundary (untrusted uploads, public write endpoints). *Not* ordinary input handling (base verification covers it) and *not* local-only single-user content — a notes file on the user's own disk triggers nothing | threat model section: trust boundaries, authZ per surface, validation at the hostile boundary, secrets handling; security review on auth diffs |
 | **Operator surface** | CLI/daemon/pipeline as a primary interface | one operator note per surface: invocation, output format, exit convention (never screens/wireframes) |
 | **Deployment** | the app ships as a composed service (containers, workers) | production-composition smoke: the real entry point boots with disposable config; gate launches always use the production entry point with fakes injected at seams — a bespoke gate-only assembly is a blocking finding |
 
@@ -224,13 +224,18 @@ every unit. Further e2e appears only when a module demands it or the final
 walkthrough finds a bug (test what broke).
 
 **Ledger, not bookkeeping:** progress lives in `.brana/ledger.md` —
-one line per unit: id, status, date. The unit's commit subject carries its
-U-ID (e.g. `feat: stream endpoint [U3]`), so `git log --grep` is the
-authority for which commit completed which unit — the ledger never records
-SHAs (a commit cannot contain its own hash). Ledger updates are never
-committed into PLAN.md and never generate their own commits; the ledger line
-rides along in the unit's commit. After compaction, state rebuilds from
-git log + ledger, never from remembered conversation.
+one line per unit: id, status, date, under a header naming the cycle. The
+unit's commit subject carries its **cycle-qualified** U-ID (e.g.
+`feat: stream endpoint [001-core/U3]` — unit numbers restart every cycle, so
+a bare `[U3]` is ambiguous after one cycle), making
+`git log --grep "\[001-core/U3\]"` the authority for which commit completed
+which unit — the ledger never records SHAs (a commit cannot contain its own
+hash). Committed ledger rows are **terminal only** (done, or a recorded
+outcome); an in-progress row is uncommitted working-tree controller state,
+replaced by the terminal row in the unit's commit. Ledger updates are never
+committed into PLAN.md and never generate their own commits. After
+compaction, state rebuilds from git log + ledger, never from remembered
+conversation.
 
 **Mid-cycle plan changes:** patch PLAN.md in place, re-run the self-review on
 the patched section only, and update the interfaces of not-yet-done units that
