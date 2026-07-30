@@ -1,20 +1,24 @@
-# Brana Skills
+# Brana Skills (v2.0)
 
-One skill per phase of `WORKFLOW.md` (Brana v1.12). Run each phase in a **fresh session**; Phase 5 runs one session per 2–3-task batch, cleared at each demo gate.
+Three skills implementing `WORKFLOW.md` v2.0. Skills are thin routers: they
+sequence the flow and point at the canon; the rules live in WORKFLOW.md only.
 
-| Skill | Phase | Reads | Writes |
-|---|---|---|---|
-| `brana-1-spec` | 1 | your idea | `specs/NNN-name/SPEC.md` (kernel/v1/backlog + kernel journey) |
-| `brana-2-prd-arch` | 2 | SPEC.md | `UX.md`, `specs/NNN-name/PRD.md`, `ARCHITECTURE.md` |
-| `brana-3-plan` | 3 | PRD.md, ARCHITECTURE.md, UX.md | `specs/NNN-name/PLAN.md`, `CONVENTIONS.md`, `DESIGN.md`, `FILE_STRUCTURE.md` + consistency gate |
-| `brana-4-tasks` | 4 | PLAN.md, ARCHITECTURE.md, UX.md, PRD.md (error/edge-case list) | `specs/NNN-name/TASKS.md` (incl. demo-gate tasks) |
-| `brana-5-implement` | 5 | task N + context pack | code + tests + commit, demonstrated |
-| `brana-6-review` | 6a/6b | git diff + contracts / running app | `specs/NNN-name/reviews/REVIEW_N.md` / gate walkthrough (+ optional screenshots) |
-| `brana-7-change` | 7 | change request + living docs | routed cycle (A/B/C/R) + doc sync |
+| Skill | Covers | Writes |
+|---|---|---|
+| `brana-plan` | Discover + Plan | `specs/NNN-name/PLAN.md` (single canonical artifact), `CONVENTIONS.md`, `DESIGN.md` (UI module only) |
+| `brana-build` | Execute + Review | code + tests per unit, `.brana/ledger.md`, review findings |
+| `brana-ship` | Release + Change | walkthrough close-out, change routing, doc sync, ADRs |
 
-Every skill has two modes (brana-5 adds `delegate`):
+One persistent controller session per cycle; subagents per unit with
+path-based packets. No mandated session flushes, no per-phase fresh sessions.
 
-- **run** (default): execute the phase here in Claude Code — the workflow's Agent Adaptation Layer applies (reading roams, writing doesn't; gates are soft stops; scope cuts are hard stops).
-- **prompt** (pass `prompt` as argument): output paste-ready prompt block(s) — with actual file contents embedded — for an external chat UI, then stop. Copy-paste is the workflow's canon medium; this preserves its cross-vendor and model-tier economics.
+Deterministic checks: the gate script (`docs` for placeholder/contrast
+scans, `claims` for cited-path grounding). Source of truth is
+`tools/brana-gate`; `brana-plan` bundles a byte-identical copy
+(`scripts/brana_gate.py`) plus the canon (`reference/WORKFLOW.md`) so
+skill-only installs are self-contained — install all three skills together;
+`tools/check-dist.sh` guards the bundle against drift.
 
-Living docs at repo root: `ARCHITECTURE.md`, `UX.md`, `CONVENTIONS.md`, `DESIGN.md` — patched, never regenerated, no "deviations" ledgers. Per-cycle docs (`SPEC.md`, `PRD.md`, `PLAN.md`, `TASKS.md`, `FILE_STRUCTURE.md`) are archived under `specs/NNN-name/` (v1 = `specs/001-core/`, gate screenshots in `specs/NNN-name/screenshots/`) and carry a `status:` frontmatter stamp (`draft` → `gate-passed`; TASKS.md `draft` → `ready` via the Phase 4 task gate) — a consuming phase refuses a doc whose gate hasn't cleared. `FILE_STRUCTURE.md` is a per-cycle prediction only, never a living doc and never stamped.
+v1's seven phase skills (`brana-1-spec` … `brana-7-change`) and the
+nine-artifact document set are retired; see CHANGELOG 2.0.0 and
+`docs/2026-07-30-v2-review.md` for the rationale and the before/after numbers.
